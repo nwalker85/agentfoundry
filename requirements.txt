@@ -1,0 +1,44 @@
+# Core Dependencies
+fastapi==0.110.0
+uvicorn[standard]==0.27.0
+python-dotenv==1.0.1
+pydantic==2.6.0
+pydantic-settings==2.1.0
+
+# LangGraph & AI
+langgraph==0.0.32
+langchain==0.1.9
+langchain-openai==0.0.8
+openai==1.12.0
+tiktoken==0.6.0
+
+# Integrations
+notion-client==2.2.1
+PyGithub==2.2.0
+httpx==0.26.0
+
+# Data & Caching
+redis==5.0.1
+sqlalchemy==2.0.27
+alembic==1.13.1
+
+# Observability
+opentelemetry-api==1.22.0
+opentelemetry-sdk==1.22.0
+opentelemetry-instrumentation-fastapi==0.43b0
+opentelemetry-exporter-otlp==1.22.0
+structlog==24.1.0
+
+# Testing
+pytest==8.0.0
+pytest-asyncio==0.23.4
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+faker==22.5.0
+
+# Development
+black==24.1.1
+ruff==0.2.1
+mypy==1.8.0
+ipython==8.20.0
+rich==13.7.0

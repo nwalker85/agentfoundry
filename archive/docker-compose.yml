@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # Ollama LLM service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pm_agent_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - pm_network
+
+  # Main PM Agent service with Streamlit UI
+  pm_agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pm_agent_app
+    ports:
+      - "8501:8501"  # Streamlit UI
+    volumes:
+      - /Users/nate/Development/1. Projects/Engineering Department:/app/project_source:ro
+      - /Users/nate/Documents/Engineering Department:/app/working_dir:rw
+      - ./pm_agent:/app/pm_agent:ro
+      - ./ui:/app/ui:ro
+      - ./core:/app/core:ro
+      - ./mcp_servers:/app/mcp_servers:ro
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=qwen2.5:7b
+      - NOTION_API_KEY=${NOTION_API_KEY}
+      - NOTION_TEAMSPACE=Engineering Department
+      - PROJECT_SOURCE_DIR=/app/project_source
+      - WORKING_DIR=/app/working_dir
+      - PYTHONPATH=/app
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - pm_network
+    command: streamlit run ui/streamlit_app.py --server.address=0.0.0.0
+
+volumes:
+  ollama_data:
+
+networks:
+  pm_network:
+    driver: bridge

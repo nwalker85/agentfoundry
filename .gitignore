@@ -1,0 +1,56 @@
+# Secrets & local configs
+.env*
+!.env.example
+*.secrets.*
+*_PRIVATE.*
+*_private.*
+*__PRIVATE.*
+*__DRAFT.*
+
+# Local state & outputs
+/audit/*.jsonl
+/audit/*.ndjson
+/tests/output/
+/tmp/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node.js
+node_modules/
+.next/
+out/
+.cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Generated
+/api/generated/
+/docs/generated/
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker
+.dockerignore
