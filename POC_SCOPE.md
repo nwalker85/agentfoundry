@@ -220,6 +220,14 @@ Future integration debt	Maintain clear MCP tool boundaries
 
 ⸻
 
+Progress Snapshot (as of 2025-11-09)
+
+- Completed: Python 3.12 environment rebuilt, MCP server scaffold online (`/`, `/health`, `/api/status`), Next.js dashboard landing page deployed, Notion smoke test validated credentials.
+- In Flight: Chat/backlog/settings UI flows, MCP tool contracts (Notion story create/list, GitHub issue create) with schema enforcement, JSONL audit and idempotency protections.
+- Next Up: Connect LangGraph PM agent skeleton to MCP endpoints and expose authenticated tool routes; propagate status telemetry into UI dashboard.
+
+⸻
+
 Summary
 
 This PoC is not disposable—it’s the seed of the production system.
