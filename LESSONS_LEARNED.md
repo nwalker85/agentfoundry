@@ -32,10 +32,28 @@ Document captures insights and adjustments discovered during the initial impleme
 ### 7. Prompt Governance
 - LangGraph prompts require version pinning; added `policy.py` to isolate template versions for eval tracking.
 
+### 8. Next.js App Router Discipline
+
+- Root-level `app/` directory must contain `page.tsx` and `layout.tsx`; nesting an extra `app/` produced 404s until we flattened the structure.
+- Tailwind configuration needs the `app/**/*` glob to pick up App Router components, otherwise styles silently fail.
+
+### 9. Environment Reprovisioning
+
+- Rebuilding the Python 3.12 virtualenv and reinstalling dependencies resolved `pydantic-core` wheel issues and removed drift from old packages.
+- npm dependency upgrades (Next.js 14.2.33, eslint-config-next parity) avoided security advisories flagged by `npm audit`.
+
+### 10. CLI Output Hygiene
+
+- Replaced emoji indicators in CLI smoke tests with ASCII to keep logs automation-friendly and avoid encoding issues in CI.
+- Added standalone Notion smoke test (`test_notion.py`) so environment validation is scriptable before running the full stack.
+
 ## Outstanding Questions
+
 - Will FastAPI remain embedded, or should MCP become a standalone service container?
 - Should audit logs replicate to SQLite for persistence beyond JSONL?
 
 ## Next Review
+
 Update this document after MCP + Agent integration test (end of Phase 2).
+
 ---
