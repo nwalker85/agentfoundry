@@ -1,0 +1,11 @@
+Title,Description,Status,Priority,Target Quarter,Business Value,Technical Area,Created By
+"User Authentication System","Implement secure authentication and authorization for the platform",Active,P0,Q1 2025,High,"Backend,Security",PM Agent
+"API Infrastructure","Build robust REST and GraphQL APIs for client applications",Active,P1,Q1 2025,High,"Backend,API,Infrastructure",PM Agent
+"Frontend Dashboard","Create intuitive dashboard for monitoring and analytics",Planning,P1,Q2 2025,Medium,"Frontend,Data",PM Agent
+"Data Pipeline","Implement ETL pipeline for data processing and analytics",Planning,P2,Q2 2025,Medium,"Backend,Data,Infrastructure",PM Agent
+"DevOps Automation","Automate deployment and infrastructure management",Active,P2,Q1 2025,High,"DevOps,Infrastructure",PM Agent
+"Performance Optimization","Optimize system performance and response times",Planning,P2,Q3 2025,Medium,"Backend,Frontend,Infrastructure",PM Agent
+"Security Hardening","Enhance security posture and compliance",Planning,P0,Q2 2025,High,"Security,Infrastructure",PM Agent
+"Mobile Application","Native mobile apps for iOS and Android",On Hold,P3,Q4 2025,Low,"Frontend",Human
+"Documentation Hub","Comprehensive documentation for developers and users",Planning,P2,Q1 2025,Medium,"Documentation",PM Agent
+"Testing Framework","Automated testing infrastructure for quality assurance",Active,P1,Q1 2025,High,"Backend,DevOps",PM Agent

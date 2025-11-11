@@ -174,7 +174,7 @@ async def api_status():
     }
 
 
-# ============= PM Agent Chat Endpoint =============
+# ============= PM Agent Chat Endpoints =============
 
 @app.post("/api/agent/chat")
 async def agent_chat(
@@ -222,6 +222,81 @@ async def agent_chat(
                 error=str(e)
             )
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/agent/process")
+async def process_agent_message(
+    request: Request,
+    actor: str = Depends(verify_auth)
+):
+    """Process a message through the PM agent (frontend API)."""
+    if not pm_agent:
+        raise HTTPException(status_code=503, detail="PM Agent not available")
+    
+    try:
+        body = await request.json()
+        message = body.get("message")
+        session_id = body.get("session_id", "default")
+        message_history = body.get("message_history", [])
+        
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
+        
+        # Process message through agent
+        result = await pm_agent.process_message(message)
+        
+        # Extract artifacts if any
+        artifacts = []
+        if result.get("story_created"):
+            artifacts.append({
+                "type": "story",
+                "data": result["story_created"]
+            })
+        if result.get("issue_created"):
+            artifacts.append({
+                "type": "issue", 
+                "data": result["issue_created"]
+            })
+        
+        # Log the conversation
+        if audit_tool:
+            await audit_tool.log_action(
+                actor=actor,
+                tool="pm_agent",
+                action="process",
+                input_data={"message": message, "session_id": session_id},
+                output_data=result,
+                result="success" if result.get("status") != "error" else "failure"
+            )
+        
+        return {
+            "success": True,
+            "response": result.get("response", "Processing your request..."),
+            "artifacts": artifacts,
+            "requires_clarification": result.get("requires_clarification", False),
+            "clarification_prompt": result.get("clarification_prompt"),
+            "current_state": result.get("state"),
+            "session_id": session_id
+        }
+        
+    except Exception as e:
+        # Log failure
+        if audit_tool:
+            await audit_tool.log_action(
+                actor=actor,
+                tool="pm_agent", 
+                action="process",
+                input_data={"message": message if 'message' in locals() else None},
+                output_data=None,
+                result="failure",
+                error=str(e)
+            )
+        
+        return {
+            "success": False,
+            "error": str(e),
+            "session_id": session_id if 'session_id' in locals() else "default"
+        }
 
 
 # ============= Notion Tool Endpoints =============

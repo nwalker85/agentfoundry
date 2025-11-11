@@ -1,0 +1,61 @@
+Title,Epic,User Story,Description,Acceptance Criteria,Status,Priority,Story Points,Sprint,Technical Type,GitHub Issue,GitHub PR,Assignee,AI Generated
+"Add JWT authentication endpoint","User Authentication System","As a user I want to authenticate securely so that my data is protected","Implement JWT-based authentication with refresh tokens","• Endpoint returns valid JWT token
+• Refresh token mechanism works
+• Token expiration is configurable
+• Rate limiting is implemented",Ready,P0,5,Sprint 1,Feature,https://github.com/nwalker/engineeringdepartment/issues/1,,,TRUE
+"Create password reset flow","User Authentication System","As a user I want to reset my password so that I can regain access to my account","Implement secure password reset via email verification","• Email verification sent
+• Token expires after 1 hour
+• Password complexity validated
+• User notified of success",Backlog,P1,3,Sprint 2,Feature,,,,TRUE
+"Implement user registration","User Authentication System","As a new user I want to create an account so that I can access the platform","Create registration endpoint with email verification","• Email validation works
+• Duplicate emails prevented
+• Welcome email sent
+• Profile created successfully",In Progress,P0,5,Sprint 1,Feature,https://github.com/nwalker/engineeringdepartment/issues/2,,,TRUE
+"Build GraphQL schema","API Infrastructure","As a developer I want a GraphQL API so that I can efficiently query data","Design and implement core GraphQL schema and resolvers","• Schema validates correctly
+• All queries resolve
+• Mutations work as expected
+• Subscriptions functional",Ready,P1,8,Sprint 1,Feature,,,,TRUE
+"Add REST API versioning","API Infrastructure","As a developer I want API versioning so that changes don't break existing clients","Implement versioning strategy for REST endpoints","• Version header accepted
+• URL versioning works
+• Backward compatibility maintained
+• Documentation updated",Backlog,P2,3,Sprint 2,Feature,,,,TRUE
+"Create metrics dashboard","Frontend Dashboard","As a manager I want to see key metrics so that I can monitor system health","Build dashboard showing KPIs and system metrics","• Real-time data updates
+• Charts render correctly
+• Export functionality works
+• Mobile responsive",Backlog,P1,5,Sprint 3,Feature,,,,TRUE
+"Set up CI/CD pipeline","DevOps Automation","As a developer I want automated deployments so that releases are consistent","Configure GitHub Actions for automated testing and deployment","• Tests run on PR
+• Build succeeds
+• Deploy to staging works
+• Rollback capability exists",In Progress,P0,8,Sprint 1,Feature,https://github.com/nwalker/engineeringdepartment/issues/3,,John Doe,TRUE
+"Add database migrations","API Infrastructure","As a developer I want database migrations so that schema changes are tracked","Implement migration system for database schema management","• Migrations run successfully
+• Rollback works
+• Seed data loads
+• No data loss",Ready,P1,3,Sprint 1,Tech Debt,,,,TRUE
+"Implement rate limiting","Security Hardening","As a system admin I want rate limiting so that the API is protected from abuse","Add rate limiting to all API endpoints","• Rate limits enforced
+• Headers show limits
+• 429 responses work
+• Redis cache works",Backlog,P1,3,Sprint 2,Feature,,,,TRUE
+"Create unit test suite","Testing Framework","As a developer I want unit tests so that code quality is maintained","Write comprehensive unit tests for core modules","• 80% coverage achieved
+• All tests pass
+• CI integration works
+• Reports generated",In Progress,P1,5,Sprint 1,Feature,,,Jane Smith,TRUE
+"Add error monitoring","DevOps Automation","As a developer I want error tracking so that issues are quickly identified","Integrate error monitoring and alerting system","• Errors captured
+• Alerts configured
+• Dashboard accessible
+• Stack traces included",Ready,P2,3,Sprint 2,Feature,,,,TRUE
+"Implement caching layer","Performance Optimization","As a user I want fast responses so that the application feels responsive","Add Redis caching for frequently accessed data","• Cache hits work
+• TTL configured
+• Invalidation works
+• Performance improved",Backlog,P2,5,Sprint 3,Feature,,,,TRUE
+"Create API documentation","Documentation Hub","As a developer I want API documentation so that I can integrate easily","Generate comprehensive API documentation with examples","• All endpoints documented
+• Examples provided
+• Interactive testing works
+• Auto-generated from code",Ready,P2,3,Sprint 2,Documentation,,,,TRUE
+"Add health check endpoint","API Infrastructure","As a DevOps engineer I want health checks so that I can monitor service status","Create health check endpoint for monitoring","• Returns 200 when healthy
+• Database connection checked
+• Redis connection checked
+• Response time tracked",Done,P1,2,Sprint 1,Feature,https://github.com/nwalker/engineeringdepartment/issues/4,https://github.com/nwalker/engineeringdepartment/pull/1,,TRUE
+"Fix memory leak in worker","Performance Optimization","As a developer I want to fix memory leaks so that the system remains stable","Identify and fix memory leak in background worker process","• Memory usage stable
+• No gradual increase
+• Garbage collection works
+• Performance improved",In Review,P0,5,Sprint 1,Bug Fix,https://github.com/nwalker/engineeringdepartment/issues/5,https://github.com/nwalker/engineeringdepartment/pull/2,Mike Johnson,FALSE

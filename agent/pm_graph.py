@@ -67,7 +67,7 @@ class PMAgent:
         workflow.add_node("validate", self.validate_requirements)
         workflow.add_node("plan", self.plan_execution)
         workflow.add_node("create_story", self.create_story)
-        workflow.add_node("create_issue", self.create_issue)
+        # Removed create_issue node - not needed anymore
         workflow.add_node("complete", self.complete_task)
         workflow.add_node("error", self.handle_error)
         
@@ -85,8 +85,8 @@ class PMAgent:
             }
         )
         
-        # From clarify
-        workflow.add_edge("clarify", "understand")
+        # From clarify - go to validate instead of understand to prevent loop
+        workflow.add_edge("clarify", "validate")
         
         # From validate
         workflow.add_conditional_edges(
@@ -102,19 +102,17 @@ class PMAgent:
         # From plan
         workflow.add_edge("plan", "create_story")
         
-        # From create_story
+        # From create_story - go directly to complete (no GitHub issues)
         workflow.add_conditional_edges(
             "create_story",
             self.route_after_story,
             {
-                "create_issue": "create_issue",
-                "complete": "complete",
+                "complete": "complete",  # Skip GitHub, go to complete
                 "error": "error"
             }
         )
         
-        # From create_issue
-        workflow.add_edge("create_issue", "complete")
+        # No more create_issue edge needed
         
         # Terminal nodes
         workflow.add_edge("complete", END)
@@ -124,94 +122,147 @@ class PMAgent:
     
     async def understand_task(self, state: AgentState) -> AgentState:
         """Understand the user's task request."""
+        print("[Node: understand] Starting...")  # Debug
         
         messages = state["messages"]
         
-        # Extract task details using LLM
+        # Extract task details using LLM with structured output
         prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content="""You are a Project Manager agent helping to create stories.
-Extract the following information from the user's request:
-- Epic title
-- Story title  
-- Priority (P0, P1, P2, or P3)
-- Description
-- Any mentioned acceptance criteria
-- Any mentioned definition of done items
-
-If any critical information is missing, note what needs clarification.
-Respond in JSON format."""),
+            
+Analyze the user's request and extract:
+            1. Epic title (e.g., "User Authentication", "Infrastructure", "API Development")
+            2. Story title (brief, clear title for the story)
+            3. Priority (P0=Critical, P1=High, P2=Medium, P3=Low)
+            4. Description (detailed description of what needs to be done)
+            
+            If information is missing, use reasonable defaults:
+            - Epic: "Engineering Tasks"
+            - Priority: "P2"
+            - Description: Use the user's message
+            - Story title: Create from the user's message
+            
+            Respond with ONLY a JSON object like:
+            {
+                "epic_title": "Infrastructure",
+                "story_title": "Add healthcheck endpoint",
+                "priority": "P2",
+                "description": "Implement a healthcheck endpoint for monitoring",
+                "needs_clarification": false
+            }"""),
             MessagesPlaceholder(variable_name="messages")
         ])
         
         chain = prompt | self.llm
         response = await chain.ainvoke({"messages": messages})
         
-        # Parse response (simplified - would use structured output in production)
-        # For now, we'll extract manually
-        content = response.content
+        # Parse JSON response
+        try:
+            import json
+            # Clean the response content to get just JSON
+            content = response.content
+            # Remove markdown code blocks if present
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0]
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0]
+            
+            parsed = json.loads(content.strip())
+            
+            # Update state with extracted values
+            state["epic_title"] = parsed.get("epic_title", "Engineering Tasks")
+            state["story_title"] = parsed.get("story_title", "")
+            state["priority"] = parsed.get("priority", "P2")
+            state["description"] = parsed.get("description", "")
+            
+            # Clear clarifications if we have what we need
+            if state["epic_title"] and state["story_title"]:
+                state["clarifications_needed"] = []
+            else:
+                # Set clarifications needed
+                clarifications = []
+                if not state["story_title"]:
+                    clarifications.append("What should the story title be?")
+                state["clarifications_needed"] = clarifications
+            
+        except (json.JSONDecodeError, KeyError) as e:
+            # Fallback to basic extraction
+            print(f"JSON parsing error: {e}, content: {response.content}")
+            
+            # Use the message as basis
+            user_message = messages[-1].content if messages else ""
+            
+            # Simple extraction based on keywords
+            state["epic_title"] = "Engineering Tasks"
+            state["story_title"] = user_message[:100] if user_message else "New Story"
+            state["priority"] = "P2"
+            state["description"] = user_message
+            state["clarifications_needed"] = []
         
-        # Extract fields (this would be more robust in production)
-        state["epic_title"] = self._extract_field(content, "epic_title")
-        state["story_title"] = self._extract_field(content, "story_title")
-        state["priority"] = self._extract_field(content, "priority") or "P2"
-        state["description"] = self._extract_field(content, "description")
-        
-        # Check what's missing
-        clarifications = []
-        if not state.get("epic_title"):
-            clarifications.append("Which epic should this story belong to?")
-        if not state.get("story_title"):
-            clarifications.append("What should the story title be?")
-        if not state.get("acceptance_criteria"):
-            clarifications.append("What are the acceptance criteria for this story?")
-        if not state.get("definition_of_done"):
-            clarifications.append("What is the definition of done?")
-        
-        state["clarifications_needed"] = clarifications
+        print(f"[Node: understand] State after processing:")
+        print(f"  - epic_title: {state.get('epic_title')}")
+        print(f"  - story_title: {state.get('story_title')}")
+        print(f"  - priority: {state.get('priority')}")
+        print(f"  - clarifications_needed: {state.get('clarifications_needed')}")
         
         return state
     
     async def request_clarification(self, state: AgentState) -> AgentState:
         """Request clarification from the user."""
+        print("[Node: clarify] Starting...")  # Debug
         
         # Limit clarification rounds
         state["clarification_count"] = state.get("clarification_count", 0) + 1
+        print(f"[Node: clarify] Clarification count: {state['clarification_count']}")  # Debug
         
         if state["clarification_count"] > 2:
-            # Use defaults after 2 rounds
-            if not state.get("acceptance_criteria"):
-                state["acceptance_criteria"] = ["Functionality implemented as described", "Tests passing"]
-            if not state.get("definition_of_done"):
-                state["definition_of_done"] = ["Code reviewed", "Tests written", "Documentation updated"]
-            # Clear clarifications so we proceed to validation
+            # After 2 rounds, just proceed with defaults
+            print("[Node: clarify] Max clarifications reached, clearing and proceeding")  # Debug
             state["clarifications_needed"] = []
+            # Set defaults if still missing
+            if not state.get("story_title"):
+                state["story_title"] = "New Story Task"
+            if not state.get("epic_title"):
+                state["epic_title"] = "Engineering Tasks"
             return state
         
-        # Add clarification message
-        clarification_msg = "I need some clarification:\n"
-        for q in state["clarifications_needed"]:
-            clarification_msg += f"- {q}\n"
+        # Build clarification message
+        clarifications = state.get("clarifications_needed", [])
+        if clarifications:
+            clarification_msg = "I need some clarification:\n"
+            for q in clarifications:
+                clarification_msg += f"- {q}\n"
+            
+            state["messages"].append(AIMessage(content=clarification_msg))
+            state["next_action"] = "awaiting_clarification"
         
-        state["messages"].append(AIMessage(content=clarification_msg))
-        state["next_action"] = "awaiting_clarification"
+        # IMPORTANT: Clear clarifications after asking to prevent infinite loop
+        state["clarifications_needed"] = []
         
         return state
     
     async def validate_requirements(self, state: AgentState) -> AgentState:
         """Validate that we have all required information."""
+        print("[Node: validate] Starting...")  # Debug
         
-        # Check required fields
-        missing = []
+        # Check absolutely required fields
         if not state.get("epic_title"):
-            missing.append("epic_title")
+            state["epic_title"] = "Engineering Tasks"  # Default
+        
         if not state.get("story_title"):
-            missing.append("story_title")
+            # Try to create from description or messages
+            if state.get("description"):
+                state["story_title"] = state["description"][:100]
+            else:
+                state["story_title"] = "New Story Task"
         
-        if missing:
-            state["clarifications_needed"] = [f"Missing required field: {field}" for field in missing]
-            return state
+        if not state.get("priority"):
+            state["priority"] = "P2"  # Default priority
         
-        # Apply defaults if needed
+        if not state.get("description"):
+            state["description"] = state.get("story_title", "Task to be completed")
+        
+        # Always apply defaults for AC and DoD - don't ask for clarification
         if not state.get("acceptance_criteria"):
             state["acceptance_criteria"] = [
                 "Functionality works as specified",
@@ -226,6 +277,9 @@ Respond in JSON format."""),
                 "Documentation updated",
                 "No critical security vulnerabilities"
             ]
+        
+        # Clear any clarifications - we have everything we need
+        state["clarifications_needed"] = []
         
         return state
     
@@ -242,7 +296,7 @@ Respond in JSON format."""),
 - AC: {len(state['acceptance_criteria'])} criteria defined
 - DoD: {len(state['definition_of_done'])} items defined
 
-Creating in Notion first, then GitHub issue..."""
+Creating in Notion..."""
         
         state["messages"].append(AIMessage(content=plan_msg))
         
@@ -276,62 +330,19 @@ Creating in Notion first, then GitHub issue..."""
             
         return state
     
-    async def create_issue(self, state: AgentState) -> AgentState:
-        """Create issue in GitHub via MCP."""
-        
-        # Build issue body
-        body_parts = []
-        
-        if state["description"]:
-            body_parts.append(f"## Description\n{state['description']}\n")
-        
-        body_parts.append("## Acceptance Criteria")
-        for ac in state["acceptance_criteria"]:
-            body_parts.append(f"- [ ] {ac}")
-        
-        body_parts.append("\n## Definition of Done")
-        for dod in state["definition_of_done"]:
-            body_parts.append(f"- [ ] {dod}")
-        
-        if state["story_url"]:
-            body_parts.append(f"\n## Links\n- [Notion Story]({state['story_url']})")
-        
-        body = "\n".join(body_parts)
-        
-        try:
-            response = await self.client.post(
-                "/api/tools/github/create-issue",
-                json={
-                    "title": f"[{state['priority']}] {state['story_title']}",
-                    "body": body,
-                    "labels": [f"priority/{state['priority']}", "source/agent-pm"],
-                    "story_url": state["story_url"]
-                }
-            )
-            response.raise_for_status()
-            data = response.json()
-            
-            state["issue_url"] = data["issue_url"]
-            state["messages"].append(
-                AIMessage(content=f"✅ GitHub issue created: {data['issue_url']}")
-            )
-            
-        except Exception as e:
-            state["error_message"] = f"Failed to create GitHub issue: {str(e)}"
-            
-        return state
+    # Removed create_issue method - not needed
+    # Issues are managed exclusively in Notion
     
     async def complete_task(self, state: AgentState) -> AgentState:
         """Complete the task and provide summary."""
         
-        summary = f"""✨ Story successfully created!
+        summary = f"""✨ Story successfully created in Notion!
 
 **Notion Story:** {state['story_url']}
-**GitHub Issue:** {state['issue_url']}
 
 The story "{state['story_title']}" has been added to the "{state['epic_title']}" epic with priority {state['priority']}.
 
-The team can now pick this up from the backlog."""
+The team can now pick this up from the backlog in Notion."""
         
         state["messages"].append(AIMessage(content=summary))
         state["next_action"] = "completed"
@@ -350,16 +361,24 @@ The team can now pick this up from the backlog."""
     def route_after_understand(self, state: AgentState) -> str:
         """Determine next step after understanding."""
         if state.get("error_message"):
+            print(f"[Route: understand] Error detected, going to error node")  # Debug
             return "error"
-        if state.get("clarifications_needed"):
+        # Check if we have non-empty clarifications list
+        clarifications = state.get("clarifications_needed", [])
+        print(f"[Route: understand] Clarifications needed: {clarifications}")  # Debug
+        if clarifications and len(clarifications) > 0:
+            print(f"[Route: understand] Going to clarify node")  # Debug
             return "clarify"
+        print(f"[Route: understand] Going to validate node")  # Debug
         return "validate"
     
     def route_after_validate(self, state: AgentState) -> str:
         """Determine next step after validation."""
         if state.get("error_message"):
             return "error"
-        if state.get("clarifications_needed"):
+        # Check if we have non-empty clarifications list
+        clarifications = state.get("clarifications_needed", [])
+        if clarifications and len(clarifications) > 0:
             return "clarify"
         return "plan"
     
@@ -369,37 +388,86 @@ The team can now pick this up from the backlog."""
             return "error"
         if not state.get("story_url"):
             return "error"
-        return "create_issue"
-    
-    def _extract_field(self, text: str, field: str) -> Optional[str]:
-        """Extract a field from text (simplified)."""
-        # This would use proper JSON parsing in production
-        import re
-        pattern = f'"{field}"\\s*:\\s*"([^"]+)"'
-        match = re.search(pattern, text)
-        return match.group(1) if match else None
+        # Skip GitHub issues - go directly to complete
+        return "complete"
+
     
     async def process_message(self, message: str) -> Dict[str, Any]:
         """Process a user message through the agent."""
         
+        print(f"[PMAgent] Processing message: {message[:100]}...")  # Debug log
+        
         initial_state = {
             "messages": [HumanMessage(content=message)],
-            "clarification_count": 0
+            "clarification_count": 0,
+            "clarifications_needed": [],
+            "error_message": None
         }
         
-        # Run the graph with increased recursion limit
-        final_state = await self.graph.ainvoke(
-            initial_state,
-            config={"recursion_limit": 50}
-        )
-        
-        return {
-            "messages": final_state["messages"],
-            "story_url": final_state.get("story_url"),
-            "issue_url": final_state.get("issue_url"),
-            "status": final_state.get("next_action", "unknown"),
-            "error": final_state.get("error_message")
-        }
+        try:
+            # Add debug configuration
+            import logging
+            logging.basicConfig(level=logging.INFO)
+            
+            # Run the graph with increased recursion limit
+            print("[PMAgent] Starting graph execution...")  # Debug log
+            final_state = await self.graph.ainvoke(
+                initial_state,
+                config={
+                    "recursion_limit": 100,
+                    "callbacks": []  # Could add callbacks for debugging
+                }
+            )
+            print("[PMAgent] Graph execution completed")  # Debug log
+            
+            # Extract the last AI message as response
+            response_text = "Processing your request..."
+            for msg in reversed(final_state.get("messages", [])):
+                if isinstance(msg, AIMessage):
+                    response_text = msg.content
+                    break
+            
+            # Build response
+            result = {
+                "response": response_text,
+                "status": final_state.get("next_action", "unknown"),
+                "state": final_state.get("next_action", "unknown"),
+                "requires_clarification": bool(final_state.get("clarifications_needed")),
+                "clarification_prompt": final_state.get("clarifications_needed", [])
+            }
+            
+            # Add created artifacts
+            if final_state.get("story_url"):
+                result["story_created"] = {
+                    "url": final_state["story_url"],
+                    "title": final_state.get("story_title"),
+                    "epic": final_state.get("epic_title"),
+                    "priority": final_state.get("priority")
+                }
+            
+            if final_state.get("issue_url"):
+                result["issue_created"] = {
+                    "url": final_state["issue_url"],
+                    "title": final_state.get("story_title")
+                }
+            
+            if final_state.get("error_message"):
+                result["error"] = final_state["error_message"]
+            
+            return result
+            
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"Agent error: {error_details}")  # Log for debugging
+            
+            return {
+                "response": f"I encountered an error processing your request: {str(e)}",
+                "status": "error",
+                "state": "error",
+                "error": str(e),
+                "requires_clarification": False
+            }
     
     async def close(self):
         """Clean up resources."""

@@ -17,12 +17,11 @@ class Priority(str, Enum):
 
 
 class StoryStatus(str, Enum):
-    """Story status states."""
+    """Story status states matching Notion schema."""
     BACKLOG = "Backlog"
-    TODO = "To Do"
+    READY = "Ready"  # Stories ready to start
     IN_PROGRESS = "In Progress"
     IN_REVIEW = "In Review"
-    IN_QA = "In QA"
     DONE = "Done"
 
 
