@@ -21,7 +21,7 @@ from mcp.schemas import (
     ToolResponse, AuditEntry
 )
 from mcp.tools import NotionTool, GitHubTool, AuditTool
-from agent.simple_pm import SimplePMAgent
+from agent.pm_graph import PMAgent
 
 # Load environment variables
 load_dotenv('.env.local')
@@ -30,7 +30,7 @@ load_dotenv('.env.local')
 notion_tool: Optional[NotionTool] = None
 github_tool: Optional[GitHubTool] = None
 audit_tool: Optional[AuditTool] = None
-pm_agent: Optional[SimplePMAgent] = None
+pm_agent: Optional[PMAgent] = None
 
 
 @asynccontextmanager
@@ -58,10 +58,10 @@ async def lifespan(app: FastAPI):
     audit_tool = AuditTool()
     print("✅ Audit tool initialized")
     
-    # Initialize PM Agent
+    # Initialize PM Agent (LangGraph)
     try:
-        pm_agent = SimplePMAgent()
-        print("✅ PM Agent initialized")
+        pm_agent = PMAgent()
+        print("✅ LangGraph PM Agent initialized")
     except Exception as e:
         print(f"⚠️ PM Agent initialization failed: {e}")
     
@@ -81,7 +81,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Engineering Department MCP Server",
     description="Model Context Protocol server for engineering workflows",
-    version="0.3.0",
+    version="0.4.0",  # Using LangGraph agent
     lifespan=lifespan
 )
 
@@ -135,7 +135,7 @@ async def root():
     """Root endpoint for health check."""
     return {
         "service": "Engineering Department MCP Server",
-        "version": "0.3.0",
+        "version": "0.4.0",  # LangGraph agent active
         "status": "healthy",
         "environment": os.getenv("ENVIRONMENT", "development"),
         "tenant_id": os.getenv("TENANT_ID", "unknown"),

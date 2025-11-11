@@ -6,7 +6,7 @@ from enum import Enum
 import httpx
 import os
 
-from langgraph.graph import StateGraph, Graph
+from langgraph.graph import StateGraph, Graph, END
 from langgraph.prebuilt import ToolExecutor
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
@@ -29,7 +29,7 @@ class AgentState(TypedDict):
     clarification_count: int
     story_url: Optional[str]
     issue_url: Optional[str]
-    error: Optional[str]
+    error_message: Optional[str]
     next_action: Optional[str]
 
 
@@ -117,8 +117,8 @@ class PMAgent:
         workflow.add_edge("create_issue", "complete")
         
         # Terminal nodes
-        workflow.add_edge("complete", None)
-        workflow.add_edge("error", None)
+        workflow.add_edge("complete", END)
+        workflow.add_edge("error", END)
         
         return workflow.compile()
     
@@ -158,13 +158,13 @@ Respond in JSON format."""),
         
         # Check what's missing
         clarifications = []
-        if not state["epic_title"]:
+        if not state.get("epic_title"):
             clarifications.append("Which epic should this story belong to?")
-        if not state["story_title"]:
+        if not state.get("story_title"):
             clarifications.append("What should the story title be?")
-        if not state["acceptance_criteria"]:
+        if not state.get("acceptance_criteria"):
             clarifications.append("What are the acceptance criteria for this story?")
-        if not state["definition_of_done"]:
+        if not state.get("definition_of_done"):
             clarifications.append("What is the definition of done?")
         
         state["clarifications_needed"] = clarifications
@@ -179,10 +179,12 @@ Respond in JSON format."""),
         
         if state["clarification_count"] > 2:
             # Use defaults after 2 rounds
-            if not state["acceptance_criteria"]:
+            if not state.get("acceptance_criteria"):
                 state["acceptance_criteria"] = ["Functionality implemented as described", "Tests passing"]
-            if not state["definition_of_done"]:
+            if not state.get("definition_of_done"):
                 state["definition_of_done"] = ["Code reviewed", "Tests written", "Documentation updated"]
+            # Clear clarifications so we proceed to validation
+            state["clarifications_needed"] = []
             return state
         
         # Add clarification message
@@ -200,9 +202,9 @@ Respond in JSON format."""),
         
         # Check required fields
         missing = []
-        if not state["epic_title"]:
+        if not state.get("epic_title"):
             missing.append("epic_title")
-        if not state["story_title"]:
+        if not state.get("story_title"):
             missing.append("story_title")
         
         if missing:
@@ -210,14 +212,14 @@ Respond in JSON format."""),
             return state
         
         # Apply defaults if needed
-        if not state["acceptance_criteria"]:
+        if not state.get("acceptance_criteria"):
             state["acceptance_criteria"] = [
                 "Functionality works as specified",
                 "Unit tests pass",
                 "No regression in existing features"
             ]
         
-        if not state["definition_of_done"]:
+        if not state.get("definition_of_done"):
             state["definition_of_done"] = [
                 "Code reviewed and approved",
                 "Tests written and passing",
@@ -270,7 +272,7 @@ Creating in Notion first, then GitHub issue..."""
             )
             
         except Exception as e:
-            state["error"] = f"Failed to create Notion story: {str(e)}"
+            state["error_message"] = f"Failed to create Notion story: {str(e)}"
             
         return state
     
@@ -315,7 +317,7 @@ Creating in Notion first, then GitHub issue..."""
             )
             
         except Exception as e:
-            state["error"] = f"Failed to create GitHub issue: {str(e)}"
+            state["error_message"] = f"Failed to create GitHub issue: {str(e)}"
             
         return state
     
@@ -339,15 +341,15 @@ The team can now pick this up from the backlog."""
     async def handle_error(self, state: AgentState) -> AgentState:
         """Handle errors in the workflow."""
         
-        error_msg = f"❌ An error occurred: {state['error']}"
+        error_msg = f"❌ An error occurred: {state['error_message']}"
         state["messages"].append(AIMessage(content=error_msg))
-        state["next_action"] = "error"
+        state["next_action"] = "error_occurred"
         
         return state
     
     def route_after_understand(self, state: AgentState) -> str:
         """Determine next step after understanding."""
-        if state.get("error"):
+        if state.get("error_message"):
             return "error"
         if state.get("clarifications_needed"):
             return "clarify"
@@ -355,7 +357,7 @@ The team can now pick this up from the backlog."""
     
     def route_after_validate(self, state: AgentState) -> str:
         """Determine next step after validation."""
-        if state.get("error"):
+        if state.get("error_message"):
             return "error"
         if state.get("clarifications_needed"):
             return "clarify"
@@ -363,7 +365,7 @@ The team can now pick this up from the backlog."""
     
     def route_after_story(self, state: AgentState) -> str:
         """Determine next step after story creation."""
-        if state.get("error"):
+        if state.get("error_message"):
             return "error"
         if not state.get("story_url"):
             return "error"
@@ -385,15 +387,18 @@ The team can now pick this up from the backlog."""
             "clarification_count": 0
         }
         
-        # Run the graph
-        final_state = await self.graph.ainvoke(initial_state)
+        # Run the graph with increased recursion limit
+        final_state = await self.graph.ainvoke(
+            initial_state,
+            config={"recursion_limit": 50}
+        )
         
         return {
             "messages": final_state["messages"],
             "story_url": final_state.get("story_url"),
             "issue_url": final_state.get("issue_url"),
             "status": final_state.get("next_action", "unknown"),
-            "error": final_state.get("error")
+            "error": final_state.get("error_message")
         }
     
     async def close(self):
