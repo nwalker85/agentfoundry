@@ -1,9 +1,9 @@
 # Engineering Department — Testing Guide
 
-**Version:** 2.0 (Consolidated)  
-**Last Updated:** November 10, 2025  
-**System:** Engineering Department MCP Server v0.2.0  
-**Test Environment:** http://localhost:8001
+**Version:** 2.1 (v0.7.0 Update)  
+**Last Updated:** November 12, 2025  
+**System:** Engineering Department MCP Server v0.7.0  
+**Test Environment:** http://localhost:8001 (backend), http://localhost:3000 (frontend)
 
 ---
 
@@ -457,7 +457,57 @@ asyncio.run(test())
 
 ---
 
-#### TC-008: Concurrent Requests
+#### TC-008: Backlog View UI
+**Priority:** P1 - High  
+**Time:** 5 minutes
+
+**Steps:**
+1. Navigate to http://localhost:3000/backlog
+2. Verify stories load from Notion
+3. Test priority filters (P0, P1, P2, P3)
+4. Test status filters (Backlog, Ready, In Progress, etc.)
+5. Test search functionality
+6. Verify story cards display correctly
+7. Test external links to Notion and GitHub
+8. Test mobile responsive behavior
+
+**Expected Results:**
+- [ ] Backlog page loads without errors
+- [ ] Stories display in card format
+- [ ] Filters work correctly (priority, status, epic)
+- [ ] Search filters stories in real-time
+- [ ] Story cards show:
+  - [ ] Title
+  - [ ] Epic (if assigned)
+  - [ ] Priority badge
+  - [ ] Status badge
+  - [ ] Created date
+  - [ ] Links to Notion and GitHub (if available)
+- [ ] Mobile view collapses filters appropriately
+- [ ] Dark mode renders correctly
+
+**Manual Test Commands:**
+```bash
+# Start frontend
+npm run dev
+
+# Navigate to:
+http://localhost:3000/backlog
+
+# Test filtering:
+# 1. Click P0 checkbox
+# 2. Verify only P0 stories shown
+# 3. Click "Ready" status
+# 4. Verify only Ready + P0 stories shown
+# 5. Clear filters and search "auth"
+# 6. Verify only stories with "auth" in title/epic shown
+```
+
+**Status:** ⬜ PASS / ⬜ FAIL
+
+---
+
+#### TC-009: Concurrent Requests
 **Priority:** P2 - Medium  
 **Time:** 3 minutes
 
@@ -523,10 +573,11 @@ asyncio.run(test())
 | TC-005 | P1 | ⬜ PASS / ⬜ FAIL | |
 | TC-006 | P1 | ⬜ PASS / ⬜ FAIL | |
 | TC-007 | P2 | ⬜ PASS / ⬜ FAIL | |
-| TC-008 | P2 | ⬜ PASS / ⬜ FAIL | |
+| TC-008 | P1 | ⬜ PASS / ⬜ FAIL | |
+| TC-009 | P2 | ⬜ PASS / ⬜ FAIL | |
 
 **Statistics:**
-- Total Tests: 8
+- Total Tests: 9
 - Passed: _____
 - Failed: _____
 - Pass Rate: _____%
@@ -807,5 +858,6 @@ All tests should show:
 
 ---
 
-*Testing Guide Version 2.0 - Consolidated*  
-*Last Updated: November 10, 2025*
+*Testing Guide Version 2.1 - v0.7.0 Update*  
+*Last Updated: November 12, 2025*  
+*Includes: Backlog View UI Testing (TC-008)*

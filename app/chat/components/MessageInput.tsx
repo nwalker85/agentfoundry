@@ -54,14 +54,14 @@ export function MessageInput({ onSend, disabled = false, placeholder = 'Type a m
             w-full px-4 py-3 pr-12 rounded-lg border resize-none
             transition-colors duration-200
             ${disabled 
-              ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' 
-              : 'bg-white border-gray-300 text-gray-900 hover:border-blue-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20'
+              ? 'bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+              : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 hover:border-blue-400 dark:hover:border-blue-600 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-500/30'
             }
           `}
           style={{ minHeight: '48px', maxHeight: '200px' }}
         />
         <div className="absolute right-2 bottom-2">
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-400 dark:text-gray-500">
             {input.length > 0 && `${input.length}/2000`}
           </span>
         </div>
@@ -73,7 +73,7 @@ export function MessageInput({ onSend, disabled = false, placeholder = 'Type a m
         className={`
           px-4 py-3 rounded-lg font-medium transition-all duration-200
           ${disabled || !input.trim()
-            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
             : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
           }
         `}

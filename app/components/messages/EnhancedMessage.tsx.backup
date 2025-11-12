@@ -1,0 +1,334 @@
+'use client';
+
+import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
+import { Prism as SyntaxHighlighter } from 'prism-react-renderer';
+import { motion } from 'framer-motion';
+import { formatDistanceToNow } from 'date-fns';
+import { Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import type { ChatMessage } from '@/lib/types/chat';
+
+interface EnhancedMessageProps {
+  message: ChatMessage;
+  isGrouped?: boolean;
+  showTimestamp?: boolean;
+  onRetry?: () => void;
+}
+
+export function EnhancedMessage({ 
+  message, 
+  isGrouped = false,
+  showTimestamp = true,
+  onRetry 
+}: EnhancedMessageProps) {
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const isUser = message.role === 'user';
+  
+  const copyToClipboard = async (code: string, id: string) => {
+    await navigator.clipboard.writeText(code);
+    setCopiedCode(id);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const messageVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 }
+  };
+
+  return (
+    <motion.div
+      variants={messageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className={`flex ${isUser ? 'justify-end' : 'justify-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}
+    >
+      <div className={`max-w-2xl ${isUser ? 'items-end' : 'items-start'} flex flex-col`}>
+        {/* Avatar and Name (only if not grouped) */}
+        {!isGrouped && (
+          <div className={`flex items-center gap-2 mb-1 ${isUser ? 'flex-row-reverse' : ''}`}>
+            <div className={`
+              w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+              ${isUser ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}
+            `}>
+              {isUser ? 'U' : 'PM'}
+            </div>
+            <span className="text-sm font-medium text-gray-700">
+              {isUser ? 'You' : 'PM Agent'}
+            </span>
+            {showTimestamp && (
+              <span className="text-xs text-gray-500">
+                {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Message Content */}
+        <div
+          className={`
+            px-4 py-3 rounded-2xl shadow-sm
+            ${isUser 
+              ? 'bg-blue-600 text-white rounded-br-sm' 
+              : 'bg-white border border-gray-200 text-gray-900 rounded-bl-sm'
+            }
+          `}
+        >
+          {/* Markdown Content */}
+          <div className={`prose ${isUser ? 'prose-invert' : 'prose-gray'} max-w-none`}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm, remarkBreaks]}
+              components={{
+                // Custom code block renderer
+                code({ node, inline, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  const language = match ? match[1] : '';
+                  const codeString = String(children).replace(/\n$/, '');
+                  const codeId = `code-${Date.now()}`;
+                  
+                  if (!inline && language) {
+                    return (
+                      <div className="relative group my-3">
+                        <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => copyToClipboard(codeString, codeId)}
+                            className={`
+                              p-1.5 rounded-md transition-colors
+                              ${isUser 
+                                ? 'bg-blue-700 hover:bg-blue-800' 
+                                : 'bg-gray-100 hover:bg-gray-200'
+                              }
+                            `}
+                            title="Copy code"
+                          >
+                            {copiedCode === codeId ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <pre className={`
+                            p-4 rounded-lg text-sm
+                            ${isUser ? 'bg-blue-700' : 'bg-gray-100'}
+                          `}>
+                            <code>{codeString}</code>
+                          </pre>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <code className={`
+                      px-1 py-0.5 rounded text-sm
+                      ${isUser ? 'bg-blue-700' : 'bg-gray-100'}
+                    `} {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+                // Custom link renderer
+                a({ href, children }) {
+                  return (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`
+                        underline underline-offset-2 hover:no-underline
+                        ${isUser ? 'text-blue-200' : 'text-blue-600'}
+                      `}
+                    >
+                      {children}
+                    </a>
+                  );
+                },
+                // Tables with better styling
+                table({ children }) {
+                  return (
+                    <div className="overflow-x-auto my-4">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        {children}
+                      </table>
+                    </div>
+                  );
+                },
+                // Blockquotes
+                blockquote({ children }) {
+                  return (
+                    <blockquote className={`
+                      border-l-4 pl-4 my-3 italic
+                      ${isUser ? 'border-blue-400 text-blue-100' : 'border-gray-300 text-gray-600'}
+                    `}>
+                      {children}
+                    </blockquote>
+                  );
+                },
+                // Lists with better spacing
+                ul({ children }) {
+                  return (
+                    <ul className="list-disc list-inside space-y-1 my-3">
+                      {children}
+                    </ul>
+                  );
+                },
+                ol({ children }) {
+                  return (
+                    <ol className="list-decimal list-inside space-y-1 my-3">
+                      {children}
+                    </ol>
+                  );
+                }
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
+          </div>
+
+          {/* Collapsible for long messages */}
+          {message.content.length > 500 && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={`
+                mt-2 text-sm flex items-center gap-1 
+                ${isUser ? 'text-blue-200' : 'text-gray-500'}
+                hover:underline
+              `}
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="w-4 h-4" />
+                  Show less
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  Show more
+                </>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Artifacts */}
+        {message.artifacts && message.artifacts.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {message.artifacts.map((artifact, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 * idx }}
+              >
+                {artifact.type === 'story' && (
+                  <StoryCreatedCard artifact={artifact} isUser={isUser} />
+                )}
+                {artifact.type === 'issue' && (
+                  <IssueCreatedCard artifact={artifact} isUser={isUser} />
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Error State */}
+        {message.error && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-2"
+          >
+            <ErrorCard 
+              error={message.error} 
+              onRetry={onRetry}
+              isUser={isUser}
+            />
+          </motion.div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// Placeholder components - will be fully implemented in separate files
+function StoryCreatedCard({ artifact, isUser }: any) {
+  return (
+    <div className={`
+      p-3 rounded-lg border
+      ${isUser ? 'bg-blue-700 border-blue-500' : 'bg-gray-50 border-gray-200'}
+    `}>
+      <div className="flex items-center justify-between">
+        <span className="font-medium">📝 Story Created</span>
+        {artifact.data.url && (
+          <a 
+            href={artifact.data.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`text-sm underline ${isUser ? 'text-blue-200' : 'text-blue-600'}`}
+          >
+            View in Notion →
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function IssueCreatedCard({ artifact, isUser }: any) {
+  return (
+    <div className={`
+      p-3 rounded-lg border
+      ${isUser ? 'bg-blue-700 border-blue-500' : 'bg-gray-50 border-gray-200'}
+    `}>
+      <div className="flex items-center justify-between">
+        <span className="font-medium">🎯 Issue Created</span>
+        {artifact.data.url && (
+          <a 
+            href={artifact.data.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`text-sm underline ${isUser ? 'text-blue-200' : 'text-blue-600'}`}
+          >
+            View in GitHub →
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ErrorCard({ error, onRetry, isUser }: any) {
+  return (
+    <div className={`
+      p-3 rounded-lg border
+      ${isUser ? 'bg-red-900/20 border-red-700' : 'bg-red-50 border-red-200'}
+    `}>
+      <div className="flex items-start gap-2">
+        <span className="text-red-500">⚠️</span>
+        <div className="flex-1">
+          <p className={`text-sm ${isUser ? 'text-red-200' : 'text-red-700'}`}>
+            {error}
+          </p>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className={`
+                mt-2 text-sm underline
+                ${isUser ? 'text-red-300' : 'text-red-600'}
+              `}
+            >
+              Try again
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

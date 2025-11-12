@@ -1,4 +1,4 @@
-export type ConnectionStatus = 'connected' | 'connecting' | 'disconnected';
+export type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
 
 export interface ChatMessage {
   id: string;
@@ -25,9 +25,10 @@ export interface ConversationContext {
 
 export interface ToolExecution {
   toolName: string;
-  status: 'pending' | 'running' | 'success' | 'error';
-  startedAt: string;
+  status: 'pending' | 'running' | 'completed' | 'success' | 'error';
+  startTime: string;
   completedAt?: string;
+  input?: any;
   result?: any;
   error?: string;
 }

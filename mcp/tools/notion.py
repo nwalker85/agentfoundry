@@ -149,15 +149,17 @@ class NotionTool:
         # Build filter
         filter_conditions = []
         
-        if request.priorities:
-            filter_conditions.append({
-                "or": [
-                    {"property": "Priority", "select": {"equals": p.value}}
-                    for p in request.priorities
-                ]
-            })
+        if request.priorities and len(request.priorities) > 0:
+            priority_filters = [
+                {"property": "Priority", "select": {"equals": p.value}}
+                for p in request.priorities
+            ]
+            if len(priority_filters) == 1:
+                filter_conditions.append(priority_filters[0])
+            else:
+                filter_conditions.append({"or": priority_filters})
         
-        if request.status:
+        if request.status and len(request.status) > 0:
             # Map StoryStatus enum to actual Notion status values
             # Status is now rich_text, so we use rich_text filter
             status_mapping = {
@@ -167,12 +169,14 @@ class NotionTool:
                 StoryStatus.IN_REVIEW: "In Review",
                 StoryStatus.DONE: "Done"
             }
-            filter_conditions.append({
-                "or": [
-                    {"property": "Status", "rich_text": {"equals": status_mapping.get(s, s.value)}}
-                    for s in request.status
-                ]
-            })
+            status_filters = [
+                {"property": "Status", "rich_text": {"equals": status_mapping.get(s, s.value)}}
+                for s in request.status
+            ]
+            if len(status_filters) == 1:
+                filter_conditions.append(status_filters[0])
+            else:
+                filter_conditions.append({"or": status_filters})
         
         filter_obj = None
         if filter_conditions:
@@ -181,18 +185,31 @@ class NotionTool:
             else:
                 filter_obj = {"and": filter_conditions}
         
+        # Build query payload
+        query_payload = {
+            "page_size": request.limit,
+            "sorts": [
+                {"property": "Priority", "direction": "ascending"},
+                {"timestamp": "created_time", "direction": "descending"}
+            ]
+        }
+        
+        # Only add filter if we have one
+        if filter_obj is not None:
+            query_payload["filter"] = filter_obj
+        
+        print(f"[NotionTool] Query payload: {json.dumps(query_payload, indent=2)}")
+        
         # Query database
         response = await self.client.post(
             f"/databases/{self.stories_db_id}/query",
-            json={
-                "filter": filter_obj,
-                "page_size": request.limit,
-                "sorts": [
-                    {"property": "Priority", "direction": "ascending"},
-                    {"timestamp": "created_time", "direction": "descending"}
-                ]
-            }
+            json=query_payload
         )
+        
+        if response.status_code != 200:
+            print(f"[NotionTool] Notion API error: {response.status_code}")
+            print(f"[NotionTool] Response: {response.text}")
+        
         response.raise_for_status()
         data = response.json()
         

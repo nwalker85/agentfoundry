@@ -8,7 +8,7 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException, Depends, Header, Request
+from fastapi import FastAPI, HTTPException, Depends, Header, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -22,6 +22,7 @@ from mcp.schemas import (
 )
 from mcp.tools import NotionTool, GitHubTool, AuditTool
 from agent.pm_graph import PMAgent
+from mcp.websocket_handler import manager, handle_websocket_message
 
 # Load environment variables
 load_dotenv('.env.local')
@@ -469,6 +470,74 @@ async def get_tool_schemas():
             "create_issue": CreateIssueResponse.schema()
         }
     }
+
+
+# ============= WebSocket Endpoint =============
+
+@app.websocket("/ws/chat")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    session_id: Optional[str] = None
+):
+    """WebSocket endpoint for real-time chat."""
+    if not session_id:
+        session_id = f"ws-{datetime.utcnow().timestamp()}"
+    
+    await manager.connect(websocket, session_id)
+    
+    try:
+        # Send initial connection message
+        await manager.send_message(session_id, {
+            "type": "status",
+            "data": {
+                "status": "connected",
+                "session_id": session_id,
+                "message": "Connected to Engineering Department"
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+        # Handle incoming messages
+        while True:
+            data = await websocket.receive_json()
+            await handle_websocket_message(
+                websocket=websocket,
+                session_id=session_id,
+                message=data,
+                pm_agent=pm_agent,
+                audit_tool=audit_tool,
+                manager=manager
+            )
+            
+    except WebSocketDisconnect:
+        manager.disconnect(session_id)
+        print(f"WebSocket disconnected: {session_id}")
+        
+        # Log disconnection
+        if audit_tool:
+            await audit_tool.log_action(
+                actor=f"ws-{session_id}",
+                tool="websocket",
+                action="disconnect",
+                input_data={"session_id": session_id},
+                output_data=None,
+                result="success"
+            )
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        manager.disconnect(session_id)
+        
+        # Log error
+        if audit_tool:
+            await audit_tool.log_action(
+                actor=f"ws-{session_id}",
+                tool="websocket",
+                action="error",
+                input_data={"session_id": session_id},
+                output_data=None,
+                result="failure",
+                error=str(e)
+            )
 
 
 if __name__ == "__main__":
