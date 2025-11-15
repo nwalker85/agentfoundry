@@ -1,5 +1,28 @@
 services:
-  # Redis - State management for LangGraph checkpointing
+  # LiveKit Server - Voice/video infrastructure
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --config /etc/livekit.yaml --dev
+    ports:
+      - "7880:7880"     # HTTP/WebSocket
+      - "7881:7881"     # RTC over TCP
+      - "50000-60000:50000-60000/udp"  # WebRTC UDP
+    volumes:
+      - ./livekit-config.yaml:/etc/livekit.yaml:ro
+    environment:
+      - LIVEKIT_KEYS=devkey:secret
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - foundry
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7880"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis - State management for LangGraph + LiveKit
   redis:
     image: redis:7-alpine
     ports:
@@ -30,7 +53,7 @@ services:
       - ./data:/app/data
       - ./mcp:/app/mcp
     environment:
-      - LIVEKIT_URL=ws://host.docker.internal:7880
+      - LIVEKIT_URL=ws://livekit:7880
       - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
       - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
       - REDIS_URL=redis://redis:6379
@@ -45,10 +68,10 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      livekit:
+        condition: service_healthy
     networks:
       - foundry
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   # Foundry Compiler - DIS Parser + Agent YAML Generator
   foundry-compiler:
