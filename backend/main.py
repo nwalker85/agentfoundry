@@ -57,7 +57,7 @@ class AgentListResponse(BaseModel):
 app = FastAPI(
     title="Agent Foundry API",
     description="LangGraph agents with LiveKit voice integration",
-    version="1.0.0"
+    version="0.8.1-dev"
 )
 
 # CORS middleware
@@ -224,7 +224,7 @@ async def root():
     return {
         "service": "agent-foundry-backend",
         "status": "operational",
-        "version": "1.0.0",
+        "version": "0.8.1-dev",
         "livekit_url": os.getenv("LIVEKIT_URL", "ws://livekit:7880")
     }
 

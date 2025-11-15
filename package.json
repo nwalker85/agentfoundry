@@ -1,6 +1,6 @@
 {
   "name": "agent-foundry-ui",
-  "version": "0.8.0-dev",
+  "version": "0.8.1-dev",
   "private": true,
   "scripts": {
     "dev": "next dev",
