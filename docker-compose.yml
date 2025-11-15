@@ -1,0 +1,75 @@
+services:
+  # Redis - State management for LangGraph checkpointing
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - foundry
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Foundry Backend - FastAPI MCP Server + LangGraph agents + LiveKit integration
+  foundry-backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"   # FastAPI HTTP
+      - "8001:8001"   # WebSocket
+    volumes:
+      - ./backend:/app/backend
+      - ./agent:/app/agent
+      - ./agents:/app/agents
+      - ./data:/app/data
+      - ./mcp:/app/mcp
+    environment:
+      - LIVEKIT_URL=ws://host.docker.internal:7880
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=sqlite:///data/foundry.db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NOTION_API_TOKEN=${NOTION_API_TOKEN}
+      - NOTION_DATABASE_STORIES_ID=${NOTION_DATABASE_STORIES_ID}
+      - NOTION_DATABASE_EPICS_ID=${NOTION_DATABASE_EPICS_ID}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - GITHUB_DEFAULT_BRANCH=${GITHUB_DEFAULT_BRANCH}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - foundry
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Foundry Compiler - DIS Parser + Agent YAML Generator
+  foundry-compiler:
+    build:
+      context: .
+      dockerfile: compiler/Dockerfile
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./compiler:/app/compiler
+      - ./agents:/app/agents
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///data/foundry.db
+      - DIS_SCHEMA_URL=https://schemas.domainintelligenceschema.org/dis/1.6.0
+    networks:
+      - foundry
+
+networks:
+  foundry:
+    driver: bridge
+
+volumes:
+  redis-data:

@@ -1,0 +1,147 @@
+apiVersion: engineering-dept/v1
+kind: Agent
+metadata:
+  id: pm-agent
+  name: Project Manager Agent
+  version: 1.0.0
+  description: Translates requirements into actionable stories and manages dependencies
+  tags: [planning, coordination, pmo, langgraph]
+  created: 2024-01-15T00:00:00Z
+  updated: 2024-01-15T00:00:00Z
+
+spec:
+  capabilities:
+    - requirement_analysis
+    - story_creation
+    - dependency_management
+    - clarification_handling
+    - notion_integration
+
+  parameters:
+    - name: max_stories_per_requirement
+      type: integer
+      default: 5
+      min: 1
+      max: 20
+      description: Maximum stories to generate from single requirement
+
+    - name: validation_threshold
+      type: float
+      default: 0.85
+      min: 0.0
+      max: 1.0
+      description: Confidence threshold for auto-approval
+
+    - name: max_clarification_rounds
+      type: integer
+      default: 2
+      min: 1
+      max: 5
+      description: Maximum rounds of clarification before proceeding with defaults
+
+    - name: default_priority
+      type: string
+      default: P2
+      enum: [P0, P1, P2, P3]
+      description: Default priority for stories when not specified
+
+    - name: llm_model
+      type: string
+      default: gpt-4
+      description: OpenAI model to use for understanding and planning
+
+    - name: llm_temperature
+      type: float
+      default: 0.3
+      min: 0.0
+      max: 2.0
+      description: LLM temperature for response generation
+
+  workflow:
+    type: langgraph.StateGraph
+    entry_point: understand
+    recursion_limit: 100
+    
+    nodes:
+      - id: understand
+        handler: pm_graph.PMAgent.understand_task
+        description: Parse and understand user requirements
+        next: [clarify, validate, error]
+        timeout_seconds: 30
+
+      - id: clarify
+        handler: pm_graph.PMAgent.request_clarification
+        description: Request additional information from user
+        next: [validate]
+        timeout_seconds: 5
+
+      - id: validate
+        handler: pm_graph.PMAgent.validate_requirements
+        description: Validate all required information is present
+        next: [plan, clarify, error]
+        timeout_seconds: 10
+
+      - id: plan
+        handler: pm_graph.PMAgent.plan_execution
+        description: Plan the story creation steps
+        next: [create_story]
+        timeout_seconds: 15
+
+      - id: create_story
+        handler: pm_graph.PMAgent.create_story
+        description: Create story in Notion
+        next: [complete, error]
+        timeout_seconds: 60
+
+      - id: complete
+        handler: pm_graph.PMAgent.complete_task
+        description: Finalize and summarize created artifacts
+        next: [END]
+        timeout_seconds: 10
+
+      - id: error
+        handler: pm_graph.PMAgent.handle_error
+        description: Handle errors gracefully
+        next: [END]
+        timeout_seconds: 5
+
+  integrations:
+    - type: notion
+      workspace: ravenhelm
+      teamspace: engineering-department
+      database: engineering-stories
+      required: true
+      operations: [create_page, read_database, update_page]
+
+    - type: openai
+      model: gpt-4
+      required: true
+      operations: [chat_completion]
+
+  resource_limits:
+    max_concurrent_tasks: 3
+    timeout_seconds: 300
+    memory_mb: 512
+    max_tokens_per_request: 4000
+
+  observability:
+    trace_level: info
+    metrics_enabled: true
+    metrics_interval_seconds: 30
+    log_retention_days: 30
+    structured_logging: true
+    
+  health_check:
+    enabled: true
+    interval_seconds: 60
+    timeout_seconds: 5
+    unhealthy_threshold: 3
+
+status:
+  phase: production
+  state: active
+  last_heartbeat: null
+  uptime_seconds: 0
+  total_executions: 0
+  success_rate: 0.0
+  avg_latency_ms: 0.0
