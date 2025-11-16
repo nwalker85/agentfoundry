@@ -1,7 +1,7 @@
-# 🏗️ Agent Foundry - Setup Complete
+# 🏗️ Agent Foundry - MVP UI Complete
 
-**Status:** ✅ **READY TO START**  
-**Date:** November 15, 2025  
+**Status:** ✅ **v0.8.1-dev - Production-Ready UI Shell**
+**Date:** November 16, 2025
 **LiveKit:** Homebrew (native), running with `livekit-server --dev`
 
 ---
@@ -40,7 +40,17 @@ chmod +x start_foundry.sh
 - ✅ **Redis** - Docker container for state persistence
 - ✅ **Backend** - FastAPI with voice + agent endpoints
 - ✅ **Compiler** - DIS 1.6.0 → Agent YAML transformation
-- ✅ **Frontend** - Next.js (existing Engineering Department)
+- ✅ **Frontend** - Next.js with Shadcn UI and Ravenhelm theme
+
+### UI Features (v0.8.1)
+- ✅ **Design System** - Shadcn component library + Ravenhelm dark theme
+- ✅ **Global Navigation** - TopNav + LeftNav with responsive design
+- ✅ **Dashboard** (`/`) - Metrics, system status, activity feed
+- ✅ **Projects** (`/projects`) - Project management table (stub)
+- ✅ **Instances** (`/instances`) - Agent instance monitoring (stub)
+- ✅ **Artifacts** (`/artifacts`) - Generated artifacts browser (stub)
+- ✅ **Chat** (`/chat`) - AI conversation interface with voice toggle
+- ✅ **Modals** - Org switcher and app launcher overlays
 
 ### Backend Features
 - ✅ Voice session creation (`POST /api/voice/session`)

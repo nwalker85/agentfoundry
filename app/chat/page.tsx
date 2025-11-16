@@ -8,8 +8,7 @@ import { VoiceToggle } from './components/VoiceToggle';
 import { EnhancedMessage } from '@/components/messages/EnhancedMessage';
 import { useChatStore } from '@/lib/stores/chat.store';
 import { Toaster, toast } from 'sonner';
-import { Sparkles, MessageSquare } from 'lucide-react';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { MessageSquare } from 'lucide-react';
 
 export default function ChatPage() {
   const { 
@@ -72,33 +71,15 @@ export default function ChatPage() {
   }, [] as Array<any>);
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="flex flex-col h-full bg-bg-0">
       <Toaster position="top-center" richColors />
-      
-      {/* Header */}
-      <motion.header 
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 shadow-sm px-6 py-4"
-      >
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Engineering Department
-              </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">AI-Powered Development Assistant</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <ConnectionStatus status={connectionStatus} latency={latency} />
-            <ThemeToggle />
-          </div>
+
+      {/* Connection Status Bar */}
+      <div className="border-b border-white/10 px-6 py-2 bg-bg-1">
+        <div className="max-w-4xl mx-auto">
+          <ConnectionStatus status={connectionStatus} latency={latency} />
         </div>
-      </motion.header>
+      </div>
 
       {/* Messages Area */}
       <main className="flex-1 overflow-y-auto">

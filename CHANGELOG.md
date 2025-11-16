@@ -7,6 +7,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2025-11-16
+
+### 🎨 MVP UI Scaffolding Complete
+
+Complete redesign of the frontend with professional dark theme, modern component library, and production-ready navigation system.
+
+### Added
+- 🎨 **Shadcn UI Component Library**
+  - Installed complete Shadcn component system
+  - Button, Card, Input, Badge, Avatar, Dropdown, Dialog, Table components
+  - Customized with Ravenhelm dark theme colors
+  - CSS variables for consistent theming across all components
+
+- 🌙 **Ravenhelm Dark Theme**
+  - Custom color palette (bg-0/1/2, fg-0/1/2, blue-600, cyan-400)
+  - Professional dark mode optimized for long sessions
+  - Consistent contrast ratios for accessibility
+  - Smooth transitions and animations
+
+- 🧭 **Global Navigation System**
+  - **TopNav** - Persistent header with org switcher, app menu, user dropdown
+  - **LeftNav** - Collapsible sidebar with main navigation (responsive - hidden on mobile)
+  - **OrgSwitcher Modal** - Organization management interface (stub)
+  - **AppMenu Modal** - Application launcher (Forge AI, Crucible AI, DIS)
+  - Mobile-responsive with breakpoints
+
+- 📊 **Dashboard** (`/`)
+  - Metric cards showing Organizations, Projects, Instances, Artifacts
+  - System status integration with API monitoring
+  - Recent activity feed with empty state
+  - Merged previous homepage functionality
+
+- 📁 **Projects Page** (`/projects`)
+  - Table layout with search and filter controls
+  - Empty state with create project CTA
+  - Ready for CRUD implementation
+  - Responsive table design
+
+- 🖥️ **Instance Monitoring** (`/instances`)
+  - Agent instance browser (stub)
+  - Empty state placeholder
+  - Ready for LiveKit integration
+
+- 📦 **Artifacts Browser** (`/artifacts`)
+  - Generated artifacts display (stub)
+  - Empty state placeholder
+  - Ready for artifact management
+
+- 💬 **Migrated Chat Interface** (`/chat`)
+  - Removed standalone header (now uses global TopNav)
+  - Integrated within app shell
+  - Maintained all existing functionality
+  - Added connection status bar
+
+### Changed
+- Standardized all icons to lucide-react (removed @heroicons/react dependency)
+- Migrated from `tailwind.config.js` to `tailwind.config.ts` with TypeScript
+- Updated root layout to use global app shell structure
+- Changed default theme to dark mode
+- Backend port references updated from 8001 to 8000 in documentation
+
+### Removed
+- Backlog page and components (out of MVP scope)
+- Standalone page headers (replaced by global TopNav)
+- @heroicons/react dependency
+
+### Fixed
+- Import path issues with Shadcn components
+- TypeScript compilation errors in EnhancedMessage and AudioVisualizer
+- Responsive layout on mobile devices
+- Build process now passes with zero errors
+
+### Technical
+- Added `components.json` for Shadcn configuration
+- Created `app/lib/utils.ts` with cn() utility
+- Installed dependencies: tailwindcss-animate, @radix-ui/react-icons, tailwind-merge
+- Production build verified: 31 files changed, 1,624 insertions, 695 deletions
+
 ## [0.8.0] - 2025-11-16
 
 ### 🏆 Major Achievement: Complete Platform Modernization

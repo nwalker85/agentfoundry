@@ -7,7 +7,7 @@ import { useLocalParticipant } from '@livekit/components-react';
 export function AudioVisualizer() {
   const { localParticipant } = useLocalParticipant();
   const micTrackPub = localParticipant?.getTrackPublication(Track.Source.Microphone);
-  const volume = useTrackVolume(micTrackPub?.track);
+  const volume = useTrackVolume(micTrackPub?.track as any);
 
   // Normalize volume to 0-100 range
   const volumeLevel = Math.min(100, Math.max(0, volume * 100));
