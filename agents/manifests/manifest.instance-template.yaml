@@ -1,0 +1,21 @@
+apiVersion: agent-foundry/v1
+kind: AgentInstanceTemplate
+metadata:
+  description: Template for per-instance runtime manifests
+  version: "0.1.0"
+
+spec:
+  # Required system agents for every runtime instance
+  system_agents:
+    - agent_id: io-agent
+    - agent_id: supervisor-agent
+    - agent_id: context-agent
+    - agent_id: coherence-agent
+    - agent_id: exception-agent
+    - agent_id: observability-agent
+    - agent_id: governance-agent
+
+  # Custom workers will be injected at build time
+  custom_agents: []
+
+

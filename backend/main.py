@@ -459,18 +459,106 @@ async def root():
 
 @app.get("/health")
 async def health():
-    """Detailed health check"""
-    return {
+    """
+    Comprehensive health check endpoint.
+    Returns 200 if all critical services are healthy, 503 if any are unhealthy.
+    """
+    health_status = {
         "status": "healthy",
-        "livekit": {
-            "url": os.getenv("LIVEKIT_URL"),
-            "configured": bool(os.getenv("LIVEKIT_API_KEY"))
-        },
-        "redis": {
-            "url": os.getenv("REDIS_URL"),
-            "configured": bool(os.getenv("REDIS_URL"))
-        }
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "0.8.1-dev",
+        "services": {}
     }
+    
+    all_healthy = True
+    
+    # Check Marshal Agent
+    try:
+        if marshal is None:
+            health_status["services"]["marshal"] = {
+                "status": "unhealthy",
+                "error": "Not initialized"
+            }
+            all_healthy = False
+        else:
+            agents = await marshal.registry.list_all()
+            health_status["services"]["marshal"] = {
+                "status": "healthy",
+                "agents_loaded": len(agents),
+                "file_watcher_active": marshal.file_watcher is not None,
+                "health_monitor_active": marshal.health_monitor is not None
+            }
+    except Exception as e:
+        health_status["services"]["marshal"] = {
+            "status": "unhealthy",
+            "error": str(e)
+        }
+        all_healthy = False
+    
+    # Check LiveKit
+    try:
+        livekit_url = os.getenv("LIVEKIT_URL")
+        livekit_key = os.getenv("LIVEKIT_API_KEY")
+        livekit_secret = os.getenv("LIVEKIT_API_SECRET")
+        
+        if not all([livekit_url, livekit_key, livekit_secret]):
+            # In local/dev environments, LiveKit misconfiguration should not mark
+            # the whole backend as unhealthy. We surface it as degraded status.
+            health_status["services"]["livekit"] = {
+                "status": "misconfigured",
+                "error": "Missing required environment variables",
+                "url": livekit_url,
+            }
+            # Only mark unhealthy in non-development environments
+            if os.getenv("ENVIRONMENT", "development") not in ("development", "dev", "local"):
+                all_healthy = False
+        else:
+            # Try to get LiveKit service
+            livekit_svc = get_livekit_service()
+            health_status["services"]["livekit"] = {
+                "status": "healthy",
+                "url": livekit_url,
+                "configured": True
+            }
+    except Exception as e:
+        health_status["services"]["livekit"] = {
+            "status": "unhealthy",
+            "error": str(e)
+        }
+        all_healthy = False
+    
+    # Check Redis (optional)
+    try:
+        redis_url = os.getenv("REDIS_URL")
+        if redis_url:
+            # TODO: Add actual Redis ping check when Redis client is implemented
+            health_status["services"]["redis"] = {
+                "status": "configured",
+                "url": redis_url,
+                "note": "Health check not implemented yet"
+            }
+        else:
+            health_status["services"]["redis"] = {
+                "status": "not_configured",
+                "note": "Redis is optional"
+            }
+    except Exception as e:
+        health_status["services"]["redis"] = {
+            "status": "error",
+            "error": str(e),
+            "note": "Redis is optional, failure doesn't affect system health"
+        }
+        # Redis failure doesn't mark system as unhealthy since it's optional
+    
+    # Set overall status
+    if not all_healthy:
+        health_status["status"] = "unhealthy"
+        raise HTTPException(
+            status_code=503,
+            detail=health_status
+        )
+    
+    return health_status
 
 
 # ============================================================================

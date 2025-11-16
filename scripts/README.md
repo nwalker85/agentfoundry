@@ -9,17 +9,107 @@
 
 ```
 scripts/
-├── README.md                    # This file
-├── git/                         # Git operation helpers
-│   ├── check_git_status.py     # Python git status validator
-│   ├── check_git_status.sh     # Shell git status checker
-│   └── commit_helper.sh        # Interactive commit helper
-├── docs/                        # Documentation utilities
-│   ├── consolidate_docs.py     # Documentation consolidation (v1)
-│   └── consolidate_docs_v2.py  # Documentation consolidation (v2)
-└── setup/                       # Setup and initialization
-    └── create_frontend.py      # Frontend setup script
+├── README.md                     # This file
+├── QUICK_REFERENCE.md            # Short command cheat sheet
+├── monitor_local_health.sh       # Local Docker stack health monitor
+├── monitor_aws_health.sh         # AWS ECS / ALB health monitor (dev)
+├── check_alb_targets.sh          # ALB target group health for UI/API
+├── start-services.sh             # Wrapper around ./start_foundry.sh
+├── diagnose.sh                   # (Deprecated) old local diagnostics
+├── git/                          # Git operation helpers
+│   ├── check_git_status.py       # Python git status validator
+│   ├── check_git_status.sh       # Shell git status checker
+│   └── commit_helper.sh          # Interactive commit helper
+├── docs/                         # Documentation utilities
+│   ├── consolidate_docs.py       # Documentation consolidation (v1)
+│   └── consolidate_docs_v2.py    # Documentation consolidation (v2)
+└── setup/                        # Setup and initialization
+    └── create_frontend.py        # Frontend setup script
 ```
+
+---
+
+## Core Operational Scripts
+
+### `monitor_local_health.sh`
+
+**Purpose:** Quick health check for the **local Docker stack**.
+
+**What it checks:**
+- Docker daemon running
+- Container status via `docker compose ps`
+- Ports: 7880 (LiveKit), 7881, 6379 (Redis), 8000 (backend), 8002 (compiler)
+- HTTP health:
+  - `http://localhost:8000/health`
+  - `http://localhost:8002/health`
+  - `http://localhost:7880`
+- Recent logs for LiveKit, Redis, backend, compiler
+
+**Usage:**
+
+```bash
+./scripts/monitor_local_health.sh
+```
+
+### `monitor_aws_health.sh`
+
+**Purpose:** Summarize health of the **AWS dev environment**.
+
+**What it checks:**
+- ECS services:
+  - `agentfoundry-ui-svc`
+  - `agentfoundry-api-svc`
+- ALB existence and DNS
+- `/api/health` via ALB (if curl is available)
+
+**Usage (defaults):**
+
+```bash
+AWS_REGION=us-east-1 \
+./scripts/monitor_aws_health.sh
+```
+
+Override services/cluster if needed:
+
+```bash
+AWS_REGION=us-east-1 \
+ECS_CLUSTER=my-cluster \
+UI_SERVICE=my-ui-svc \
+API_SERVICE=my-api-svc \
+./scripts/monitor_aws_health.sh
+```
+
+### `check_alb_targets.sh`
+
+**Purpose:** Inspect **ALB target group health** for UI and API.
+
+**Defaults:**
+- UI TG:  `agentfoundry-ui-tg`
+- API TG: `agentfoundry-api-tg`
+
+**Usage:**
+
+```bash
+./scripts/check_alb_targets.sh
+
+# With overrides
+PROJECT_NAME=myproject AWS_REGION=us-west-2 ./scripts/check_alb_targets.sh
+```
+
+### `start-services.sh`
+
+**Purpose:** Thin wrapper around `./start_foundry.sh` so you can type:
+
+```bash
+./scripts/start-services.sh
+```
+
+from anywhere and get the same behavior as `./start_foundry.sh`.
+
+### `diagnose.sh` (Deprecated)
+
+**Purpose:** Older local diagnostics script.  
+**Status:** Deprecated – use `monitor_local_health.sh` instead. Running it will print a warning and exit.
 
 ---
 
@@ -230,6 +320,22 @@ python scripts/setup/create_frontend.py
 ---
 
 ## Usage Guidelines
+
+### When to Use Operational Scripts
+
+**Local stack:**
+- Use `monitor_local_health.sh` when:
+  - Containers won’t start
+  - Health endpoints fail
+  - You want a quick snapshot of local services and ports
+
+**AWS dev:**
+- Use `monitor_aws_health.sh` when:
+  - A deploy finishes but the site/API isn’t behaving
+  - You want to confirm ECS service counts and ALB/API reachability
+- Use `check_alb_targets.sh` when:
+  - ALB reports unhealthy targets
+  - You need to see which tasks/targets are failing health checks
 
 ### When to Use Git Scripts
 

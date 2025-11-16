@@ -1,39 +1,9 @@
-# Agent Foundry - Homebrew LiveKit Setup
+## LiveKit & Voice – Local Setup
 
-## Quick Start
+This document explains how LiveKit fits into Agent Foundry and how to run and test the **local voice stack**.
 
-### Step 1: Start LiveKit (Homebrew)
-
-```bash
-livekit-server --dev
-```
-
-This starts LiveKit with:
-- **URL:** `ws://localhost:7880`
-- **API Key:** `devkey`
-- **API Secret:** `secret`
-
-Keep this terminal open.
-
-### Step 2: Start Agent Foundry
-
-In a new terminal:
-
-```bash
-cd /Users/nwalker/Development/Projects/agentfoundry
-
-# Make script executable (first time only)
-chmod +x start_foundry.sh
-
-# Start services
-./start_foundry.sh
-```
-
-This starts:
-- **Redis** (port 6379)
-- **Backend** (port 8000, 8001)
-- **Compiler** (port 8002)
-- **Frontend** (port 3000)
+- **Current default:** LiveKit runs as a **Docker service** alongside the backend and compiler.
+- **Legacy option:** Homebrew/native LiveKit is still documented below but is no longer the default.
 
 ---
 
@@ -64,22 +34,25 @@ This starts:
     └────────────┘
 ```
 
-**Key difference from Docker-only setup:**
-- LiveKit runs **natively** via Homebrew (faster, simpler)
-- Backend connects to host machine via `host.docker.internal:7880`
-- No LiveKit container in docker-compose
+In the current Docker‑based setup:
+
+- LiveKit runs as a container (`livekit` service in `docker-compose.yml`)
+- Backend connects to LiveKit via `ws://livekit:7880` on the Docker network
+- The browser connects to LiveKit via `ws://localhost:7880` (port mapping)
 
 ---
 
-## Environment Variables
+## Environment Variables (Docker LiveKit)
 
-Already configured in `.env.local`:
+In `.env.local`:
 
 ```bash
-# LiveKit (Homebrew local instance)
-LIVEKIT_URL=ws://localhost:7880
+# LiveKit (Docker local instance)
+LIVEKIT_URL=ws://livekit:7880
 LIVEKIT_API_KEY=devkey
 LIVEKIT_API_SECRET=secret
+
+# Browser / frontend
 NEXT_PUBLIC_LIVEKIT_URL=ws://localhost:7880
 ```
 

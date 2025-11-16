@@ -19,15 +19,14 @@ interface AppMenuProps {
 const apps = [
   {
     name: "Forge AI",
-    description: "Define and manage AI agents",
+    description: "Visual agent configuration tool",
     icon: Hammer,
     href: "/forge",
-    available: false,
-    badge: "Coming Soon",
+    available: true,
   },
   {
-    name: "Crucible AI",
-    description: "Test agents in development",
+    name: "Playground",
+    description: "Test agents in dev before deployment",
     icon: FlaskConical,
     href: "/chat",
     available: true,

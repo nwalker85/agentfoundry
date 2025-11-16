@@ -1,3 +1,8 @@
+## LEGACY / ARCHIVE – LiveKit Docker Migration
+
+> **Note:** This document records the migration from Homebrew LiveKit to a Dockerized LiveKit service.  
+> The **current LiveKit / voice setup guide** is `LIVEKIT_SETUP.md`, which describes the Docker‑based architecture and how to run it today.
+
 # LiveKit Docker Migration - Complete
 
 ## Status: ✅ Complete and Released

@@ -1,10 +1,28 @@
 'use client';
 
-import { LiveKitRoom, RoomAudioRenderer } from '@livekit/components-react';
+import { useEffect } from 'react';
+import { LiveKitRoom, RoomAudioRenderer, useLocalParticipant, useTrackVolume } from '@livekit/components-react';
 import '@livekit/components-styles';
+import { Track } from 'livekit-client';
 import { VoiceControls } from './VoiceControls';
 import { AudioVisualizer } from './AudioVisualizer';
 import { ParticipantList } from './ParticipantList';
+
+// Helper component to track audio levels and call callback
+function AudioLevelTracker({ onAudioLevel }: { onAudioLevel?: (level: number) => void }) {
+  const { localParticipant } = useLocalParticipant();
+  const micTrackPub = localParticipant?.getTrackPublication(Track.Source.Microphone);
+  const volume = useTrackVolume(micTrackPub?.track as any);
+
+  useEffect(() => {
+    if (onAudioLevel) {
+      // Volume is already in 0-1 range from useTrackVolume
+      onAudioLevel(volume);
+    }
+  }, [volume, onAudioLevel]);
+
+  return null; // This component doesn't render anything
+}
 
 interface VoiceChatProps {
   token: string;
@@ -13,6 +31,7 @@ interface VoiceChatProps {
   userName: string;
   agentId: string;
   onDisconnect: () => void;
+  onAudioLevel?: (level: number) => void; // 0-1 range
 }
 
 export function VoiceChat({
@@ -22,6 +41,7 @@ export function VoiceChat({
   userName,
   agentId,
   onDisconnect,
+  onAudioLevel,
 }: VoiceChatProps) {
   return (
     <LiveKitRoom
@@ -35,7 +55,10 @@ export function VoiceChat({
     >
       {/* Audio renderer for playback */}
       <RoomAudioRenderer />
-      
+
+      {/* Track audio levels and send to parent */}
+      {onAudioLevel && <AudioLevelTracker onAudioLevel={onAudioLevel} />}
+
       <div className="voice-chat-ui">
         <div className="voice-header">
           <h3>Voice Chat with {agentId}</h3>

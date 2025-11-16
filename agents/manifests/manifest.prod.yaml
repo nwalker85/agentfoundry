@@ -1,0 +1,11 @@
+apiVersion: agent-foundry/v1
+kind: AgentManifest
+metadata:
+  description: Production environment manifest for all system agents
+  generated_at: "2025-11-16T00:00:00Z"
+  version: "0.1.0"
+
+spec:
+  entries: []
+
+

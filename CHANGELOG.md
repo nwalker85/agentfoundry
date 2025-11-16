@@ -7,6 +7,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-01-16
+
+### 🎯 Phase 2: Core Agent Pages - COMPLETE
+
+Complete implementation of agent and tool management pages with advanced search, filtering, and detail views.
+
+### Added
+- 📋 **Agents Registry Page** (`/agents`)
+  - Advanced search and filtering (status, environment, tags)
+  - 4 summary metric cards (Active Agents, Executions, Success Rate, Cost)
+  - Responsive agent card grid with hover effects
+  - Active filter chips with clear all functionality
+  - Empty state with clear filters action
+  - Debounced search (300ms) with memoized filtering
+
+- 🔍 **Agent Detail Page** (`/agents/[id]`)
+  - 4-tab interface (Overview, Metrics & Logs, Deployments, Configuration)
+  - Test Agent and Duplicate actions
+  - 4 key metric cards with trends
+  - Recent traces with links to monitoring
+  - Deployment history with performance deltas
+  - YAML configuration viewer
+  - 404 handling for invalid agent IDs
+
+- 🔧 **Tools Catalog Page** (`/tools`)
+  - Advanced filtering (status, category, verification)
+  - Search across name, description, vendor, tags
+  - 4 summary metrics (Installed, Updates Available, Invocations, Success Rate)
+  - Tool cards showing metrics for installed tools
+  - Install/Uninstall workflows with loading states
+  - Update available indicators
+
+- 📦 **Tool Detail Page** (`/tools/[id]`)
+  - 5-tab interface (Overview, Usage & Metrics, Agents, Permissions, Documentation)
+  - Install/Uninstall with state management
+  - Usage statistics and recent invocations
+  - List of agents using this tool with links
+  - Required permissions display
+  - Tool documentation and handler code viewer
+  - 404 handling for invalid tool IDs
+
+- 🛠️ **Forge Page Enhancement**
+  - Replaced header with PageHeader component
+  - Added LoadingState overlay during operations
+  - Added EmptyState when no workflow nodes exist
+  - Replaced alert() calls with state-based error/success messages
+  - Visual consistency with other pages
+  - Improved error handling
+
+### Changed
+- Enhanced StatusBadge component with `rolled_back` and `cancelled` statuses for deployment support
+- Improved error handling across all pages (no more alert() dialogs)
+- Standardized page structure patterns for all registry and detail pages
+
+### Technical
+- **Code Statistics**: 1,798 lines of new TypeScript code
+- **Routes Created**: 5 new/enhanced routes
+- **Component Integration**: All pages use Phase 1 shared components (PageHeader, SearchBar, FilterPanel, MetricCard, StatusBadge, EmptyState, LoadingState)
+- **Type Safety**: 100% TypeScript with full type coverage
+- **Mock Data**: Full integration with Phase 1 mock data (agents, tools, deployments, traces)
+- **Build Status**: All builds passing, 13 total routes, optimized bundle sizes
+- **Documentation**: Complete phase documentation in `docs/PHASE_2_COMPLETE.md`
+
+### Performance
+- Debounced search (300ms delay) prevents excessive re-renders
+- Memoized filtering with `useMemo` for optimized performance
+- Responsive grids (1/2/3 columns) based on viewport
+- Smooth transitions and hover effects
+
+### UX Improvements
+- Consistent design patterns across all pages
+- Clear visual feedback with status badges and trends
+- Empty states with helpful actions
+- Loading states during async operations
+- Keyboard navigation support
+- Accessible (semantic HTML, ARIA labels)
+
 ## [0.8.1] - 2025-11-16
 
 ### 🎨 MVP UI Scaffolding Complete

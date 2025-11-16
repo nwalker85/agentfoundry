@@ -1,56 +1,271 @@
-# Secrets & local configs
-.env*
+# Agent Foundry - .gitignore
+
+# ============================================
+# SECRETS - NEVER COMMIT
+# ============================================
+
+# Environment Variables
+.env
+.env.*
 !.env.example
-*.secrets.*
-*_PRIVATE.*
-*_private.*
-*__PRIVATE.*
-*__DRAFT.*
+!.env.local.example
 
-# Local state & outputs
-/audit/*.jsonl
-/audit/*.ndjson
-/tests/output/
-/tmp/
+# AWS & Deployment Secrets
+*.pem
+*.ppk
+deploy/bootstrap_secrets.sh
+deploy/update_secrets.sh
+deploy/terraform_outputs.txt
+deploy/*.sh.backup
+put_*_params.sh
+update_params.sh
 
-# Python
+# Security Keys
+id_rsa
+id_rsa.pub
+*.key
+*.crt
+*.cert
+
+# ============================================
+# TERRAFORM - PROJECT-WIDE
+# ============================================
+
+# State Files (contain sensitive data)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+terraform.tfstate.d/
+
+# Variable Files (may contain secrets)
+*.tfvars
+*.auto.tfvars
+!*.tfvars.example
+secrets.tf
+secrets.auto.tfvars
+*.tfvars.json
+!*.tfvars.example.json
+
+# Terraform Working Directories
+.terraform/
+**/.terraform/*
+.terraform.lock.hcl
+
+# Plan Files
+*.tfplan
+*.tfplan.*
+plan.out
+plan.json
+
+# Crash & Debug Logs
+crash.log
+crash.*.log
+terraform.log
+
+# Override Files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI Configuration Files
+.terraformrc
+terraform.rc
+
+# Generated Modules
+.terraform.modules/
+
+# Sentinel runtime directory
+.sentinel
+
+# ============================================
+# PYTHON
+# ============================================
+
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
 venv/
-.venv/
+env/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
 .pytest_cache/
 .coverage
 htmlcov/
-dist/
-build/
-*.egg-info/
+.tox/
+.hypothesis/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Node.js
+# ============================================
+# NODE.JS / FRONTEND
+# ============================================
+
 node_modules/
-.next/
-out/
-.cache/
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
+.next/
+out/
+build/
+dist/
+.cache/
+.turbo/
+*.tsbuildinfo
 
-# Generated
-/api/generated/
-/docs/generated/
+# ============================================
+# DOCKER
+# ============================================
 
-# OS/Editor
-.DS_Store
-Thumbs.db
+*.log
+data/
+*.db
+*.db-*
+redis-data/
+docker-compose.override.yml
+
+# ============================================
+# DATABASE
+# ============================================
+
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# ============================================
+# IDE / EDITORS
+# ============================================
+
+# VSCode
 .vscode/
+*.code-workspace
+
+# IntelliJ/PyCharm
 .idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime
+*.sublime-*
+
+# Vim
 *.swp
 *.swo
 *~
 
-# Docker
-.dockerignore
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# ============================================
+# OS
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+.directory
+.Trash-*
+
+# ============================================
+# LOGS
+# ============================================
+
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+*.log.*
+*.log.gz
+
+# ============================================
+# TESTING
+# ============================================
+
+coverage/
+.nyc_output/
+*.cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*.swp
+*.swo
+*~
+
+# ============================================
+# COMPILED OUTPUT
+# ============================================
+
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+*.dylib
+
+# ============================================
+# LOCAL CONFIGURATION
+# ============================================
+
+config.local.*
+local.settings.json
+.env.local
+.env.*.local
+
+# ============================================
+# PACKAGE MANAGER LOCKS (OPTIONAL)
+# ============================================
+# Uncomment these if you don't want to track lock files
+# package-lock.json
+# yarn.lock
+# poetry.lock
+# Pipfile.lock

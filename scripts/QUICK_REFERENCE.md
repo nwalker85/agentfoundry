@@ -4,6 +4,28 @@
 
 ---
 
+## Local & AWS Diagnostics
+
+### Local Docker Stack
+```bash
+# Start services (wrapper around ./start_foundry.sh)
+./scripts/start-services.sh
+
+# Check local health (Docker, ports, /health, logs)
+./scripts/monitor_local_health.sh
+```
+
+### AWS Dev (ECS / ALB)
+```bash
+# High-level ECS + ALB + /api/health check
+AWS_REGION=us-east-1 ./scripts/monitor_aws_health.sh
+
+# Inspect ALB target group health
+AWS_REGION=us-east-1 ./scripts/check_alb_targets.sh
+```
+
+---
+
 ## Git Operations
 
 ### Check Status

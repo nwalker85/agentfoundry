@@ -15,11 +15,16 @@ services:
         condition: service_healthy
     networks:
       - foundry
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${LIVEKIT_HTTP_PORT:-7880}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+#    healthcheck:
+#      test: ["CMD", "curl", "http://localhost:7880/"] # Example for LiveKit Server
+#      interval: 30s
+#      timeout: 10s
+#      retries: 1
+#      start_period: 30s
+
+
+
+
 
   # Redis - State management for LangGraph + LiveKit
   redis:
@@ -65,6 +70,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:${BACKEND_PORT:-8000}
       - NEXT_PUBLIC_WS_URL=ws://localhost:${BACKEND_PORT:-8000}
       - NEXT_PUBLIC_LIVEKIT_URL=ws://localhost:${LIVEKIT_HTTP_PORT:-7880}
+      - NEXT_PUBLIC_FORGE_API_URL=http://localhost:${FORGE_PORT:-8003}
       # Server-side URL for API routes (Docker network)
       - BACKEND_URL=http://foundry-backend:${BACKEND_PORT:-8000}
       # API Keys (for server-side API routes)
@@ -75,9 +81,9 @@ services:
       - NEXT_PUBLIC_ENABLE_WEBSOCKET=true
     depends_on:
       foundry-backend:
-        condition: service_started
-      livekit:
         condition: service_healthy
+      livekit:
+        condition: service_started
     networks:
       - foundry
 
@@ -108,8 +114,8 @@ services:
       # Redis
       - REDIS_URL=redis://redis:${REDIS_PORT:-6379}
       - REDIS_PORT=${REDIS_PORT:-6379}
-      # Database
-      - DATABASE_URL=sqlite:///data/foundry.db
+      # Database (PostgreSQL)
+      - DATABASE_URL=postgresql://foundry:foundry@postgres:5432/foundry
       # API Keys
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - NOTION_API_TOKEN=${NOTION_API_TOKEN}
@@ -122,7 +128,13 @@ services:
       redis:
         condition: service_healthy
       livekit:
-        condition: service_healthy
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:${BACKEND_PORT:-8000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - foundry
 
@@ -139,8 +151,27 @@ services:
       - ./data:/app/data
     environment:
       - PORT=${COMPILER_PORT:-8002}
-      - DATABASE_URL=sqlite:///data/foundry.db
+      - DATABASE_URL=postgresql://foundry:foundry@postgres:5432/foundry
       - DIS_SCHEMA_URL=https://schemas.domainintelligenceschema.org/dis/1.6.0
+    networks:
+      - foundry
+
+  # Forge Service - Agent Configuration and Management API
+  forge-service:
+    build:
+      context: .
+      dockerfile: forge_service/Dockerfile
+    ports:
+      - "${FORGE_PORT:-8003}:${FORGE_PORT:-8003}"
+    volumes:
+      - ./forge_service:/app/forge_service
+      - ./agents:/app/agents
+      - ./data:/app/data
+    environment:
+      - PORT=${FORGE_PORT:-8003}
+      - DATABASE_URL=postgresql://foundry:foundry@postgres:5432/foundry
+      - AGENTS_DIR=/app/agents
+      - DATA_DIR=/app/data
     networks:
       - foundry
 
@@ -168,12 +199,65 @@ services:
       - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
     depends_on:
       livekit:
-        condition: service_healthy
-      foundry-backend:
         condition: service_started
+      foundry-backend:
+        condition: service_healthy
     networks:
       - foundry
     restart: unless-stopped
+
+  # n8n - Workflow automation platform
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    environment:
+      # Basic config
+      - N8N_HOST=n8n
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+
+      # For local dev you can leave auth off, for shared envs turn this on:
+      # - N8N_BASIC_AUTH_ACTIVE=true
+      # - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      # - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-change-me}
+
+      # For encryption (sessions, creds) – set and keep stable
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-super-secret-long-key}
+
+      # Use built-in sqlite + volume for now (simple, fast)
+      - N8N_SAVE_DATA_MODE=filesystem
+      - N8N_SAVE_CREDENTIALS=filesystem
+      - N8N_PATH=/               # base path
+
+    # For local dev, expose port; for prod, you can omit ports so it stays internal only
+    ports:
+      - "5678:5678"
+
+    volumes:
+      - n8n-data:/home/node/.n8n
+
+    networks:
+      - foundry
+
+  # Database - PostgreSQL for control plane (orgs/domains/instances/users)
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=foundry
+      - POSTGRES_USER=foundry
+      - POSTGRES_PASSWORD=foundry
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - foundry
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U foundry -d foundry"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   foundry:
@@ -181,3 +265,5 @@ networks:
 
 volumes:
   redis-data:
+  n8n-data:
+  postgres-data:

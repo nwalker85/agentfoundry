@@ -1,0 +1,156 @@
+# Terraform Refactor Summary
+
+**Date:** 2025-11-16
+**Status:** ✅ Complete - Configuration validated successfully
+
+## 🎯 Primary Goal: API Health Check Fix
+
+### ⭐ Critical Change: ALB Target Group Health Check
+
+**File:** `alb.tf:52-59`
+
+Added `timeout = 5` to the API target group health check:
+
+```hcl
+health_check {
+  path                = "/health"
+  healthy_threshold   = 3
+  unhealthy_threshold = 3
+  interval            = 30
+  timeout             = 5        # ← ADDED
+  matcher             = "200-399"
+}
+```
+
+**Also added** `timeout = 5` to UI target group for consistency (alb.tf:30-37).
+
+---
+
+## 🧹 Structural Cleanup & Organization
+
+### 1. **main.tf** - Core Terraform Configuration Only
+- ✅ Removed Route53 zone (moved to route53.tf)
+- ✅ Now contains only Terraform version and provider configuration
+- ✅ Clean separation of concerns
+
+### 2. **security.tf** - All Security Groups
+- ✅ Added ALB security group (moved from alb.tf)
+- ✅ Now contains all security group resources in one place
+- ✅ Better organization and clarity
+
+### 3. **alb.tf** - ALB Resources Only
+- ✅ Removed security group (moved to security.tf)
+- ✅ Added `timeout = 5` to both target group health checks
+- ✅ Added section comments for better navigation
+- ✅ Cleaner structure: ALB → Target Groups → Listeners → Rules
+
+### 4. **route53.tf** - DNS Configuration
+- ✅ Added Route53 hosted zone (moved from main.tf)
+- ✅ Now contains all DNS-related resources
+- ✅ Added helpful tags to hosted zone
+
+### 5. **variables.tf** - All Variables Consolidated
+- ✅ Added image tag variables (moved from ecs.tf)
+- ✅ Added section comments
+- ✅ All variables now in one place
+
+### 6. **ecs.tf** - ECS Services & Task Definitions
+- ✅ Removed duplicate variable declarations
+- ✅ Added CloudWatch Logs configuration to task definitions
+- ✅ Added section comments for better navigation
+- ✅ Cleaner structure: Services → Task Definitions
+
+### 7. **vpc.tf**, **ecr.tf**, **ecs.cluster.tf**, **iam.tf**, **outputs.tf**
+- ✅ Added consistent header comments
+- ✅ Minor formatting improvements
+- ✅ Added additional outputs (ECR repos, VPC ID, cluster name)
+- ✅ Added tags for better resource tracking
+
+---
+
+## 🔍 Verification Checklist
+
+### ✅ No Breaking Changes
+- [x] All resource names unchanged (no state drift)
+- [x] Route53 zone `aws_route53_zone.ravenhelm_ai` preserved
+- [x] ACM certificate ARN reference unchanged
+- [x] ALB DNS name `aws_lb.foundry` preserved
+- [x] Target groups `aws_lb_target_group.ui` and `.api` unchanged
+- [x] ECS services `aws_ecs_service.ui` and `.api` unchanged
+- [x] ECR repositories preserved
+
+### ✅ ECS + ALB Wiring Verified
+- [x] `aws_ecs_service.ui` references correct cluster
+- [x] `aws_ecs_service.api` references correct cluster
+- [x] Network configuration uses public subnets
+- [x] Network configuration uses correct security group
+- [x] Load balancer blocks point to correct target groups
+- [x] Listener rule routes `/api/*` to API target group
+
+### ✅ ECR & Task Definitions Verified
+- [x] ECR repos: ui, backend, compiler, forge (all preserved)
+- [x] Task definitions reference correct ECR repositories
+- [x] Image names unchanged
+- [x] Port mappings correct (UI: 3000, API: 8000)
+
+### ✅ Terraform Validation
+```bash
+$ terraform fmt -check
+# ✓ All files properly formatted
+
+$ terraform validate
+Success! The configuration is valid.
+```
+
+---
+
+## 📊 File Structure (After Refactor)
+
+```
+infra/
+├── main.tf              # Terraform core configuration
+├── variables.tf         # All input variables
+├── vpc.tf              # VPC, subnets, IGW, route tables
+├── security.tf         # Security groups (ALB + ECS)
+├── alb.tf              # ALB, target groups, listeners
+├── route53.tf          # DNS hosted zone and records
+├── ecr.tf              # ECR container repositories
+├── ecs.cluster.tf      # ECS cluster
+├── ecs.tf              # ECS services & task definitions
+├── iam.tf              # IAM roles and policies
+├── outputs.tf          # Terraform outputs
+└── terraform.tfvars    # Variable values
+```
+
+---
+
+## 🚀 Next Steps
+
+1. **Review the changes** (especially alb.tf:52-59)
+2. **Plan deployment**:
+   ```bash
+   terraform plan
+   ```
+3. **Apply changes**:
+   ```bash
+   terraform apply
+   ```
+4. **Verify health checks** after deployment:
+   - UI target group should show healthy targets
+   - API target group should show healthy targets with new timeout
+
+---
+
+## 📝 Notes
+
+- **No state migration required** - All resource names preserved
+- **Health check timeout** added to prevent premature failures
+- **CloudWatch Logs** configuration added to task definitions (prep for better monitoring)
+- **Consistent formatting** across all files
+- **Better organization** for easier maintenance
+
+---
+
+**Generated by:** Claude Code  
+**Terraform Version:** >= 1.6.0  
+**AWS Provider Version:** ~> 5.0

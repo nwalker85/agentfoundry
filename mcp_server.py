@@ -16,13 +16,22 @@ from dotenv import load_dotenv
 import uvicorn
 from livekit.api import AccessToken, VideoGrants
 
+from backend.db import init_db
 from mcp.schemas import (
-    CreateStoryRequest, CreateStoryResponse,
-    CreateIssueRequest, CreateIssueResponse,
-    ListStoriesRequest, ListStoriesResponse,
-    ToolResponse, AuditEntry
+    CreateStoryRequest,
+    CreateStoryResponse,
+    CreateIssueRequest,
+    CreateIssueResponse,
+    ListStoriesRequest,
+    ListStoriesResponse,
+    ToolResponse,
+    AuditEntry,
 )
-from mcp.tools import NotionTool, GitHubTool, AuditTool
+from mcp.tools import NotionTool, GitHubTool, AuditTool, ManifestTool, DataTool, AdminTool
+from mcp.tools.manifest import RegisterAgentRequest
+from mcp.tools.data import DataQueryRequest
+from mcp.tools.admin import ListObjectsRequest, GetObjectRequest
+from agent.form_data_agent import FormDataAgent
 from agent.pm_graph import PMAgent
 from mcp.websocket_handler import manager, handle_websocket_message
 
@@ -33,18 +42,28 @@ load_dotenv('.env.local')
 notion_tool: Optional[NotionTool] = None
 github_tool: Optional[GitHubTool] = None
 audit_tool: Optional[AuditTool] = None
+manifest_tool: Optional[ManifestTool] = None
+data_tool: Optional[DataTool] = None
+admin_tool: Optional[AdminTool] = None
 pm_agent: Optional[PMAgent] = None
+form_data_agent: Optional[FormDataAgent] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    global notion_tool, github_tool, audit_tool, pm_agent
+    global notion_tool, github_tool, audit_tool, manifest_tool, data_tool, admin_tool, pm_agent, form_data_agent
     
     print("🚀 Starting Engineering Department MCP Server...")
     print(f"📊 Environment: {os.getenv('ENVIRONMENT', 'development')}")
     print(f"🏢 Tenant ID: {os.getenv('TENANT_ID', 'unknown')}")
     
+    # Initialize database schema (PostgreSQL)
+    try:
+        init_db()
+    except Exception as e:
+        print(f"⚠️ Database initialization failed: {e}")
+
     # Initialize tools
     try:
         notion_tool = NotionTool()
@@ -60,6 +79,34 @@ async def lifespan(app: FastAPI):
     
     audit_tool = AuditTool()
     print("✅ Audit tool initialized")
+
+    # Initialize Manifest tool
+    try:
+        manifest_tool = ManifestTool()
+        print("✅ Manifest tool initialized")
+    except Exception as e:
+        print(f"⚠️ Manifest tool initialization failed: {e}")
+
+    # Initialize Data tool
+    try:
+        data_tool = DataTool()
+        print("✅ Data tool initialized")
+    except Exception as e:
+        print(f"⚠️ Data tool initialization failed: {e}")
+
+    # Initialize Admin tool
+    try:
+        admin_tool = AdminTool()
+        print("✅ Admin tool initialized")
+    except Exception as e:
+        print(f"⚠️ Admin tool initialization failed: {e}")
+
+    # Initialize Form Data agent
+    try:
+        form_data_agent = FormDataAgent()
+        print("✅ Form Data agent initialized")
+    except Exception as e:
+        print(f"⚠️ Form Data agent initialization failed: {e}")
     
     # Initialize PM Agent (LangGraph)
     try:
@@ -151,6 +198,7 @@ async def root():
             "notion": notion_tool is not None,
             "github": github_tool is not None,
             "audit": audit_tool is not None,
+            "manifest": manifest_tool is not None,
             "agent": pm_agent is not None
         }
     }
@@ -177,6 +225,8 @@ async def api_status():
             "notion": notion_tool is not None,
             "github": github_tool is not None,
             "audit": audit_tool is not None,
+            "manifest": manifest_tool is not None,
+            "data": data_tool is not None,
             "agent": pm_agent is not None
         }
     }
@@ -572,6 +622,186 @@ async def query_audit(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============= Manifest Tool Endpoints =============
+
+@app.post("/api/tools/manifest/register-agent", response_model=ToolResponse)
+async def register_manifest_agent(
+    request: RegisterAgentRequest,
+    req: Request,
+    actor: str = Depends(verify_auth),
+):
+    """Register or update an agent binding in the manifest (control plane)."""
+    if not manifest_tool:
+        raise HTTPException(status_code=503, detail="Manifest tool not available")
+
+    start_time = datetime.utcnow()
+
+    try:
+        response = await manifest_tool.register_agent(request)
+
+        # Audit log
+        if audit_tool:
+            await audit_tool.log_tool_call(
+                tool_name="manifest",
+                method="register_agent",
+                request=request,
+                response=response,
+                start_time=start_time,
+            )
+
+        if not response.success:
+            raise HTTPException(status_code=400, detail=response.error or "Manifest operation failed")
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if audit_tool:
+            await audit_tool.log_tool_call(
+                tool_name="manifest",
+                method="register_agent",
+                request=request,
+                error=e,
+                start_time=start_time,
+            )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============= Data Tool Endpoints =============
+
+@app.post("/api/tools/data/query", response_model=ToolResponse)
+async def data_query(
+    request: DataQueryRequest,
+    req: Request,
+    actor: str = Depends(verify_auth),
+):
+    """Run a natural-language data query against the control-plane DB."""
+    if not data_tool:
+        raise HTTPException(status_code=503, detail="Data tool not available")
+
+    start_time = datetime.utcnow()
+
+    try:
+        response = await data_tool.query(request)
+
+        # Audit log
+        if audit_tool:
+            await audit_tool.log_tool_call(
+                tool_name="data",
+                method="query",
+                request=request,
+                response=response,
+                start_time=start_time,
+            )
+
+        if not response.success:
+            raise HTTPException(status_code=400, detail=response.error or "Data query failed")
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if audit_tool:
+            await audit_tool.log_tool_call(
+                tool_name="data",
+                method="query",
+                request=request,
+                error=e,
+                start_time=start_time,
+            )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============= Admin Tool Endpoints =============
+
+@app.post("/api/tools/admin/list", response_model=ToolResponse)
+async def admin_list_objects(
+    request: ListObjectsRequest,
+    req: Request,
+    actor: str = Depends(verify_auth),
+):
+    """List organizations/domains/instances/users for admin views."""
+    if not admin_tool:
+        raise HTTPException(status_code=503, detail="Admin tool not available")
+
+    start_time = datetime.utcnow()
+
+    try:
+        response = await admin_tool.list_objects(request)
+
+        if audit_tool:
+            await audit_tool.log_tool_call(
+                tool_name="admin",
+                method="list_objects",
+                request=request,
+                response=response,
+                start_time=start_time,
+            )
+
+        if not response.success:
+            raise HTTPException(status_code=400, detail=response.error or "Admin list failed")
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if audit_tool:
+            await audit_tool.log_tool_call(
+                tool_name="admin",
+                method="list_objects",
+                request=request,
+                error=e,
+                start_time=start_time,
+            )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/tools/admin/get", response_model=ToolResponse)
+async def admin_get_object(
+    request: GetObjectRequest,
+    req: Request,
+    actor: str = Depends(verify_auth),
+):
+    """Get a single organization/domain/instance/user for admin detail view."""
+    if not admin_tool:
+        raise HTTPException(status_code=503, detail="Admin tool not available")
+
+    start_time = datetime.utcnow()
+
+    try:
+        response = await admin_tool.get_object(request)
+
+        if audit_tool:
+            await audit_tool.log_tool_call(
+                tool_name="admin",
+                method="get_object",
+                request=request,
+                response=response,
+                start_time=start_time,
+            )
+
+        if not response.success:
+            raise HTTPException(status_code=400, detail=response.error or "Admin get failed")
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if audit_tool:
+            await audit_tool.log_tool_call(
+                tool_name="admin",
+                method="get_object",
+                request=request,
+                error=e,
+                start_time=start_time,
+            )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============= OpenAPI Schema Endpoint =============
 
 @app.get("/api/tools/schema")
@@ -627,7 +857,8 @@ async def websocket_endpoint(
                 message=data,
                 pm_agent=pm_agent,
                 audit_tool=audit_tool,
-                manager=manager
+                manager=manager,
+                form_data_agent=form_data_agent,
             )
             
     except WebSocketDisconnect:

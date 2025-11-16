@@ -1,3 +1,9 @@
+## LEGACY / ARCHIVE – Docker Build Fixes (Pre‑ECS)
+
+> **Note:** This document describes an earlier phase of the local Docker setup and is kept for historical reference.  
+> The **current** local workflow is documented in `DOCKER_DEV_WORKFLOW.md` and `start_foundry.sh`.  
+> The **current** AWS deployment path is documented in `DEPLOYMENT.md` and `infra/REFACTOR_SUMMARY.md`.
+
 # Docker Build Fixes
 
 ## Issues Fixed

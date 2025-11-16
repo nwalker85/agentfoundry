@@ -1,0 +1,119 @@
+apiVersion: agent-foundry/v1
+kind: AgentManifest
+metadata:
+  description: >
+    Matrix of agents and their organization / domain / environment bindings.
+    This is the single source of truth for which agents are active where.
+  generated_at: "2025-11-16T00:00:00Z"
+  version: "0.1.0"
+
+spec:
+  entries:
+    # Tier 0 system agents (platform core)
+    - agent_id: io-agent
+      yaml_path: dev_io_agent.yaml
+      organization_id: default-org
+      organization_name: Default Organization
+      domain_id: default-domain
+      domain_name: Default Domain
+      environment: dev
+      instance_id: dev
+      is_system_agent: true
+      system_tier: 0
+      version: "0.8.0"
+      author: system
+      last_editor: system
+      tags: [platform, io, adapter]
+
+    - agent_id: supervisor-agent
+      yaml_path: dev_supervisor_agent.yaml
+      organization_id: default-org
+      organization_name: Default Organization
+      domain_id: default-domain
+      domain_name: Default Domain
+      environment: dev
+      instance_id: dev
+      is_system_agent: true
+      system_tier: 0
+      version: "0.8.0"
+      author: system
+      last_editor: system
+      tags: [platform, orchestration, routing]
+
+    - agent_id: context-agent
+      yaml_path: dev_context_agent.yaml
+      organization_id: default-org
+      organization_name: Default Organization
+      domain_id: default-domain
+      domain_name: Default Domain
+      environment: dev
+      instance_id: dev
+      is_system_agent: true
+      system_tier: 0
+      version: "0.8.0"
+      author: system
+      last_editor: system
+      tags: [platform, state, context]
+
+    - agent_id: coherence-agent
+      yaml_path: dev_coherence_agent.yaml
+      organization_id: default-org
+      organization_name: Default Organization
+      domain_id: default-domain
+      domain_name: Default Domain
+      environment: dev
+      instance_id: dev
+      is_system_agent: true
+      system_tier: 0
+      version: "0.8.0"
+      author: system
+      last_editor: system
+      tags: [platform, coherence, assembly]
+
+    # Tier 1 system agents (production readiness)
+    - agent_id: exception-agent
+      yaml_path: dev_exception_agent.yaml
+      organization_id: default-org
+      organization_name: Default Organization
+      domain_id: default-domain
+      domain_name: Default Domain
+      environment: dev
+      instance_id: dev
+      is_system_agent: true
+      system_tier: 1
+      version: "1.0.0"
+      author: system
+      last_editor: system
+      tags: [platform, resilience, error-handling]
+
+    - agent_id: observability-agent
+      yaml_path: dev_observability_agent.yaml
+      organization_id: default-org
+      organization_name: Default Organization
+      domain_id: default-domain
+      domain_name: Default Domain
+      environment: dev
+      instance_id: dev
+      is_system_agent: true
+      system_tier: 1
+      version: "1.0.0"
+      author: system
+      last_editor: system
+      tags: [platform, monitoring, tracing, metrics]
+
+    - agent_id: governance-agent
+      yaml_path: dev_governance_agent.yaml
+      organization_id: default-org
+      organization_name: Default Organization
+      domain_id: default-domain
+      domain_name: Default Domain
+      environment: dev
+      instance_id: dev
+      is_system_agent: true
+      system_tier: 1
+      version: "1.0.0"
+      author: system
+      last_editor: system
+      tags: [platform, security, compliance, governance]
+
+

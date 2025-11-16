@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Agent Foundry - Development Start Script
 # Starts all services with hot reload enabled
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"

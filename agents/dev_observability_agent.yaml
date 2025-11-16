@@ -1,0 +1,136 @@
+apiVersion: engineering-dept/v1
+kind: Agent
+metadata:
+  id: observability-agent
+  name: Observability Agent
+  version: 1.0.0
+  description: Runtime monitoring, tracing, metrics collection, and performance analysis
+  tags:
+    - platform
+    - tier-1
+    - monitoring
+    - tracing
+    - metrics
+  created: "2025-11-16T00:00:00Z"
+  updated: "2025-11-16T00:00:00Z"
+
+spec:
+  capabilities:
+    - execution_tracing
+    - performance_metrics
+    - state_snapshots
+    - anomaly_detection
+    - cost_tracking
+    - token_tracking
+    - execution_playback
+    - langsmith_integration
+  
+  workflow:
+    type: langgraph.StateGraph
+    entry_point: start_trace
+    recursion_limit: 50
+    nodes:
+      - id: start_trace
+        handler: agents.workers.observability_agent.ObservabilityAgent.start_trace
+        description: Initialize execution trace for an agent run
+        next:
+          - log_node_execution
+        timeout_seconds: 5
+      
+      - id: log_node_execution
+        handler: agents.workers.observability_agent.ObservabilityAgent.log_node_execution
+        description: Log execution of individual nodes with metrics
+        next:
+          - create_state_snapshot
+          - check_anomalies
+        timeout_seconds: 10
+      
+      - id: create_state_snapshot
+        handler: agents.workers.observability_agent.ObservabilityAgent.create_state_snapshot
+        description: Create snapshot of state for debugging
+        next:
+          - log_node_execution
+        timeout_seconds: 10
+      
+      - id: check_anomalies
+        handler: agents.workers.observability_agent.ObservabilityAgent._check_anomalies
+        description: Detect performance anomalies and alert
+        next:
+          - log_node_execution
+        timeout_seconds: 5
+      
+      - id: end_trace
+        handler: agents.workers.observability_agent.ObservabilityAgent.end_trace
+        description: Finalize trace and compute summary metrics
+        next:
+          - send_to_langsmith
+        timeout_seconds: 10
+      
+      - id: send_to_langsmith
+        handler: agents.workers.observability_agent.ObservabilityAgent._send_to_langsmith
+        description: Send trace data to LangSmith for visualization
+        next:
+          - END
+        timeout_seconds: 30
+  
+  integrations:
+    - type: redis
+      required: true
+      operations:
+        - trace_storage
+        - metrics_storage
+    
+    - type: postgresql
+      required: false
+      operations:
+        - trace_persistence
+        - metrics_history
+    
+    - type: langsmith
+      required: false
+      operations:
+        - trace_export
+    
+    - type: datadog
+      required: false
+      operations:
+        - metrics_export
+  
+  resource_limits:
+    max_concurrent_tasks: 50
+    timeout_seconds: 120
+    memory_mb: 1024
+    max_tokens_per_request: 4000
+  
+  observability:
+    trace_level: info
+    metrics_enabled: true
+    metrics_interval_seconds: 15
+    log_retention_days: 90
+    structured_logging: true
+  
+  health_check:
+    enabled: true
+    interval_seconds: 30
+    timeout_seconds: 5
+    unhealthy_threshold: 3
+  
+  configuration:
+    trace_retention_count: 10000
+    metrics_retention_count: 1000
+    state_snapshot_size_limit_bytes: 10240
+    langsmith_enabled: false
+    anomaly_detection_enabled: true
+    anomaly_thresholds:
+      max_latency_ms: 30000
+      max_tokens: 100000
+      max_cost_usd: 10.0
+      error_rate_threshold: 0.5
+    export_format: json
+
+status:
+  phase: production
+  state: active
+  last_health_check: "2025-11-16T00:00:00Z"
+  health_status: healthy
+

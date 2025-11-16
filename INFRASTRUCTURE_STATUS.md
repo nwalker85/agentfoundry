@@ -1,3 +1,11 @@
+## STATUS SNAPSHOT (LEGACY) – Infrastructure as of 2025‑11‑15
+
+> **Note:** This file captures a point‑in‑time status of the infrastructure during the LiveKit + Docker bring‑up.  
+> For the **current deployment workflow**, see:
+> - `docs/AWS_DEPLOYMENT_ECS.md` – ECS/Fargate deployment guide  
+> - `DEPLOYMENT.md` – legacy EC2 deployment overview (archive)  
+> - `DOCKER_DEV_WORKFLOW.md` – local Docker development workflow
+
 # Agent Foundry - Infrastructure Status
 
 **Date:** November 15, 2025  

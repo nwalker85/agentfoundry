@@ -12,7 +12,8 @@ Uses LangGraph StateGraph for coordination.
 """
 
 import logging
-from typing import Literal
+import asyncio
+from typing import Literal, List, Any, Callable, Dict
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -244,3 +245,126 @@ Your response (one word only):"""
         
         # Extract final response
         return result["final_response"]
+    
+    async def execute_parallel_workers(
+        self,
+        worker_agents: List[Any],
+        state: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Execute multiple worker agents in parallel (for map-reduce patterns).
+        
+        Args:
+            worker_agents: List of worker agent instances
+            state: Current state to pass to workers
+        
+        Returns:
+            Dict mapping worker names to their responses
+        """
+        logger.info(f"Executing {len(worker_agents)} workers in parallel")
+        
+        # Create tasks for parallel execution
+        tasks = []
+        worker_names = []
+        
+        for worker in worker_agents:
+            worker_name = worker.__class__.__name__
+            worker_names.append(worker_name)
+            tasks.append(worker.process(state.get("current_input", "")))
+        
+        # Execute all workers in parallel
+        try:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # Map results to worker names
+            worker_responses = {}
+            for name, result in zip(worker_names, results):
+                if isinstance(result, Exception):
+                    logger.error(f"Worker {name} failed: {result}")
+                    worker_responses[name] = f"Error: {result}"
+                else:
+                    worker_responses[name] = result
+            
+            logger.info(f"Parallel execution completed: {len(worker_responses)} responses")
+            return worker_responses
+            
+        except Exception as e:
+            logger.error(f"Error during parallel execution: {e}", exc_info=True)
+            return {}
+    
+    async def execute_with_timeout(
+        self,
+        node_func: Callable,
+        state: Dict[str, Any],
+        timeout_seconds: float = 60.0
+    ) -> Any:
+        """
+        Execute a node function with timeout enforcement.
+        
+        Args:
+            node_func: Node function to execute
+            state: State to pass to function
+            timeout_seconds: Timeout in seconds
+        
+        Returns:
+            Function result
+        
+        Raises:
+            asyncio.TimeoutError: If execution exceeds timeout
+        """
+        logger.debug(f"Executing with timeout: {timeout_seconds}s")
+        
+        try:
+            return await asyncio.wait_for(
+                node_func(state),
+                timeout=timeout_seconds
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"Node execution timed out after {timeout_seconds}s")
+            raise
+    
+    async def enforce_recursion_limit(
+        self,
+        current_depth: int,
+        max_depth: int
+    ) -> bool:
+        """
+        Check if recursion limit has been exceeded (prevent infinite loops).
+        
+        Args:
+            current_depth: Current recursion depth
+            max_depth: Maximum allowed depth
+        
+        Returns:
+            True if within limit, False if exceeded
+        """
+        if current_depth >= max_depth:
+            logger.error(f"Recursion limit exceeded: {current_depth}/{max_depth}")
+            return False
+        return True
+    
+    async def execute_with_streaming(
+        self,
+        state: Dict[str, Any],
+        stream_mode: bool = False
+    ) -> Any:
+        """
+        Execute graph with optional streaming mode.
+        
+        Args:
+            state: Initial state
+            stream_mode: Whether to stream results
+        
+        Returns:
+            Final result (or stream iterator if streaming)
+        """
+        if stream_mode:
+            logger.info("Executing in streaming mode")
+            # Return async generator for streaming
+            async def stream_results():
+                async for chunk in self.graph.astream(state):
+                    yield chunk
+            return stream_results()
+        else:
+            logger.info("Executing in batch mode")
+            return await self.graph.ainvoke(state)

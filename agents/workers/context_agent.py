@@ -13,7 +13,7 @@ Platform agent (always available, not domain-specific).
 import asyncio
 import logging
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from langchain_anthropic import ChatAnthropic
@@ -287,3 +287,176 @@ class ContextAgent:
             
         except Exception as e:
             logger.error(f"Error clearing session {session_id}: {e}", exc_info=True)
+    
+    async def checkpoint_state(
+        self,
+        session_id: str,
+        checkpoint_id: str,
+        state: Dict[str, Any]
+    ) -> None:
+        """
+        Create a checkpoint of current state (for long-running conversations).
+        
+        Args:
+            session_id: Session identifier
+            checkpoint_id: Unique checkpoint identifier
+            state: State to checkpoint
+        """
+        logger.info(f"Creating checkpoint: {session_id}:{checkpoint_id}")
+        
+        checkpoint_key = f"{session_id}:checkpoint:{checkpoint_id}"
+        
+        checkpoint_data = {
+            'session_id': session_id,
+            'checkpoint_id': checkpoint_id,
+            'timestamp': datetime.now().isoformat(),
+            'state': state
+        }
+        
+        try:
+            if self.redis_client:
+                # TODO: Store in Redis when integrated
+                # await self.redis_client.set(
+                #     f"checkpoint:{checkpoint_key}",
+                #     json.dumps(checkpoint_data),
+                #     ex=86400 * 7  # 7 days TTL
+                # )
+                pass
+            
+            # Store in in-memory (for now)
+            if not hasattr(self, '_checkpoints'):
+                self._checkpoints = {}
+            self._checkpoints[checkpoint_key] = checkpoint_data
+            
+            logger.info(f"Checkpoint created: {checkpoint_key}")
+            
+        except Exception as e:
+            logger.error(f"Error creating checkpoint {checkpoint_key}: {e}", exc_info=True)
+    
+    async def restore_checkpoint(
+        self,
+        session_id: str,
+        checkpoint_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Restore state from a checkpoint.
+        
+        Args:
+            session_id: Session identifier
+            checkpoint_id: Checkpoint identifier
+        
+        Returns:
+            Checkpoint state or None if not found
+        """
+        logger.info(f"Restoring checkpoint: {session_id}:{checkpoint_id}")
+        
+        checkpoint_key = f"{session_id}:checkpoint:{checkpoint_id}"
+        
+        try:
+            if self.redis_client:
+                # TODO: Load from Redis when integrated
+                # checkpoint_data = await self.redis_client.get(f"checkpoint:{checkpoint_key}")
+                # if checkpoint_data:
+                #     return json.loads(checkpoint_data)
+                pass
+            
+            # Load from in-memory
+            if hasattr(self, '_checkpoints') and checkpoint_key in self._checkpoints:
+                checkpoint_data = self._checkpoints[checkpoint_key]
+                logger.info(f"Checkpoint restored: {checkpoint_key}")
+                return checkpoint_data['state']
+            
+            logger.warning(f"Checkpoint not found: {checkpoint_key}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error restoring checkpoint {checkpoint_key}: {e}", exc_info=True)
+            return None
+    
+    async def get_state_snapshot(
+        self,
+        session_id: str,
+        node_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Get a snapshot of current state (for debugging).
+        
+        Args:
+            session_id: Session identifier
+            node_id: Optional node context
+        
+        Returns:
+            State snapshot
+        """
+        logger.debug(f"Creating state snapshot: {session_id}")
+        
+        session_state = await self._load_session(session_id)
+        
+        snapshot = {
+            'session_id': session_id,
+            'node_id': node_id,
+            'timestamp': datetime.now().isoformat(),
+            'session_state': session_state,
+            'message_count': session_state.get('message_count', 0),
+            'conversation_history': session_state.get('conversation_history', [])[-10:]  # Last 10
+        }
+        
+        return snapshot
+    
+    async def list_checkpoints(self, session_id: str) -> List[Dict[str, Any]]:
+        """
+        List all checkpoints for a session.
+        
+        Args:
+            session_id: Session identifier
+        
+        Returns:
+            List of checkpoint metadata
+        """
+        logger.debug(f"Listing checkpoints for session: {session_id}")
+        
+        checkpoints = []
+        
+        try:
+            if self.redis_client:
+                # TODO: Query Redis when integrated
+                pass
+            
+            # Query in-memory checkpoints
+            if hasattr(self, '_checkpoints'):
+                for key, checkpoint in self._checkpoints.items():
+                    if checkpoint['session_id'] == session_id:
+                        checkpoints.append({
+                            'checkpoint_id': checkpoint['checkpoint_id'],
+                            'timestamp': checkpoint['timestamp'],
+                            'session_id': checkpoint['session_id']
+                        })
+            
+            logger.debug(f"Found {len(checkpoints)} checkpoints for {session_id}")
+            return checkpoints
+            
+        except Exception as e:
+            logger.error(f"Error listing checkpoints for {session_id}: {e}", exc_info=True)
+            return []
+    
+    async def get_conversation_context(
+        self,
+        session_id: str,
+        lookback: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Get recent conversation context (last N turns).
+        
+        Args:
+            session_id: Session identifier
+            lookback: Number of recent turns to retrieve
+        
+        Returns:
+            List of conversation turns
+        """
+        logger.debug(f"Getting conversation context: {session_id} (last {lookback})")
+        
+        session_state = await self._load_session(session_id)
+        conversation_history = session_state.get('conversation_history', [])
+        
+        return conversation_history[-lookback:]

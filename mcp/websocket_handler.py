@@ -82,7 +82,8 @@ async def handle_websocket_message(
     message: dict,
     pm_agent,
     audit_tool,
-    manager: ConnectionManager
+    manager: ConnectionManager,
+    form_data_agent=None,
 ):
     """Handle incoming WebSocket messages."""
     msg_type = message.get("type")
@@ -95,6 +96,68 @@ async def handle_websocket_message(
         })
         return
     
+    # Handle field population via tool_execution
+    if msg_type == "tool_execution":
+        data = message.get("data", {}) or {}
+        tool = data.get("tool")
+
+        if tool == "form_data.populate":
+            if not form_data_agent:
+                await manager.send_message(
+                    session_id,
+                    {
+                        "type": "error",
+                        "data": {"error": "FormDataAgent not available"},
+                        "timestamp": datetime.utcnow().isoformat(),
+                    },
+                )
+                return
+
+            context = data.get("context", {}) or {}
+            try:
+                result_state = await form_data_agent.populate_fields(
+                    org_id=context.get("organization_id", "default-org"),
+                    domain_id=context.get("domain_id", "default-domain"),
+                    environment=context.get("environment", "dev"),
+                    instance_id=context.get("instance_id", "dev"),
+                    field_id=context.get("field_id", "instances_for_org_domain"),
+                )
+
+                if result_state.get("error"):
+                    await manager.send_message(
+                        session_id,
+                        {
+                            "type": "error",
+                            "data": {"error": result_state["error"]},
+                            "timestamp": datetime.utcnow().isoformat(),
+                        },
+                    )
+                else:
+                    await manager.send_message(
+                        session_id,
+                        {
+                            "type": "tool_execution",
+                            "data": {
+                                "tool": tool,
+                                "context": context,
+                                "result": result_state.get("result"),
+                            },
+                            "timestamp": datetime.utcnow().isoformat(),
+                        },
+                    )
+                return
+            except Exception as e:
+                print(f"Error in FormDataAgent via WebSocket: {e}")
+                await manager.send_message(
+                    session_id,
+                    {
+                        "type": "error",
+                        "data": {"error": str(e)},
+                        "timestamp": datetime.utcnow().isoformat(),
+                    },
+                )
+                return
+
     # Handle chat messages
     if msg_type == "message":
         data = message.get("data", {})
