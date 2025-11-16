@@ -1,15 +1,15 @@
 # Agent Foundry
 
-**Heroku for AI Agents** - A platform for deploying and managing AI agents with voice capabilities. Upload DIS dossiers to get instant voice-enabled agent demos.
+**Modern AI Agent Development Platform** - Professional platform for building, deploying, and managing AI agents with voice capabilities and multi-agent orchestration.
 
 ## Project Status
 
-**Current Phase:** Platform + LiveKit Integration  
-**Version:** 0.8.0-dev  
-**Status:** **Development - Rebranding to Agent Foundry**
+**Current Phase:** MVP UI Scaffolding Complete
+**Version:** 0.8.1-dev
+**Status:** **Development - Production-Ready UI Shell**
 
-### Latest Achievement (Nov 15, 2025)
-🎉 **v0.8.0-dev** - Rebranding to Agent Foundry platform. Preparing for LiveKit voice integration and DIS compiler implementation.
+### Latest Achievement (Nov 16, 2025)
+🎉 **v0.8.1-dev** - Complete MVP UI scaffolding with Shadcn component library and Ravenhelm dark theme. Professional navigation system, dashboard, and page architecture ready for feature development.
 
 ## 🚀 Quick Start
 
@@ -43,13 +43,13 @@ cp .env.example .env.local
 ./start_dev.sh
 
 # Or run separately:
-# Terminal 1: Start MCP server (FastAPI on port 8001)
+# Terminal 1: Start Backend (FastAPI on port 8000)
 python mcp_server.py
 
-# Terminal 2: Start frontend (Next.js on port 3000)
+# Terminal 2: Start Frontend (Next.js on port 3000)
 npm run dev
 
-# Visit http://localhost:3000/chat and start building!
+# Visit http://localhost:3000 to see the Dashboard!
 ```
 
 ## ✅ What's Working
@@ -66,55 +66,77 @@ npm run dev
 - **Audit Logging**: Complete JSONL-based compliance trail
 - **Mock Mode**: Full functionality without external API credentials
 
-### Frontend (100% Complete) ⭐ v0.7.0
-- **Chat Interface**: Production-ready conversational UI at `/chat`
-  - ✅ Clean message thread with smooth animations
-  - ✅ User/Assistant message differentiation with avatars
-  - ✅ Real-time connection status indicator
-  - ✅ Typing indicators during processing
-  - ✅ Loading states and error handling
-  - ✅ Empty state with suggestion chips
-  - ✅ Keyboard shortcuts (Enter to send, Shift+Enter for newline)
-  - ✅ Responsive design with Tailwind CSS
-  - ✅ Enhanced markdown rendering with GFM support
-  - ✅ Code syntax highlighting (Prism with GitHub Dark theme)
-  - ✅ Rich tool result cards (Notion/GitHub branded)
-- **Backlog View**: Comprehensive story management at `/backlog`
-  - ✅ Story cards with priority/status badges
-  - ✅ Filter sidebar (priority, status, epic)
-  - ✅ Real-time search across all fields
-  - ✅ Mobile-responsive with collapsible filters
-  - ✅ Direct links to Notion pages and GitHub issues
+### Frontend (MVP Complete) ⭐ v0.8.1
+- **Design System**: Professional Ravenhelm dark theme
+  - ✅ Shadcn UI component library
+  - ✅ Custom color palette (bg-0/1/2, fg-0/1/2, blue-600, cyan-400)
+  - ✅ CSS variables for consistent theming
+  - ✅ Lucide React icons throughout
+- **Global Navigation**: Persistent app shell
+  - ✅ TopNav with org switcher, app menu, user dropdown
+  - ✅ LeftNav with collapsible sidebar (responsive - hidden on mobile)
+  - ✅ Organization switcher modal (stub)
+  - ✅ App launcher modal (Forge AI, Crucible AI, DIS)
+- **Dashboard** (`/`): Command center
+  - ✅ Metric cards (Organizations, Projects, Instances, Artifacts)
+  - ✅ System status with API integration monitoring
+  - ✅ Recent activity feed (empty state)
+- **Projects** (`/projects`): Project management
+  - ✅ Table with search and filter controls
+  - ✅ Empty state with CTA
+  - ✅ Ready for CRUD implementation
+- **Instances** (`/instances`): Agent instance monitoring (stub)
+- **Artifacts** (`/artifacts`): Generated artifact browser (stub)
+- **Chat Interface** (`/chat`): AI conversation
+  - ✅ Migrated to work within app shell
+  - ✅ Enhanced markdown rendering with syntax highlighting
+  - ✅ Real-time connection status
+  - ✅ Voice integration toggle (LiveKit)
+  - ✅ WebSocket communication with fallback
 - **State Management**: Zustand store with session tracking
-- **API Integration**: Proxy layer connecting to MCP server
-- **Artifact Display**: Story and issue creation confirmation cards
-- **Professional Styling**: Gradient headers, smooth transitions, modern UI
+- **Responsive Design**: Mobile-first with tablet/desktop breakpoints
 
 ## Architecture
 
 ```
-┌──────────────────┐
-│  Next.js UI      │ ← Fully styled chat interface with Tailwind
-│  (Port 3000)     │   Message thread, input, connection status
-└────────┬─────────┘
-         │ HTTP/REST
-┌────────▼─────────┐
-│   MCP Server     │ ← FastAPI orchestration layer
-│   (Port 8001)    │   8 RESTful endpoints + health checks
-└────────┬─────────┘
-         │
-┌────────▼─────────┐
-│ LangGraph Agent  │ ← GPT-4 powered state machine
-│  (pm_graph.py)   │   Sophisticated workflow with validation
-└────────┬─────────┘
-         │
-┌────────▼─────────┐
-│   Tool Layer     │
-├──────────────────┤
-│ • Notion API     │ ← Story management (mock available)
-│ • GitHub API     │ ← Issue tracking (mock available)
-│ • Audit Logs     │ ← Compliance trail
-└──────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                     Next.js UI (Port 3000)                   │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ Global App Shell - Shadcn Components + Ravenhelm     │   │
+│  ├──────────────────────────────────────────────────────┤   │
+│  │ TopNav: Org Switcher | App Menu | User Menu         │   │
+│  ├────────┬─────────────────────────────────────────────┤   │
+│  │LeftNav │ Dashboard  | Projects | Instances | Chat   │   │
+│  │        │ Artifacts  | Admin    | More...            │   │
+│  └────────┴─────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ HTTP/REST + WebSocket
+┌───────────────────────────▼─────────────────────────────────┐
+│              Backend Server (Port 8000)                      │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ FastAPI Orchestration Layer                          │   │
+│  │ • RESTful API endpoints                              │   │
+│  │ • WebSocket for real-time chat                       │   │
+│  │ • Health checks & status monitoring                  │   │
+│  └──────────────────────┬───────────────────────────────┘   │
+└───────────────────────────┼─────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│              LangGraph PM Agent (pm_graph.py)                │
+│  GPT-4 Powered State Machine with:                          │
+│  • Understand → Clarify → Validate → Plan → Execute         │
+│  • Multi-turn clarification loops                           │
+│  • Structured task extraction                               │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│                      Tool & Integration Layer                │
+├──────────────────────────────────────────────────────────────┤
+│ • Notion API     - Story management (mock available)         │
+│ • GitHub API     - Issue tracking (mock available)           │
+│ • LiveKit        - Voice agent infrastructure                │
+│ • Audit Logs     - Compliance trail                          │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ## Key Features
@@ -128,6 +150,20 @@ npm run dev
 - **📊 Audit Trail**: Complete logging of all operations
 - **🧪 Mock Mode**: Test without real API credentials
 - **⚡ Fast Performance**: Optimized with proper caching and state management
+
+## UI Navigation
+
+**Main Pages:**
+- **Dashboard** (`/`) - Overview with metrics, system status, and activity
+- **Projects** (`/projects`) - Project management (stub - ready for implementation)
+- **Instances** (`/instances`) - Running agent instances (stub)
+- **Artifacts** (`/artifacts`) - Generated artifacts browser (stub)
+- **Chat** (`/chat`) - AI-powered conversation interface
+
+**Navigation:**
+- **TopNav** - Organization switcher, app launcher, user menu
+- **LeftNav** - Main navigation (responsive - hidden on mobile)
+- **Modals** - Org switcher and app launcher overlays
 
 ## Demo Scenarios
 
