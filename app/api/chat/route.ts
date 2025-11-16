@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const MCP_SERVER_URL = process.env.MCP_SERVER_URL || 'http://localhost:8001';
-
+/**
+ * HTTP Fallback Chat Endpoint
+ * 
+ * Used when WebSocket connection is not available.
+ * Forwards requests to the backend /api/agent/process endpoint.
+ * 
+ * @route POST /api/chat
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -14,71 +20,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Forward request to MCP server
-    const response = await fetch(`${MCP_SERVER_URL}/api/agent/process`, {
+    // Use BACKEND_URL from environment (defined in .env.local)
+    const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) {
+      throw new Error('BACKEND_URL not configured');
+    }
+
+    console.log(`[API /api/chat] Forwarding to ${backendUrl}/api/agent/process`);
+
+    const response = await fetch(`${backendUrl}/api/agent/process`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message,
-        session_id: sessionId || 'default',
-        message_history: messageHistory || []
-      }),
+        session_id: sessionId,
+        message_history: messageHistory
+      })
     });
 
     if (!response.ok) {
-      console.error('MCP server error:', response.status, response.statusText);
-      
-      // Try to parse error response
-      let errorMessage = 'Failed to process request';
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.error || errorMessage;
-      } catch {
-        // If response isn't JSON, use status text
-        errorMessage = `MCP server error: ${response.statusText}`;
-      }
-
-      return NextResponse.json(
-        { error: errorMessage },
-        { status: response.status }
-      );
+      const errorText = await response.text();
+      console.error(`[API /api/chat] Backend error ${response.status}:`, errorText);
+      throw new Error(`Backend error: ${response.status}`);
     }
 
     const data = await response.json();
-
-    // Transform response for frontend
-    const transformedResponse = {
-      response: data.response || 'Processing your request...',
-      artifacts: data.artifacts || [],
-      requiresClarification: data.requires_clarification || false,
-      clarificationPrompt: data.clarification_prompt,
-      currentState: data.current_state,
-      sessionId: data.session_id || sessionId
-    };
-
-    return NextResponse.json(transformedResponse);
     
+    return NextResponse.json({
+      response: data.response,
+      artifacts: data.artifacts,
+      currentState: data.current_state
+    });
+
   } catch (error) {
-    console.error('API route error:', error);
-    
-    // Check if MCP server is unreachable
-    if (error instanceof Error && error.message.includes('fetch')) {
-      return NextResponse.json(
-        { 
-          error: 'Cannot connect to MCP server. Please ensure the server is running on port 8001.',
-          details: error.message
-        },
-        { status: 503 }
-      );
-    }
-
+    console.error('[API /api/chat] Error:', error);
     return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }
@@ -87,21 +64,29 @@ export async function POST(request: NextRequest) {
 // Health check endpoint
 export async function GET(request: NextRequest) {
   try {
-    // Check MCP server health
-    const response = await fetch(`${MCP_SERVER_URL}/health`);
+    const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) {
+      return NextResponse.json({
+        status: 'misconfigured',
+        error: 'BACKEND_URL not configured'
+      }, { status: 503 });
+    }
+
+    // Check backend health
+    const response = await fetch(`${backendUrl}/health`);
     
     if (response.ok) {
       const data = await response.json();
       return NextResponse.json({
         status: 'healthy',
-        mcp_server: data,
+        backend: data,
         api_version: '1.0.0'
       });
     }
 
     return NextResponse.json({
       status: 'degraded',
-      mcp_server: 'unreachable',
+      backend: 'unreachable',
       api_version: '1.0.0'
     });
     

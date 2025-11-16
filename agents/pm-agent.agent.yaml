@@ -64,43 +64,43 @@ spec:
     
     nodes:
       - id: understand
-        handler: pm_graph.PMAgent.understand_task
+        handler: agents.workers.pm_agent.PMAgent.process
         description: Parse and understand user requirements
         next: [clarify, validate, error]
         timeout_seconds: 30
 
       - id: clarify
-        handler: pm_graph.PMAgent.request_clarification
+        handler: agents.workers.pm_agent.PMAgent.process
         description: Request additional information from user
         next: [validate]
         timeout_seconds: 5
 
       - id: validate
-        handler: pm_graph.PMAgent.validate_requirements
+        handler: agents.workers.pm_agent.PMAgent.process
         description: Validate all required information is present
         next: [plan, clarify, error]
         timeout_seconds: 10
 
       - id: plan
-        handler: pm_graph.PMAgent.plan_execution
+        handler: agents.workers.pm_agent.PMAgent.process
         description: Plan the story creation steps
         next: [create_story]
         timeout_seconds: 15
 
       - id: create_story
-        handler: pm_graph.PMAgent.create_story
+        handler: agents.workers.pm_agent.PMAgent.process
         description: Create story in Notion
         next: [complete, error]
         timeout_seconds: 60
 
       - id: complete
-        handler: pm_graph.PMAgent.complete_task
+        handler: agents.workers.pm_agent.PMAgent.process
         description: Finalize and summarize created artifacts
         next: [END]
         timeout_seconds: 10
 
       - id: error
-        handler: pm_graph.PMAgent.handle_error
+        handler: agents.workers.pm_agent.PMAgent.process
         description: Handle errors gracefully
         next: [END]
         timeout_seconds: 5

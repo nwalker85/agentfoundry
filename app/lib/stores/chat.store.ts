@@ -74,7 +74,7 @@ export const useChatStore = create<ChatStore>()(
           return;
         }
         
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8001';
+        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
         const fullUrl = `${wsUrl}/ws/chat?session_id=${context.sessionId}`;
         
         console.log('[Chat Store] Initializing WebSocket:', fullUrl);

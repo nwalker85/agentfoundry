@@ -1,10 +1,10 @@
 # LiveKit Docker Migration - Complete
 
-## Status: ✅ Configuration Complete, Ready to Start
+## Status: ✅ COMPLETE - Voice Integration Validated
 
-**Date:** November 15, 2025  
-**Version:** 0.8.0-dev  
-**Commit:** 5dd59bd
+**Date:** November 16, 2025  
+**Version:** 0.8.0 Release Candidate  
+**Validation:** See docs/artifacts/VOICE_INTEGRATION_VALIDATION.md
 
 ## Changes Applied
 
@@ -227,3 +227,36 @@ open http://localhost:3000/chat
 ---
 
 **Status:** Ready to execute validation checklist above
+
+## Issues Encountered
+
+### Issue #1: Missing langchain-anthropic Dependency (Nov 16, 2025)
+
+**Symptom:** Backend container fails to start with:
+```
+ModuleNotFoundError: No module named 'langchain_anthropic'
+```
+
+**Root Cause:** Docker container built before LangChain 1.0 upgrade dependencies were finalized. The `requirements.txt` includes `langchain-anthropic==1.0.4` but the container image wasn't rebuilt.
+
+**Resolution:**
+```bash
+cd /Users/nwalker/Development/Projects/agentfoundry
+docker-compose build foundry-backend
+docker-compose up -d foundry-backend
+```
+
+**Prevention:** Always rebuild containers after dependency changes:
+```bash
+# After any requirements.txt change
+docker-compose build
+docker-compose up -d
+```
+
+**Verification:**
+```bash
+# Backend should start successfully
+docker-compose logs foundry-backend | tail -20
+
+# Should see Uvicorn startup, not ModuleNotFoundError
+```

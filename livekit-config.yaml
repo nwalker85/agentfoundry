@@ -7,8 +7,8 @@ bind_addresses:
 
 rtc:
   # Port range for WebRTC connections
-  port_range_start: 50000
-  port_range_end: 60000
+  port_range_start: 40000
+  port_range_end: 40100
   
   # Use TCP fallback for restricted networks
   tcp_port: 7882
@@ -16,10 +16,8 @@ rtc:
   # TURN server for NAT traversal
   use_external_ip: true
   
-  # ICE servers (STUN/TURN)
-  ice_servers:
-    - urls:
-        - stun:stun.l.google.com:19302
+  stun_servers:
+    - stun.l.google.com:19302
 
 redis:
   address: redis:6379
@@ -29,7 +27,7 @@ redis:
 keys:
   # Format: API_KEY: API_SECRET
   # Populated from LIVEKIT_KEYS env var
-
+ 
 # Logging
 logging:
   level: info
@@ -46,7 +44,6 @@ room:
   empty_timeout: 300
   
   # Max room duration (seconds) - 4 hours
-  max_duration: 14400
 
 # Development mode (disable for production)
 development: true

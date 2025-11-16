@@ -65,7 +65,7 @@ const store = create<ChatStore>()(
       
       // Initialize WebSocket on mount
       initializeWebSocket: () => {
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8001/ws/chat';
+        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws/chat';
         const sessionId = get().context.sessionId;
         
         const transport = getWebSocketTransport({

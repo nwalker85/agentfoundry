@@ -222,9 +222,9 @@ GITHUB_DEFAULT_BRANCH=main
 # Development settings (defaults shown)
 ENVIRONMENT=development
 TENANT_ID=default
-MCP_SERVER_PORT=8001
-NEXT_PUBLIC_API_URL=http://localhost:8001
-NEXT_PUBLIC_WS_URL=ws://localhost:8001
+MCP_SERVER_PORT=8000
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
 
 ## API Endpoints

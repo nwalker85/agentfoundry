@@ -1,0 +1,45 @@
+# Development overrides for Agent Foundry
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  # Backend - ensure reload is explicit
+  foundry-backend:
+    command: >
+      python -m uvicorn backend.main:app
+      --host 0.0.0.0
+      --port ${BACKEND_PORT:-8000}
+      --reload
+      --reload-dir backend
+      --reload-dir agent
+      --log-level debug
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+
+  # Frontend - explicit dev mode
+  agent-foundry-ui:
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+
+  # Compiler - auto-reload on changes
+  foundry-compiler:
+    command: >
+      python -m uvicorn compiler.main:app
+      --host 0.0.0.0
+      --port ${COMPILER_PORT:-8002}
+      --reload
+      --reload-dir compiler
+      --log-level debug
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+
+  # Voice worker - auto-reload
+  voice-agent-worker:
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG

@@ -8,17 +8,12 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Copy and install Python dependencies
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install compiler-specific dependencies
-RUN pip install --no-cache-dir \
-    pyyaml \
-    pydantic \
-    python-multipart
+# Install compiler-specific dependency (only one not in requirements.txt)
+RUN pip install --no-cache-dir python-multipart
 
 # Copy compiler code
 COPY compiler/ ./compiler/

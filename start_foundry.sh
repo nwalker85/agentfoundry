@@ -1,45 +1,15 @@
 #!/bin/bash
-# Agent Foundry - Start with Homebrew LiveKit
-# Backend + Compiler in Docker, Frontend runs locally
+# Agent Foundry - Development Start Script
+# Starts all services with hot reload enabled
 
 set -e
 
-echo "🏗️  Agent Foundry - Quick Start"
-echo "================================"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+echo "🏭 Agent Foundry - Development Mode"
+echo "===================================="
 echo ""
-
-# Check if LiveKit is running
-echo "🔍 Checking LiveKit..."
-if ! curl -s http://localhost:7880 > /dev/null 2>&1; then
-    echo "❌ LiveKit not detected on port 7880"
-    echo ""
-    echo "Please start LiveKit first:"
-    echo "  livekit-server --dev"
-    echo ""
-    exit 1
-else
-    echo "✅ LiveKit running on port 7880"
-fi
-
-# Check if .env.local exists
-if [ ! -f .env.local ]; then
-    echo "❌ No .env.local found!"
-    echo "Please create .env.local with required variables"
-    exit 1
-fi
-
-# Create symlink from .env to .env.local (docker-compose needs .env)
-if [ ! -f .env ]; then
-    echo "🔗 Creating .env symlink to .env.local..."
-    ln -s .env.local .env
-fi
-
-# Check for OpenAI API key
-if ! grep -q "^OPENAI_API_KEY=sk-" .env.local; then
-    echo "⚠️  OpenAI API key not set in .env.local"
-    echo "Please add your OpenAI API key before starting."
-    exit 1
-fi
 
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
@@ -50,82 +20,143 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
+# Check for required env file
+if [ ! -f .env.local ]; then
+    echo "⚠️  .env.local not found, copying from .env.example..."
+    if [ -f .env.example ]; then
+        cp .env.example .env.local
+        echo "✅ Created .env.local - please add your API keys"
+        echo ""
+    else
+        echo "❌ No .env.example found. Please create .env.local manually."
+        exit 1
+    fi
+fi
+
+# Create symlink for docker-compose
+if [ ! -f .env ] || [ ! -L .env ]; then
+    echo "🔗 Creating .env symlink..."
+    rm -f .env
+    ln -s .env.local .env
+fi
+
+# Check for required API keys
+if ! grep -q "^OPENAI_API_KEY=sk-" .env.local; then
+    echo "⚠️  Warning: OPENAI_API_KEY not set in .env.local"
+fi
+
+if ! grep -q "^LIVEKIT_API_KEY=" .env.local; then
+    echo "⚠️  Warning: LIVEKIT_API_KEY not set in .env.local"
+fi
+
 echo ""
-echo "🐳 Starting Docker services (Backend, Compiler, Redis)..."
+echo "🐳 Starting Agent Foundry services..."
+echo ""
+echo "Mode: Development (hot reload enabled)"
+echo "Compose files: docker-compose.yml + docker-compose.dev.yml"
 echo ""
 
-# Build and start services
-docker-compose up --build -d
+# Check if we should use dev override
+if [ -f docker-compose.dev.yml ]; then
+    COMPOSE_CMD="docker-compose -f docker-compose.yml -f docker-compose.dev.yml"
+    echo "✅ Using development overrides"
+else
+    COMPOSE_CMD="docker-compose"
+    echo "ℹ️  No docker-compose.dev.yml found, using standard config"
+fi
+
+# Start services
+echo ""
+$COMPOSE_CMD up -d
 
 echo ""
-echo "⏳ Waiting for services to start..."
-sleep 8
+echo "⏳ Waiting for services to initialize..."
+sleep 10
 
 # Health checks
 echo ""
-echo "🏥 Health Checks:"
+echo "🏥 Service Health:"
 echo "=================="
 
-# LiveKit (external)
-echo "✅ LiveKit Server    - http://localhost:7880 (Homebrew)"
+# Function to check HTTP endpoint
+check_http() {
+    local url=$1
+    local name=$2
+    if curl -sf "$url" > /dev/null 2>&1; then
+        echo "✅ $name"
+        return 0
+    else
+        echo "⏳ $name (starting...)"
+        return 1
+    fi
+}
 
-# Redis
-if docker-compose exec -T redis redis-cli ping > /dev/null 2>&1; then
-    echo "✅ Redis             - localhost:6379"
-else
-    echo "❌ Redis             - FAILED"
-fi
+# Function to check container health
+check_container() {
+    local service=$1
+    local name=$2
+    local health=$(docker-compose ps -q $service | xargs docker inspect --format='{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
+    if [ "$health" = "healthy" ]; then
+        echo "✅ $name"
+        return 0
+    elif [ "$health" = "starting" ]; then
+        echo "⏳ $name (starting...)"
+        return 1
+    else
+        echo "❌ $name (unhealthy or no healthcheck)"
+        return 1
+    fi
+}
 
-# Backend
-if curl -s http://localhost:8000/health > /dev/null 2>&1; then
-    echo "✅ Backend API       - http://localhost:8000"
-else
-    echo "⏳ Backend API       - Starting... (check logs: docker-compose logs foundry-backend)"
-fi
-
-# Compiler
-if curl -s http://localhost:8002/health > /dev/null 2>&1; then
-    echo "✅ Compiler API      - http://localhost:8002"
-else
-    echo "⏳ Compiler API      - Starting... (check logs: docker-compose logs foundry-compiler)"
-fi
+# Check services
+check_container livekit "LiveKit Server    - ws://localhost:7880"
+check_container redis "Redis             - localhost:6379"
+check_http "http://localhost:8000/health" "Backend API       - http://localhost:8000"
+check_http "http://localhost:8002/health" "Compiler API      - http://localhost:8002"
+check_http "http://localhost:3000" "Frontend UI       - http://localhost:3000" || echo "⏳ Frontend UI      - Not started yet"
 
 echo ""
-echo "🎉 Docker services running!"
-echo "=============================="
+echo "🎯 Development Environment Ready!"
+echo "===================================="
 echo ""
 echo "📍 Service URLs:"
+echo "  Frontend:   http://localhost:3000"
 echo "  Backend:    http://localhost:8000"
 echo "  Compiler:   http://localhost:8002"
-echo "  LiveKit:    ws://localhost:7880 (Homebrew)"
+echo "  LiveKit:    ws://localhost:7880"
 echo "  Redis:      localhost:6379"
 echo ""
-echo "▶️  Start Frontend (Next.js):"
-echo "  npm run dev"
-echo "  # Opens on http://localhost:3000"
+echo "🔥 Hot Reload Enabled:"
+echo "  Backend:    Edit backend/*.py  → auto-reload (2-3s)"
+echo "  Frontend:   Edit app/*.tsx     → instant (Fast Refresh)"
+echo "  Agent:      Edit agent/*.py    → auto-reload (2-3s)"
+echo "  Compiler:   Restart manually or use dev override"
 echo ""
-echo "🧪 Quick Tests:"
-echo "  # Voice session"
-echo "  curl -X POST http://localhost:8000/api/voice/session \\"
-echo "    -H 'Content-Type: application/json' \\"
-echo "    -d '{\"user_id\":\"nate\",\"agent_id\":\"pm-agent\"}'"
+echo "📝 Workflow:"
+echo "  1. Edit files in your editor"
+echo "  2. Save → changes auto-reload in containers"
+echo "  3. No rebuild needed for code changes!"
 echo ""
-echo "  # List agents"
-echo "  curl http://localhost:8000/api/agents"
+echo "📊 View Logs:"
+echo "  docker-compose logs -f foundry-backend"
+echo "  docker-compose logs -f agent-foundry-ui"
+echo "  docker-compose logs -f voice-agent-worker"
+echo "  docker-compose logs -f  # All services"
 echo ""
-echo "  # Compiler health"
-echo "  curl http://localhost:8002/health"
+echo "🔄 Restart Single Service:"
+echo "  docker-compose restart foundry-backend"
+echo ""
+echo "🛑 Stop All Services:"
+echo "  docker-compose down"
+echo ""
+echo "🔧 Rebuild (only when dependencies change):"
+echo "  docker-compose build foundry-backend"
+echo "  docker-compose up -d foundry-backend"
 echo ""
 echo "📚 Documentation:"
-echo "  - START_HERE.md           - Quick start guide"
-echo "  - LIVEKIT_SETUP.md        - LiveKit integration"
-echo "  - INFRASTRUCTURE_STATUS.md - Current status"
+echo "  DOCKER_DEV_WORKFLOW.md - Complete workflow guide"
+echo "  START_HERE.md          - Project overview"
+echo "  LIVEKIT_DOCKER_MIGRATION.md - LiveKit setup"
 echo ""
-echo "🛑 To stop:"
-echo "  docker-compose down"
-echo "  # (Stop livekit-server and npm run dev separately)"
-echo ""
-echo "📜 To view logs:"
-echo "  docker-compose logs -f [service]"
-echo "  # Services: redis, foundry-backend, foundry-compiler"
+echo "✨ Happy coding! Edit files and watch them reload."
 echo ""
