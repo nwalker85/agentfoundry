@@ -6,13 +6,15 @@ A FastAPI-based server implementing Model Context Protocol with tool endpoints.
 import os
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException, Depends, Header, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from dotenv import load_dotenv
 import uvicorn
+from livekit.api import AccessToken, VideoGrants
 
 from mcp.schemas import (
     CreateStoryRequest, CreateStoryResponse,
@@ -89,7 +91,12 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -218,6 +225,120 @@ async def agent_chat(
                 tool="pm_agent", 
                 action="chat",
                 input_data={"message": message if 'message' in locals() else None},
+                output_data=None,
+                result="failure",
+                error=str(e)
+            )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============= LiveKit Voice Endpoints =============
+
+class VoiceSessionRequest(BaseModel):
+    user_id: str
+    agent_id: str
+    session_duration_hours: int = 4
+
+
+class VoiceSessionResponse(BaseModel):
+    token: str
+    livekit_url: str
+    room_name: str
+
+
+@app.post("/api/voice/session", response_model=VoiceSessionResponse)
+async def create_voice_session(
+    request: VoiceSessionRequest,
+    actor: str = Depends(verify_auth)
+):
+    """Create a LiveKit voice session for agent conversation."""
+    try:
+        # Get LiveKit credentials from environment
+        livekit_url = os.getenv("LIVEKIT_PUBLIC_URL", "ws://localhost:7880")
+        livekit_api_key = os.getenv("LIVEKIT_API_KEY", "devkey")
+        livekit_api_secret = os.getenv("LIVEKIT_API_SECRET", "secret")
+        
+        # Generate unique room name
+        room_name = f"foundry-{request.agent_id}-{request.user_id}-{int(time.time())}"
+        
+        # Create access token
+        token = AccessToken(livekit_api_key, livekit_api_secret)
+        token.with_identity(request.user_id)
+        token.with_name(f"User {request.user_id}")
+        token.with_grants(
+            VideoGrants(
+                room_join=True,
+                room=room_name,
+                can_publish=True,
+                can_subscribe=True
+            )
+        )
+        
+        # Set token TTL
+        token.with_ttl(timedelta(hours=request.session_duration_hours))
+        
+        # Log session creation
+        if audit_tool:
+            await audit_tool.log_action(
+                actor=actor,
+                tool="livekit",
+                action="create_session",
+                input_data={
+                    "user_id": request.user_id,
+                    "agent_id": request.agent_id,
+                    "room_name": room_name
+                },
+                output_data={"room_name": room_name},
+                result="success"
+            )
+        
+        return VoiceSessionResponse(
+            token=token.to_jwt(),
+            livekit_url=livekit_url,
+            room_name=room_name
+        )
+        
+    except Exception as e:
+        if audit_tool:
+            await audit_tool.log_action(
+                actor=actor,
+                tool="livekit",
+                action="create_session",
+                input_data={"user_id": request.user_id, "agent_id": request.agent_id},
+                output_data=None,
+                result="failure",
+                error=str(e)
+            )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/voice/session/{room_name}")
+async def delete_voice_session(
+    room_name: str,
+    actor: str = Depends(verify_auth)
+):
+    """End a LiveKit voice session."""
+    try:
+        # Log session end
+        if audit_tool:
+            await audit_tool.log_action(
+                actor=actor,
+                tool="livekit",
+                action="delete_session",
+                input_data={"room_name": room_name},
+                output_data=None,
+                result="success"
+            )
+        
+        return {"status": "session_ended", "room_name": room_name}
+        
+    except Exception as e:
+        if audit_tool:
+            await audit_tool.log_action(
+                actor=actor,
+                tool="livekit",
+                action="delete_session",
+                input_data={"room_name": room_name},
                 output_data=None,
                 result="failure",
                 error=str(e)

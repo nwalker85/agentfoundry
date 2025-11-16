@@ -1,15 +1,15 @@
-# Engineering Department
+# Agent Foundry
 
-An autonomous software development lifecycle (SDLC) control plane that orchestrates AI agents to handle the complete development process from requirements gathering through deployment.
+**Heroku for AI Agents** - A platform for deploying and managing AI agents with voice capabilities. Upload DIS dossiers to get instant voice-enabled agent demos.
 
 ## Project Status
 
-**Current Phase:** Phase 5 - Enhanced UI & Feature Complete ✅  
-**Version:** 0.7.0  
-**Status:** **All core UI features complete - Production ready**
+**Current Phase:** Platform + LiveKit Integration  
+**Version:** 0.8.0-dev  
+**Status:** **Development - Rebranding to Agent Foundry**
 
-### Latest Achievement (Nov 12, 2025)
-🎉 **v0.7.0 Complete** - Enhanced markdown rendering, code highlighting, rich tool cards, and comprehensive backlog view with filtering now operational. All POC requirements met.
+### Latest Achievement (Nov 15, 2025)
+🎉 **v0.8.0-dev** - Rebranding to Agent Foundry platform. Preparing for LiveKit voice integration and DIS compiler implementation.
 
 ## 🚀 Quick Start
 
@@ -24,7 +24,7 @@ An autonomous software development lifecycle (SDLC) control plane that orchestra
 
 ```bash
 # Clone and navigate to project
-cd "/Users/nwalker/Development/Projects/Engineering Department/engineeringdepartment"
+cd "/Users/nwalker/Development/Projects/agentfoundry"
 
 # Set up Python environment
 python3 -m venv venv
@@ -222,9 +222,9 @@ GITHUB_DEFAULT_BRANCH=main
 # Development settings (defaults shown)
 ENVIRONMENT=development
 TENANT_ID=default
-MCP_SERVER_PORT=8001
-NEXT_PUBLIC_API_URL=http://localhost:8001
-NEXT_PUBLIC_WS_URL=ws://localhost:8001
+MCP_SERVER_PORT=8000
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
 
 ## API Endpoints
@@ -373,5 +373,5 @@ Private - Internal Use Only
 **Frontend Chat:** http://localhost:3000/chat  
 **Status Dashboard:** http://localhost:3000  
 **Backlog View:** http://localhost:3000/backlog  
-**Last Updated:** November 12, 2025 - v0.7.0 Feature Complete  
-**Version:** 0.7.0
+**Last Updated:** November 15, 2025 - v0.8.0-dev Agent Foundry Rebrand  
+**Version:** 0.8.0-dev

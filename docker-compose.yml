@@ -1,0 +1,183 @@
+services:
+  # LiveKit Server - Voice/video infrastructure
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --config /etc/livekit.yaml --dev
+    ports:
+      - "${LIVEKIT_HTTP_PORT:-7880}:${LIVEKIT_HTTP_PORT:-7880}"     # HTTP/WebSocket
+      - "${LIVEKIT_RTC_TCP_PORT:-7881}:${LIVEKIT_RTC_TCP_PORT:-7881}"     # RTC over TCP
+      - "${LIVEKIT_TCP_FALLBACK_PORT:-7882}:${LIVEKIT_TCP_FALLBACK_PORT:-7882}"  # TCP fallback
+      - "${LIVEKIT_UDP_PORT_START:-40000}-${LIVEKIT_UDP_PORT_END:-40100}:${LIVEKIT_UDP_PORT_START:-40000}-${LIVEKIT_UDP_PORT_END:-40100}/udp"  # WebRTC UDP
+    volumes:
+      - ./livekit-config.yaml:/etc/livekit.yaml:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - foundry
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${LIVEKIT_HTTP_PORT:-7880}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis - State management for LangGraph + LiveKit
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:${REDIS_PORT:-6379}"
+    volumes:
+      - redis-data:/data
+    networks:
+      - foundry
+    command: redis-server --appendonly yes --port ${REDIS_PORT:-6379}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "${REDIS_PORT:-6379}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Agent Foundry UI - Next.js Frontend with LiveKit integration
+  agent-foundry-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      # Mount source for hot reload (everything except node_modules)
+      - ./app:/app/app
+      - ./public:/app/public
+      - ./styles:/app/styles
+      - ./lib:/app/lib
+      - ./components:/app/components
+      - ./hooks:/app/hooks
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./next.config.js:/app/next.config.js
+      - ./tailwind.config.ts:/app/tailwind.config.ts
+      - ./postcss.config.js:/app/postcss.config.js
+      # Prevent overwriting node_modules
+      - /app/node_modules
+      - /app/.next
+    environment:
+      # Public URLs for browser (localhost)
+      - NEXT_PUBLIC_API_URL=http://localhost:${BACKEND_PORT:-8000}
+      - NEXT_PUBLIC_WS_URL=ws://localhost:${BACKEND_PORT:-8000}
+      - NEXT_PUBLIC_LIVEKIT_URL=ws://localhost:${LIVEKIT_HTTP_PORT:-7880}
+      # Server-side URL for API routes (Docker network)
+      - BACKEND_URL=http://foundry-backend:${BACKEND_PORT:-8000}
+      # API Keys (for server-side API routes)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # Feature flags
+      - NEXT_PUBLIC_ENABLE_WEBSOCKET=true
+    depends_on:
+      foundry-backend:
+        condition: service_started
+      livekit:
+        condition: service_healthy
+    networks:
+      - foundry
+
+  # Foundry Backend - FastAPI MCP Server + LangGraph agents + LiveKit integration
+  foundry-backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"   # FastAPI HTTP
+      - "${BACKEND_WS_PORT:-8001}:${BACKEND_WS_PORT:-8001}"   # WebSocket
+    volumes:
+      - ./backend:/app/backend
+      - ./agent:/app/agent
+      - ./agents:/app/agents
+      - ./data:/app/data
+      - ./mcp:/app/mcp
+    environment:
+      # Port Configuration
+      - PORT=${BACKEND_PORT:-8000}
+      - WS_PORT=${BACKEND_WS_PORT:-8001}
+      # LiveKit
+      - LIVEKIT_URL=ws://livekit:${LIVEKIT_HTTP_PORT:-7880}
+      - LIVEKIT_PUBLIC_URL=${LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      - LIVEKIT_HTTP_PORT=${LIVEKIT_HTTP_PORT:-7880}
+      # Redis
+      - REDIS_URL=redis://redis:${REDIS_PORT:-6379}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      # Database
+      - DATABASE_URL=sqlite:///data/foundry.db
+      # API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NOTION_API_TOKEN=${NOTION_API_TOKEN}
+      - NOTION_DATABASE_STORIES_ID=${NOTION_DATABASE_STORIES_ID}
+      - NOTION_DATABASE_EPICS_ID=${NOTION_DATABASE_EPICS_ID}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - GITHUB_DEFAULT_BRANCH=${GITHUB_DEFAULT_BRANCH}
+    depends_on:
+      redis:
+        condition: service_healthy
+      livekit:
+        condition: service_healthy
+    networks:
+      - foundry
+
+  # Foundry Compiler - DIS Parser + Agent YAML Generator
+  foundry-compiler:
+    build:
+      context: .
+      dockerfile: compiler/Dockerfile
+    ports:
+      - "${COMPILER_PORT:-8002}:${COMPILER_PORT:-8002}"
+    volumes:
+      - ./compiler:/app/compiler
+      - ./agents:/app/agents
+      - ./data:/app/data
+    environment:
+      - PORT=${COMPILER_PORT:-8002}
+      - DATABASE_URL=sqlite:///data/foundry.db
+      - DIS_SCHEMA_URL=https://schemas.domainintelligenceschema.org/dis/1.6.0
+    networks:
+      - foundry
+
+  # Voice Agent Worker - LiveKit agent that processes audio through LangGraph
+  voice-agent-worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: python backend/voice_agent_worker.py start
+    volumes:
+      - ./backend:/app/backend
+      - ./agent:/app/agent
+      - ./agents:/app/agents
+      - ./data:/app/data
+    environment:
+      # LiveKit Connection
+      - LIVEKIT_URL=ws://livekit:${LIVEKIT_HTTP_PORT:-7880}
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      - LIVEKIT_HTTP_PORT=${LIVEKIT_HTTP_PORT:-7880}
+      # MCP Connection (for agent to call backend APIs)
+      - MCP_BASE_URL=http://foundry-backend:${BACKEND_PORT:-8000}
+      # STT/TTS API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+    depends_on:
+      livekit:
+        condition: service_healthy
+      foundry-backend:
+        condition: service_started
+    networks:
+      - foundry
+    restart: unless-stopped
+
+networks:
+  foundry:
+    driver: bridge
+
+volumes:
+  redis-data:

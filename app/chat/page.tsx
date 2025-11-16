@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageInput } from './components/MessageInput';
 import { ConnectionStatus } from './components/ConnectionStatus';
+import { VoiceToggle } from './components/VoiceToggle';
 import { EnhancedMessage } from '@/components/messages/EnhancedMessage';
 import { useChatStore } from '@/lib/stores/chat.store';
 import { Toaster, toast } from 'sonner';
@@ -22,6 +23,19 @@ export default function ChatPage() {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isTyping, setIsTyping] = useState(false);
+
+  // Generate or retrieve user ID (for demo, using localStorage)
+  const [userId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      let id = localStorage.getItem('agentfoundry_user_id');
+      if (!id) {
+        id = `user_${Math.random().toString(36).substring(2, 15)}`;
+        localStorage.setItem('agentfoundry_user_id', id);
+      }
+      return id;
+    }
+    return 'user_default';
+  });
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -178,6 +192,9 @@ export default function ChatPage() {
         className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 shadow-lg"
       >
         <div className="max-w-4xl mx-auto p-4">
+          {/* Voice Toggle */}
+          <VoiceToggle userId={userId} agentId="pm-agent" />
+          
           <MessageInput 
             onSend={handleSendMessage} 
             disabled={isProcessing || connectionStatus === 'disconnected'}

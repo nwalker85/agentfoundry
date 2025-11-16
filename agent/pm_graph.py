@@ -1,43 +1,50 @@
-"""PM Agent Graph using LangGraph."""
+"""PM Agent using LangGraph 1.0 with create_react_agent pattern."""
 
 from typing import TypedDict, Annotated, Sequence, Optional, Dict, Any, List
 from datetime import datetime
-from enum import Enum
 import httpx
 import os
 
-from langgraph.graph import StateGraph, Graph, END
-from langgraph.prebuilt import ToolExecutor
+from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
 
-# State definition
-class AgentState(TypedDict):
-    """State for the PM agent."""
-    messages: Sequence[BaseMessage]
-    current_task: Optional[Dict[str, Any]]
-    epic_title: Optional[str]
-    story_title: Optional[str]
-    priority: Optional[str]
-    acceptance_criteria: Optional[List[str]]
-    definition_of_done: Optional[List[str]]
-    description: Optional[str]
-    clarifications_needed: Optional[List[str]]
-    clarification_count: int
-    story_url: Optional[str]
-    issue_url: Optional[str]
-    error_message: Optional[str]
-    next_action: Optional[str]
+# Pydantic models for structured outputs
+class StoryRequest(BaseModel):
+    """Structured story creation request."""
+    epic_title: str = Field(description="Epic title (e.g., 'User Authentication', 'Infrastructure')")
+    story_title: str = Field(description="Story title - brief, clear description")
+    priority: str = Field(description="Priority: P0=Critical, P1=High, P2=Medium, P3=Low")
+    description: str = Field(description="Detailed description of what needs to be done")
+    acceptance_criteria: List[str] = Field(
+        default_factory=lambda: [
+            "Functionality works as specified",
+            "Unit tests pass",
+            "No regression in existing features"
+        ],
+        description="List of acceptance criteria"
+    )
+    definition_of_done: List[str] = Field(
+        default_factory=lambda: [
+            "Code reviewed and approved",
+            "Tests written and passing",
+            "Documentation updated",
+            "No critical security vulnerabilities"
+        ],
+        description="Definition of done checklist"
+    )
 
 
 class PMAgent:
-    """Project Manager Agent for story creation and management."""
+    """Project Manager Agent using LangGraph 1.0 create_react_agent."""
     
     def __init__(self, mcp_base_url: str = "http://localhost:8001"):
         self.mcp_base_url = mcp_base_url
+        
+        # Initialize LLM with structured output support
         self.llm = ChatOpenAI(
             model="gpt-4",
             temperature=0.3,
@@ -53,413 +60,172 @@ class PMAgent:
             timeout=30.0
         )
         
-        # Build the graph
-        self.graph = self._build_graph()
+        # Define tools for the agent
+        self.tools = [
+            self._create_story_tool()
+        ]
+        
+        # Build the agent using create_react_agent
+        self.graph = self._build_agent()
     
-    def _build_graph(self) -> Graph:
-        """Build the LangGraph workflow."""
+    def _create_story_tool(self):
+        """Create the story creation tool."""
         
-        workflow = StateGraph(AgentState)
+        @tool
+        async def create_notion_story(
+            epic_title: str,
+            story_title: str,
+            priority: str,
+            description: str,
+            acceptance_criteria: List[str] = None,
+            definition_of_done: List[str] = None
+        ) -> str:
+            """Create a story in Notion with the given details.
+            
+            Args:
+                epic_title: The epic this story belongs to
+                story_title: Title of the story
+                priority: Priority level (P0-P3)
+                description: Detailed description
+                acceptance_criteria: List of acceptance criteria (optional)
+                definition_of_done: List of DoD items (optional)
+                
+            Returns:
+                Confirmation message with story URL
+            """
+            # Apply defaults
+            if acceptance_criteria is None:
+                acceptance_criteria = [
+                    "Functionality works as specified",
+                    "Unit tests pass",
+                    "No regression in existing features"
+                ]
+            
+            if definition_of_done is None:
+                definition_of_done = [
+                    "Code reviewed and approved",
+                    "Tests written and passing",
+                    "Documentation updated",
+                    "No critical security vulnerabilities"
+                ]
+            
+            try:
+                response = await self.client.post(
+                    "/api/tools/notion/create-story",
+                    json={
+                        "epic_title": epic_title,
+                        "story_title": story_title,
+                        "priority": priority,
+                        "acceptance_criteria": acceptance_criteria,
+                        "definition_of_done": definition_of_done,
+                        "description": description
+                    }
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                return f"✅ Story created successfully!\n\nNotion Story: {data['story_url']}\n\nThe story '{story_title}' has been added to the '{epic_title}' epic with priority {priority}."
+                
+            except Exception as e:
+                return f"❌ Failed to create story: {str(e)}"
         
-        # Add nodes
-        workflow.add_node("understand", self.understand_task)
-        workflow.add_node("clarify", self.request_clarification)
-        workflow.add_node("validate", self.validate_requirements)
-        workflow.add_node("plan", self.plan_execution)
-        workflow.add_node("create_story", self.create_story)
-        # Removed create_issue node - not needed anymore
-        workflow.add_node("complete", self.complete_task)
-        workflow.add_node("error", self.handle_error)
+        return create_notion_story
+    
+    def _build_agent(self):
+        """Build the ReAct agent using LangGraph 1.0."""
         
-        # Add edges
-        workflow.set_entry_point("understand")
+        system_prompt = """You are a Project Manager agent helping to create engineering stories in Notion.
+
+Your role:
+1. Understand what the user wants to accomplish
+2. Extract key details: epic, story title, priority, description
+3. Use the create_notion_story tool to create the story
+4. Confirm successful creation
+
+Guidelines:
+- If details are missing, make reasonable assumptions:
+  - Default epic: "Engineering Tasks"
+  - Default priority: "P2" 
+  - Use user's message for description
+- Ask for clarification only if absolutely necessary
+- Always use the tool to create the story
+- Provide clear confirmation when done
+
+Priority levels:
+- P0: Critical, blocking issues
+- P1: High priority, should be done soon
+- P2: Medium priority, normal work
+- P3: Low priority, nice to have"""
         
-        # From understand
-        workflow.add_conditional_edges(
-            "understand",
-            self.route_after_understand,
-            {
-                "clarify": "clarify",
-                "validate": "validate",
-                "error": "error"
-            }
+        # Create the ReAct agent with tools
+        graph = create_react_agent(
+            model=self.llm,
+            tools=self.tools,
+            messages_modifier=system_prompt  # LangGraph 1.x: state_modifier → messages_modifier
         )
         
-        # From clarify - go to validate instead of understand to prevent loop
-        workflow.add_edge("clarify", "validate")
-        
-        # From validate
-        workflow.add_conditional_edges(
-            "validate",
-            self.route_after_validate,
-            {
-                "plan": "plan",
-                "clarify": "clarify",
-                "error": "error"
-            }
-        )
-        
-        # From plan
-        workflow.add_edge("plan", "create_story")
-        
-        # From create_story - go directly to complete (no GitHub issues)
-        workflow.add_conditional_edges(
-            "create_story",
-            self.route_after_story,
-            {
-                "complete": "complete",  # Skip GitHub, go to complete
-                "error": "error"
-            }
-        )
-        
-        # No more create_issue edge needed
-        
-        # Terminal nodes
-        workflow.add_edge("complete", END)
-        workflow.add_edge("error", END)
-        
-        return workflow.compile()
-    
-    async def understand_task(self, state: AgentState) -> AgentState:
-        """Understand the user's task request."""
-        print("[Node: understand] Starting...")  # Debug
-        
-        messages = state["messages"]
-        
-        # Extract task details using LLM with structured output
-        prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are a Project Manager agent helping to create stories.
-            
-Analyze the user's request and extract:
-            1. Epic title (e.g., "User Authentication", "Infrastructure", "API Development")
-            2. Story title (brief, clear title for the story)
-            3. Priority (P0=Critical, P1=High, P2=Medium, P3=Low)
-            4. Description (detailed description of what needs to be done)
-            
-            If information is missing, use reasonable defaults:
-            - Epic: "Engineering Tasks"
-            - Priority: "P2"
-            - Description: Use the user's message
-            - Story title: Create from the user's message
-            
-            Respond with ONLY a JSON object like:
-            {
-                "epic_title": "Infrastructure",
-                "story_title": "Add healthcheck endpoint",
-                "priority": "P2",
-                "description": "Implement a healthcheck endpoint for monitoring",
-                "needs_clarification": false
-            }"""),
-            MessagesPlaceholder(variable_name="messages")
-        ])
-        
-        chain = prompt | self.llm
-        response = await chain.ainvoke({"messages": messages})
-        
-        # Parse JSON response
-        try:
-            import json
-            # Clean the response content to get just JSON
-            content = response.content
-            # Remove markdown code blocks if present
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0]
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0]
-            
-            parsed = json.loads(content.strip())
-            
-            # Update state with extracted values
-            state["epic_title"] = parsed.get("epic_title", "Engineering Tasks")
-            state["story_title"] = parsed.get("story_title", "")
-            state["priority"] = parsed.get("priority", "P2")
-            state["description"] = parsed.get("description", "")
-            
-            # Clear clarifications if we have what we need
-            if state["epic_title"] and state["story_title"]:
-                state["clarifications_needed"] = []
-            else:
-                # Set clarifications needed
-                clarifications = []
-                if not state["story_title"]:
-                    clarifications.append("What should the story title be?")
-                state["clarifications_needed"] = clarifications
-            
-        except (json.JSONDecodeError, KeyError) as e:
-            # Fallback to basic extraction
-            print(f"JSON parsing error: {e}, content: {response.content}")
-            
-            # Use the message as basis
-            user_message = messages[-1].content if messages else ""
-            
-            # Simple extraction based on keywords
-            state["epic_title"] = "Engineering Tasks"
-            state["story_title"] = user_message[:100] if user_message else "New Story"
-            state["priority"] = "P2"
-            state["description"] = user_message
-            state["clarifications_needed"] = []
-        
-        print(f"[Node: understand] State after processing:")
-        print(f"  - epic_title: {state.get('epic_title')}")
-        print(f"  - story_title: {state.get('story_title')}")
-        print(f"  - priority: {state.get('priority')}")
-        print(f"  - clarifications_needed: {state.get('clarifications_needed')}")
-        
-        return state
-    
-    async def request_clarification(self, state: AgentState) -> AgentState:
-        """Request clarification from the user."""
-        print("[Node: clarify] Starting...")  # Debug
-        
-        # Limit clarification rounds
-        state["clarification_count"] = state.get("clarification_count", 0) + 1
-        print(f"[Node: clarify] Clarification count: {state['clarification_count']}")  # Debug
-        
-        if state["clarification_count"] > 2:
-            # After 2 rounds, just proceed with defaults
-            print("[Node: clarify] Max clarifications reached, clearing and proceeding")  # Debug
-            state["clarifications_needed"] = []
-            # Set defaults if still missing
-            if not state.get("story_title"):
-                state["story_title"] = "New Story Task"
-            if not state.get("epic_title"):
-                state["epic_title"] = "Engineering Tasks"
-            return state
-        
-        # Build clarification message
-        clarifications = state.get("clarifications_needed", [])
-        if clarifications:
-            clarification_msg = "I need some clarification:\n"
-            for q in clarifications:
-                clarification_msg += f"- {q}\n"
-            
-            state["messages"].append(AIMessage(content=clarification_msg))
-            state["next_action"] = "awaiting_clarification"
-        
-        # IMPORTANT: Clear clarifications after asking to prevent infinite loop
-        state["clarifications_needed"] = []
-        
-        return state
-    
-    async def validate_requirements(self, state: AgentState) -> AgentState:
-        """Validate that we have all required information."""
-        print("[Node: validate] Starting...")  # Debug
-        
-        # Check absolutely required fields
-        if not state.get("epic_title"):
-            state["epic_title"] = "Engineering Tasks"  # Default
-        
-        if not state.get("story_title"):
-            # Try to create from description or messages
-            if state.get("description"):
-                state["story_title"] = state["description"][:100]
-            else:
-                state["story_title"] = "New Story Task"
-        
-        if not state.get("priority"):
-            state["priority"] = "P2"  # Default priority
-        
-        if not state.get("description"):
-            state["description"] = state.get("story_title", "Task to be completed")
-        
-        # Always apply defaults for AC and DoD - don't ask for clarification
-        if not state.get("acceptance_criteria"):
-            state["acceptance_criteria"] = [
-                "Functionality works as specified",
-                "Unit tests pass",
-                "No regression in existing features"
-            ]
-        
-        if not state.get("definition_of_done"):
-            state["definition_of_done"] = [
-                "Code reviewed and approved",
-                "Tests written and passing",
-                "Documentation updated",
-                "No critical security vulnerabilities"
-            ]
-        
-        # Clear any clarifications - we have everything we need
-        state["clarifications_needed"] = []
-        
-        return state
-    
-    async def plan_execution(self, state: AgentState) -> AgentState:
-        """Plan the execution steps."""
-        
-        state["next_action"] = "create_story"
-        
-        # Add planning message
-        plan_msg = f"""I'll create the story with these details:
-- Epic: {state['epic_title']}
-- Title: {state['story_title']}
-- Priority: {state['priority']}
-- AC: {len(state['acceptance_criteria'])} criteria defined
-- DoD: {len(state['definition_of_done'])} items defined
-
-Creating in Notion..."""
-        
-        state["messages"].append(AIMessage(content=plan_msg))
-        
-        return state
-    
-    async def create_story(self, state: AgentState) -> AgentState:
-        """Create story in Notion via MCP."""
-        
-        try:
-            response = await self.client.post(
-                "/api/tools/notion/create-story",
-                json={
-                    "epic_title": state["epic_title"],
-                    "story_title": state["story_title"],
-                    "priority": state["priority"],
-                    "acceptance_criteria": state["acceptance_criteria"],
-                    "definition_of_done": state["definition_of_done"],
-                    "description": state["description"]
-                }
-            )
-            response.raise_for_status()
-            data = response.json()
-            
-            state["story_url"] = data["story_url"]
-            state["messages"].append(
-                AIMessage(content=f"✅ Story created in Notion: {data['story_url']}")
-            )
-            
-        except Exception as e:
-            state["error_message"] = f"Failed to create Notion story: {str(e)}"
-            
-        return state
-    
-    # Removed create_issue method - not needed
-    # Issues are managed exclusively in Notion
-    
-    async def complete_task(self, state: AgentState) -> AgentState:
-        """Complete the task and provide summary."""
-        
-        summary = f"""✨ Story successfully created in Notion!
-
-**Notion Story:** {state['story_url']}
-
-The story "{state['story_title']}" has been added to the "{state['epic_title']}" epic with priority {state['priority']}.
-
-The team can now pick this up from the backlog in Notion."""
-        
-        state["messages"].append(AIMessage(content=summary))
-        state["next_action"] = "completed"
-        
-        return state
-    
-    async def handle_error(self, state: AgentState) -> AgentState:
-        """Handle errors in the workflow."""
-        
-        error_msg = f"❌ An error occurred: {state['error_message']}"
-        state["messages"].append(AIMessage(content=error_msg))
-        state["next_action"] = "error_occurred"
-        
-        return state
-    
-    def route_after_understand(self, state: AgentState) -> str:
-        """Determine next step after understanding."""
-        if state.get("error_message"):
-            print(f"[Route: understand] Error detected, going to error node")  # Debug
-            return "error"
-        # Check if we have non-empty clarifications list
-        clarifications = state.get("clarifications_needed", [])
-        print(f"[Route: understand] Clarifications needed: {clarifications}")  # Debug
-        if clarifications and len(clarifications) > 0:
-            print(f"[Route: understand] Going to clarify node")  # Debug
-            return "clarify"
-        print(f"[Route: understand] Going to validate node")  # Debug
-        return "validate"
-    
-    def route_after_validate(self, state: AgentState) -> str:
-        """Determine next step after validation."""
-        if state.get("error_message"):
-            return "error"
-        # Check if we have non-empty clarifications list
-        clarifications = state.get("clarifications_needed", [])
-        if clarifications and len(clarifications) > 0:
-            return "clarify"
-        return "plan"
-    
-    def route_after_story(self, state: AgentState) -> str:
-        """Determine next step after story creation."""
-        if state.get("error_message"):
-            return "error"
-        if not state.get("story_url"):
-            return "error"
-        # Skip GitHub issues - go directly to complete
-        return "complete"
-
+        return graph
     
     async def process_message(self, message: str) -> Dict[str, Any]:
-        """Process a user message through the agent."""
+        """Process a user message through the agent.
         
-        print(f"[PMAgent] Processing message: {message[:100]}...")  # Debug log
+        Args:
+            message: User's input message
+            
+        Returns:
+            Dict with response, status, and any created artifacts
+        """
         
-        initial_state = {
-            "messages": [HumanMessage(content=message)],
-            "clarification_count": 0,
-            "clarifications_needed": [],
-            "error_message": None
-        }
+        print(f"[PMAgent] Processing message: {message[:100]}...")
         
         try:
-            # Add debug configuration
-            import logging
-            logging.basicConfig(level=logging.INFO)
+            # Invoke the agent
+            result = await self.graph.ainvoke({
+                "messages": [HumanMessage(content=message)]
+            })
             
-            # Run the graph with increased recursion limit
-            print("[PMAgent] Starting graph execution...")  # Debug log
-            final_state = await self.graph.ainvoke(
-                initial_state,
-                config={
-                    "recursion_limit": 100,
-                    "callbacks": []  # Could add callbacks for debugging
-                }
-            )
-            print("[PMAgent] Graph execution completed")  # Debug log
+            # Extract messages
+            messages = result.get("messages", [])
             
-            # Extract the last AI message as response
+            # Get the last AI message as response
             response_text = "Processing your request..."
-            for msg in reversed(final_state.get("messages", [])):
+            for msg in reversed(messages):
                 if isinstance(msg, AIMessage):
                     response_text = msg.content
                     break
             
             # Build response
-            result = {
+            response = {
                 "response": response_text,
-                "status": final_state.get("next_action", "unknown"),
-                "state": final_state.get("next_action", "unknown"),
-                "requires_clarification": bool(final_state.get("clarifications_needed")),
-                "clarification_prompt": final_state.get("clarifications_needed", [])
+                "status": "completed",
+                "state": "completed",
+                "requires_clarification": False
             }
             
-            # Add created artifacts
-            if final_state.get("story_url"):
-                result["story_created"] = {
-                    "url": final_state["story_url"],
-                    "title": final_state.get("story_title"),
-                    "epic": final_state.get("epic_title"),
-                    "priority": final_state.get("priority")
-                }
+            # Check if story was created (look for confirmation in response)
+            if "✅ Story created successfully" in response_text and "Notion Story:" in response_text:
+                # Extract URL from response
+                lines = response_text.split('\n')
+                story_url = None
+                for line in lines:
+                    if "Notion Story:" in line:
+                        story_url = line.replace("Notion Story:", "").strip()
+                        break
+                
+                if story_url:
+                    response["story_created"] = {
+                        "url": story_url,
+                        "title": "Story",  # Could extract from message if needed
+                        "epic": "Engineering",
+                        "priority": "P2"
+                    }
             
-            if final_state.get("issue_url"):
-                result["issue_created"] = {
-                    "url": final_state["issue_url"],
-                    "title": final_state.get("story_title")
-                }
-            
-            if final_state.get("error_message"):
-                result["error"] = final_state["error_message"]
-            
-            return result
+            return response
             
         except Exception as e:
             import traceback
             error_details = traceback.format_exc()
-            print(f"Agent error: {error_details}")  # Log for debugging
+            print(f"Agent error: {error_details}")
             
             return {
                 "response": f"I encountered an error processing your request: {str(e)}",

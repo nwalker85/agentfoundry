@@ -13,7 +13,7 @@ from datetime import datetime
 class SimplifiedPMAgent:
     """Simplified PM Agent that directly processes messages."""
     
-    def __init__(self, mcp_base_url: str = "http://localhost:8001"):
+    def __init__(self, mcp_base_url: str = "http://localhost:8000"):
         self.mcp_base_url = mcp_base_url
         self.client = httpx.AsyncClient(
             base_url=mcp_base_url,
