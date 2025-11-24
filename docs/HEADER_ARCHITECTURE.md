@@ -1,7 +1,6 @@
 # Header Architecture Guide
 
-**Version**: v0.9.0-dev
-**Date**: January 16, 2025
+**Version**: v0.9.0-dev **Date**: January 16, 2025
 
 ---
 
@@ -19,11 +18,13 @@ Agent Foundry uses two header systems depending on the page type:
 **File**: `app/components/header/UnifiedHeader.tsx`
 
 ### When to Use
+
 - Full-screen editor pages (e.g., Forge)
 - Pages that don't use the left sidebar
 - Pages that need custom context-specific controls
 
 ### Features
+
 - **Dual branding**: Quant Platform + Agent Foundry logos
 - **Agent selector**: Dropdown with search for switching between agents
 - **Environment selector**: Dev/Staging/Prod switcher
@@ -32,6 +33,7 @@ Agent Foundry uses two header systems depending on the page type:
 - **User menu**: Profile and settings dropdown
 
 ### Structure
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ [Quant Logo] | [Agent Foundry]  [Context Bar]  [Org] [User] │
@@ -39,6 +41,7 @@ Agent Foundry uses two header systems depending on the page type:
 ```
 
 ### Usage Example
+
 ```tsx
 import { UnifiedHeader } from '@/components/header/UnifiedHeader';
 import { type HeaderAction } from '@/components/header/ActionButtons';
@@ -68,19 +71,20 @@ const actions: HeaderAction[] = [
   onAgentSelect={handleLoadAgent}
   onCreateAgent={handleCreateAgent}
   actions={actions}
-/>
+/>;
 ```
 
 ### Props
+
 ```typescript
 interface UnifiedHeaderProps {
-  currentPage?: string;              // Page identifier
-  agents?: Agent[];                  // Available agents for dropdown
-  selectedAgent?: Agent | null;      // Currently selected agent
-  showAgentSelector?: boolean;       // Show/hide agent dropdown
-  actions?: HeaderAction[];          // Custom action buttons
-  onAgentSelect?: (agent: Agent) => void;  // Agent selection callback
-  onCreateAgent?: () => void;        // Create new agent callback
+  currentPage?: string; // Page identifier
+  agents?: Agent[]; // Available agents for dropdown
+  selectedAgent?: Agent | null; // Currently selected agent
+  showAgentSelector?: boolean; // Show/hide agent dropdown
+  actions?: HeaderAction[]; // Custom action buttons
+  onAgentSelect?: (agent: Agent) => void; // Agent selection callback
+  onCreateAgent?: () => void; // Create new agent callback
 }
 ```
 
@@ -89,15 +93,18 @@ interface UnifiedHeaderProps {
 ## 2. TopNav + LeftNav
 
 **Files**:
+
 - `app/components/layout/TopNav.tsx`
 - `app/components/layout/LeftNav.tsx`
 
 ### When to Use
+
 - Standard application pages (Dashboard, Agents, Tools, etc.)
 - Pages with left sidebar navigation
 - List/detail pages
 
 ### Features
+
 - **Agent Foundry branding**: Logo and name
 - **Environment selector**: Dev/Staging/Prod with color coding
 - **Organization switcher**: Org selection modal
@@ -106,6 +113,7 @@ interface UnifiedHeaderProps {
 - **Left sidebar**: Main navigation with collapsible mode
 
 ### Structure
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ [AF Logo] [Env] ... [Apps] [Org] [User]                    │
@@ -118,14 +126,16 @@ interface UnifiedHeaderProps {
 ```
 
 ### Usage
-TopNav and LeftNav are included in the root layout automatically.
-No need to import on individual pages.
+
+TopNav and LeftNav are included in the root layout automatically. No need to
+import on individual pages.
 
 ---
 
 ## Components
 
 ### AgentSelector
+
 **File**: `app/components/header/AgentSelector.tsx`
 
 Dropdown with search for selecting agents.
@@ -140,6 +150,7 @@ Dropdown with search for selecting agents.
 ```
 
 **Features**:
+
 - Searchable dropdown
 - Status indicators (active/inactive)
 - Create new agent button
@@ -148,18 +159,17 @@ Dropdown with search for selecting agents.
 ---
 
 ### EnvironmentSelector
+
 **File**: `app/components/header/EnvironmentSelector.tsx`
 
 Environment switcher with persistence.
 
 ```tsx
-<EnvironmentSelector
-  current={environment}
-  onChange={handleEnvironmentChange}
-/>
+<EnvironmentSelector current={environment} onChange={handleEnvironmentChange} />
 ```
 
 **Features**:
+
 - Dev (blue), Staging (yellow), Prod (green) color coding
 - Persists to localStorage
 - Dropdown with all options
@@ -167,6 +177,7 @@ Environment switcher with persistence.
 ---
 
 ### ActionButtons
+
 **File**: `app/components/header/ActionButtons.tsx`
 
 Toolbar action buttons with consistent styling.
@@ -179,14 +190,15 @@ const actions: HeaderAction[] = [
     icon: Save,
     onClick: handleSave,
     loading: isSaving,
-    variant: 'default',  // default | primary | danger
+    variant: 'default', // default | primary | danger
   },
 ];
 
-<ActionButtons actions={actions} />
+<ActionButtons actions={actions} />;
 ```
 
 **Features**:
+
 - Loading states
 - Disabled states
 - Variant styling (default, primary, danger)
@@ -197,6 +209,7 @@ const actions: HeaderAction[] = [
 ### Logos
 
 #### AgentFoundryLogo
+
 **File**: `app/components/logo/AgentFoundryLogo.tsx`
 
 SVG logo with hexagonal forge symbol and blue-purple gradient.
@@ -206,6 +219,7 @@ SVG logo with hexagonal forge symbol and blue-purple gradient.
 ```
 
 #### QuantLogo
+
 **File**: `app/components/logo/QuantLogo.tsx`
 
 Placeholder Quant platform logo. Replace with official logo.
@@ -215,6 +229,7 @@ Placeholder Quant platform logo. Replace with official logo.
 ```
 
 **To use official Quant logo**:
+
 1. Obtain logo from Quant team or https://quant.ai
 2. Save to `public/logos/quant-logo.svg`
 3. Update `QuantLogo.tsx` to use:
@@ -227,6 +242,7 @@ Placeholder Quant platform logo. Replace with official logo.
 ## Visual Specifications
 
 ### Sizing
+
 - Header height: `56px` (h-14) - **Consistent with TopNav**
 - Logo area (left): `320px` min-width
 - User area (right): `200px` min-width
@@ -235,14 +251,16 @@ Placeholder Quant platform logo. Replace with official logo.
 - Logo height: `24px` (h-6)
 
 ### Colors
+
 ```css
---header-bg: #030712;        /* gray-950 */
---header-border: #1f2937;    /* gray-800 */
---toolbar-bg: #111827;       /* gray-900 */
---button-hover: #1f2937;     /* gray-800 */
+--header-bg: #030712; /* gray-950 */
+--header-border: #1f2937; /* gray-800 */
+--toolbar-bg: #111827; /* gray-900 */
+--button-hover: #1f2937; /* gray-800 */
 ```
 
 ### Spacing
+
 - Tight: `8px` (gap-2)
 - Normal: `12px` (gap-3)
 - Loose: `16px` (gap-4, gap-6)
@@ -252,6 +270,7 @@ Placeholder Quant platform logo. Replace with official logo.
 ## Decision Guide
 
 ### Use UnifiedHeader when:
+
 - ✅ Building a full-screen editor or specialized tool
 - ✅ Need agent selection dropdown
 - ✅ Need custom page-specific actions in toolbar
@@ -261,6 +280,7 @@ Placeholder Quant platform logo. Replace with official logo.
 **Examples**: Forge, Future visual editors
 
 ### Use TopNav + LeftNav when:
+
 - ✅ Building standard CRUD pages
 - ✅ Need left sidebar navigation
 - ✅ List/detail page patterns
@@ -276,25 +296,26 @@ Placeholder Quant platform logo. Replace with official logo.
 ### Adding UnifiedHeader to a new page:
 
 1. Import components:
+
 ```tsx
 import { UnifiedHeader } from '@/components/header/UnifiedHeader';
 import { type HeaderAction } from '@/components/header/ActionButtons';
 ```
 
 2. Define actions array:
+
 ```tsx
-const actions: HeaderAction[] = useMemo(() => [
-  { id: 'save', label: 'Save', icon: Save, onClick: handleSave },
-], [dependencies]);
+const actions: HeaderAction[] = useMemo(
+  () => [{ id: 'save', label: 'Save', icon: Save, onClick: handleSave }],
+  [dependencies]
+);
 ```
 
 3. Add header to page:
+
 ```tsx
 <div className="flex flex-col h-screen">
-  <UnifiedHeader
-    currentPage="PageName"
-    actions={actions}
-  />
+  <UnifiedHeader currentPage="PageName" actions={actions} />
   {/* Page content */}
 </div>
 ```
@@ -308,6 +329,7 @@ const actions: HeaderAction[] = useMemo(() => [
 ## Best Practices
 
 ### 1. Action Buttons
+
 - Use clear, action-oriented labels ("Save", "Deploy", not "Click here")
 - Show loading states during async operations
 - Disable when action isn't available
@@ -315,18 +337,21 @@ const actions: HeaderAction[] = useMemo(() => [
 - Use `variant: 'danger'` for destructive actions
 
 ### 2. Agent Selection
+
 - Only show agent selector when relevant (e.g., Forge, agent-specific tools)
 - Handle loading states during agent switch
 - Update page URL/state when agent changes
 - Provide "Create New" option when applicable
 
 ### 3. Environment
+
 - Environment is global (stored in localStorage)
 - Changes affect all pages
 - Use color coding for quick visual identification
 - Consider adding environment-specific warnings for prod
 
 ### 4. Responsive Design
+
 - UnifiedHeader is optimized for desktop (min-width: 1024px)
 - Mobile users should use TopNav + LeftNav pattern
 - Consider showing simplified header on smaller screens
@@ -336,7 +361,9 @@ const actions: HeaderAction[] = useMemo(() => [
 ## Examples
 
 ### Full Forge Implementation
+
 See `app/forge/page.tsx` for complete example with:
+
 - Agent selection
 - Save/Deploy actions
 - Error/success messaging
@@ -344,6 +371,7 @@ See `app/forge/page.tsx` for complete example with:
 - Empty states
 
 ### Simple Page with Actions
+
 ```tsx
 export default function MyPage() {
   const [isSaving, setIsSaving] = useState(false);
@@ -359,13 +387,8 @@ export default function MyPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      <UnifiedHeader
-        currentPage="My Page"
-        actions={actions}
-      />
-      <div className="flex-1 p-8">
-        {/* Content */}
-      </div>
+      <UnifiedHeader currentPage="My Page" actions={actions} />
+      <div className="flex-1 p-8">{/* Content */}</div>
     </div>
   );
 }
@@ -376,6 +399,7 @@ export default function MyPage() {
 ## Future Enhancements
 
 ### Planned
+
 - [ ] Global search in header
 - [ ] Notifications dropdown
 - [ ] Quick command palette (Cmd+K)
@@ -383,6 +407,7 @@ export default function MyPage() {
 - [ ] Workspace switcher (multi-tenant)
 
 ### Under Consideration
+
 - [ ] Header customization per organization
 - [ ] Keyboard shortcuts display
 - [ ] Dark/light theme toggle
@@ -390,5 +415,4 @@ export default function MyPage() {
 
 ---
 
-*Last Updated: January 16, 2025*
-*Version: v0.9.0-dev*
+_Last Updated: January 16, 2025_ _Version: v0.9.0-dev_

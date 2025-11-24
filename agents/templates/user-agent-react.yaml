@@ -1,0 +1,100 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: User Agent - ReAct Pattern
+  type: user
+  version: 1.0.0
+  description: A user agent that uses the ReAct (Reasoning + Acting) pattern for task execution
+  tags: [react, user-agent, template]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 100, y: 100 }
+        data:
+          label: Entry
+          description: Entry point for user requests
+
+      - id: analyze
+        type: process
+        position: { x: 100, y: 200 }
+        data:
+          label: Analyze Request
+          description: Understand user intent and plan approach
+          model: gpt-4
+          temperature: 0.7
+          prompt: |
+            Analyze the user's request and determine what actions need to be taken.
+            Break down the task into logical steps.
+
+      - id: decide_action
+        type: decision
+        position: { x: 100, y: 300 }
+        data:
+          label: Decide Action
+          description: Determine if a tool call is needed
+          conditions:
+            - label: Use Tool
+              expression: requires_tool_call
+              next: call_tool
+            - label: Direct Response
+              expression: "!requires_tool_call"
+              next: synthesize
+
+      - id: call_tool
+        type: toolCall
+        position: { x: 50, y: 400 }
+        data:
+          label: Execute Tool
+          description: Call appropriate tool based on analysis
+          toolName: dynamic
+
+      - id: synthesize
+        type: process
+        position: { x: 150, y: 500 }
+        data:
+          label: Synthesize Response
+          description: Generate final response for user
+          model: gpt-4
+          temperature: 0.7
+          prompt: |
+            Based on the analysis and any tool results, generate a clear,
+            helpful response for the user.
+
+      - id: end
+        type: end
+        position: { x: 100, y: 600 }
+        data:
+          label: End
+          description: Return response to user
+
+    edges:
+      - id: e1
+        source: entry
+        target: analyze
+
+      - id: e2
+        source: analyze
+        target: decide_action
+
+      - id: e3
+        source: decide_action
+        target: call_tool
+        sourceHandle: Use Tool
+
+      - id: e4
+        source: decide_action
+        target: synthesize
+        sourceHandle: Direct Response
+
+      - id: e5
+        source: call_tool
+        target: synthesize
+
+      - id: e6
+        source: synthesize
+        target: end

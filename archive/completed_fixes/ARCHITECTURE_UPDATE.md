@@ -3,13 +3,15 @@
 ## Critical Change: GitHub is for Code, Not Issues
 
 ### Previous Architecture (INCORRECT)
+
 ```
 Notion (Stories) → GitHub Issues → Code Development
 ```
 
 ### Corrected Architecture (CORRECT)
+
 ```
-Notion (Complete Project Management) 
+Notion (Complete Project Management)
     ↓
 Developer picks up story
     ↓
@@ -19,6 +21,7 @@ GitHub (Code Management Only)
 ## Tool Responsibilities
 
 ### ✅ Notion - Complete Project Management
+
 - **Epics** - High-level feature organization
 - **Stories** - Detailed work items
 - **Issue Tracking** - All issues stay in Notion
@@ -29,6 +32,7 @@ GitHub (Code Management Only)
 - **Assignment** - Who's working on what
 
 ### ✅ GitHub - Code Management Only
+
 - **Repository Operations**
   - Clone repository
   - Pull latest changes
@@ -41,6 +45,7 @@ GitHub (Code Management Only)
 - **CI/CD** - Actions/workflows
 
 ### ❌ What GitHub Does NOT Do
+
 - **No Issue Creation** - Issues stay in Notion
 - **No Project Management** - That's Notion's job
 - **No Sprint Planning** - Handled in Notion
@@ -74,11 +79,13 @@ GitHub (Code Management Only)
 ## Implementation Changes
 
 ### Files Updated
+
 1. **`github_repo.py`** - New tool for repository operations
 2. **`pm_graph.py`** - Removed GitHub issue creation
 3. **Workflow removed**: `create_story` → ~~`create_issue`~~ → `complete`
 
 ### Files Deprecated
+
 - `github.py` - Issue management tool (not needed)
 
 ## Benefits of This Architecture
@@ -117,7 +124,9 @@ NOTION_DATABASE_EPICS_ID=<epics_db_id>
 ## Summary
 
 The Engineering Department system now correctly separates concerns:
+
 - **Notion** = Where work is planned, tracked, and managed
 - **GitHub** = Where code is stored, versioned, and reviewed
 
-This is a cleaner, more maintainable architecture that aligns with industry best practices.
+This is a cleaner, more maintainable architecture that aligns with industry best
+practices.

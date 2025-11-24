@@ -329,7 +329,7 @@ mcp/tools/__init__.py
     ├── exports NotionTool (from notion.py)
     ├── exports GitHubTool (from github.py)
     └── exports AuditTool (from audit.py)
-    
+
 Used by:
     └── mcp_server.py (imports all 3)
 ```
@@ -340,7 +340,7 @@ Used by:
 agent/simple_pm.py  ⚠️ LEGACY (Not in use)
     ├── httpx → MCP Server
     └── Standard library only
-    
+
 agent/pm_graph.py  ✅ OPERATIONAL (v0.4.0)
     ├── langgraph → State machine
     ├── langchain → Prompts & messages
@@ -363,7 +363,8 @@ The architecture has clean, acyclic dependencies:
 4. **Agent Layer** → Calls server via HTTP (loose coupling)
 5. **Frontend Layer** → Calls server via HTTP (loose coupling)
 
-**Note:** Agents call the MCP server via HTTP, which is loose coupling and avoids circular imports.
+**Note:** Agents call the MCP server via HTTP, which is loose coupling and
+avoids circular imports.
 
 ---
 
@@ -371,7 +372,8 @@ The architecture has clean, acyclic dependencies:
 
 ### Highly Coupled Modules
 
-1. **mcp_server.py** ↔ **mcp/tools/***
+1. **mcp_server.py** ↔ **mcp/tools/\***
+
    - Tight coupling (direct imports)
    - Justified: Server orchestrates tools
    - Mitigation: Tool interface abstraction
@@ -384,6 +386,7 @@ The architecture has clean, acyclic dependencies:
 ### Loosely Coupled Modules
 
 1. **Agents** ↔ **MCP Server**
+
    - Loose coupling (HTTP only)
    - Good: Can deploy separately
    - Good: Easy to test in isolation
@@ -400,6 +403,7 @@ The architecture has clean, acyclic dependencies:
 ### 1. Configuration Centralization
 
 **Current:**
+
 ```
 mcp_server.py
     └── os.getenv("NOTION_API_TOKEN")
@@ -412,6 +416,7 @@ agent/simple_pm.py  ⚠️ LEGACY
 ```
 
 **Proposed:**
+
 ```
 config.py (new)
     └── class Config
@@ -426,6 +431,7 @@ All modules:
 ### 2. Tool Interface Abstraction
 
 **Current:**
+
 ```
 mcp_server.py
     ├── from mcp.tools import NotionTool
@@ -434,6 +440,7 @@ mcp_server.py
 ```
 
 **Proposed:**
+
 ```
 mcp/tools/base.py (new)
     └── class BaseTool (ABC)
@@ -448,6 +455,7 @@ mcp_server.py:
 ### 3. Agent Interface Standardization
 
 **Current:**
+
 ```
 agent/simple_pm.py  ⚠️ LEGACY (Not in use)
     └── class SimplePMAgent (no interface)
@@ -457,6 +465,7 @@ agent/pm_graph.py  ✅ OPERATIONAL (Active in MCP Server v0.4.0)
 ```
 
 **Proposed:**
+
 ```
 agent/base.py (new)
     └── class BaseAgent (Protocol)
@@ -469,5 +478,4 @@ Both agents:
 ---
 
 **Dependency Analysis Complete**  
-*Generated: November 10, 2025*
-
+_Generated: November 10, 2025_

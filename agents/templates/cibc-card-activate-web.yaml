@@ -1,0 +1,159 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Card - Activate via Web/Mobile
+  type: system
+  version: 1.0.0
+  description: Web and mobile app card activation with device fingerprinting
+  tags: [cibc, agent-group-1, card-lifecycle, activation, web, mobile]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Web/Mobile Activation
+          description: Customer clicks activate card button
+
+      - id: verify_login
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Verify Logged In
+          description: Confirm customer is authenticated
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: device_fingerprint
+        type: process
+        position: { x: 300, y: 280 }
+        data:
+          label: Device Fingerprinting
+          description: Capture device metadata for fraud detection
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Collect device fingerprint:
+            - IP address
+            - Device ID
+            - Browser/app version
+            - Location (if permitted)
+            - Previous login history
+
+      - id: get_fraud_score
+        type: toolCall
+        position: { x: 300, y: 410 }
+        data:
+          label: Get Fraud Score
+          description: Pindrop digital fraud scoring
+          tool: func-get-fraud-risk-score
+
+      - id: check_risk
+        type: decision
+        position: { x: 300, y: 540 }
+        data:
+          label: Risk Assessment
+          description: Determine if additional verification needed
+          conditions:
+            - label: Low Risk (< 30)
+              expression: fraud_score < 30
+              next: activate_card
+            - label: Medium Risk (30-70)
+              expression: fraud_score >= 30 && fraud_score < 70
+              next: request_otp
+            - label: High Risk (>= 70)
+              expression: fraud_score >= 70
+              next: block_require_branch
+
+      - id: activate_card
+        type: toolCall
+        position: { x: 100, y: 670 }
+        data:
+          label: Activate Card
+          description: Process activation
+          tool: func-activate-card
+
+      - id: request_otp
+        type: process
+        position: { x: 300, y: 670 }
+        data:
+          label: Request OTP Verification
+          description: Send OTP to registered phone/email
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: block_require_branch
+        type: process
+        position: { x: 500, y: 670 }
+        data:
+          label: Require Branch Visit
+          description: High fraud risk - in-person verification required
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: display_confirmation
+        type: process
+        position: { x: 300, y: 800 }
+        data:
+          label: Display Confirmation
+          description: Show success message or next steps
+          model: gpt-4o-mini
+          temperature: 0.5
+
+      - id: end
+        type: end
+        position: { x: 300, y: 930 }
+        data:
+          label: Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: verify_login
+
+      - id: e2
+        source: verify_login
+        target: device_fingerprint
+
+      - id: e3
+        source: device_fingerprint
+        target: get_fraud_score
+
+      - id: e4
+        source: get_fraud_score
+        target: check_risk
+
+      - id: e5
+        source: check_risk
+        target: activate_card
+        sourceHandle: Low Risk (< 30)
+
+      - id: e6
+        source: check_risk
+        target: request_otp
+        sourceHandle: Medium Risk (30-70)
+
+      - id: e7
+        source: check_risk
+        target: block_require_branch
+        sourceHandle: High Risk (>= 70)
+
+      - id: e8
+        source: activate_card
+        target: display_confirmation
+
+      - id: e9
+        source: request_otp
+        target: display_confirmation
+
+      - id: e10
+        source: block_require_branch
+        target: display_confirmation
+
+      - id: e11
+        source: display_confirmation
+        target: end

@@ -18,7 +18,7 @@ spec:
     - user_context_loading
     - request_enrichment
     - state_persistence
-  
+
   workflow:
     type: langgraph.StateGraph
     entry_point: load_session
@@ -30,28 +30,28 @@ spec:
         next:
           - load_user_context
         timeout_seconds: 5
-      
+
       - id: load_user_context
         handler: agents.workers.context_agent.ContextAgent.load_user_context
         description: Load user profile and history from PostgreSQL
         next:
           - enrich_request
         timeout_seconds: 10
-      
+
       - id: enrich_request
         handler: agents.workers.context_agent.ContextAgent.enrich_request
         description: Combine session + user context with current request
         next:
           - update_session_state
         timeout_seconds: 10
-      
+
       - id: update_session_state
         handler: agents.workers.context_agent.ContextAgent.update_session_state
         description: Persist updated session state to Redis
         next:
           - END
         timeout_seconds: 5
-  
+
   integrations:
     - type: redis
       required: true
@@ -60,26 +60,26 @@ spec:
         - session_write
         - cache_read
         - cache_write
-    
+
     - type: postgresql
-      required: false  # Future: for user context
+      required: false # Future: for user context
       operations:
         - user_profile_read
         - conversation_history_read
-  
+
   resource_limits:
     max_concurrent_tasks: 15
     timeout_seconds: 60
     memory_mb: 512
     max_tokens_per_request: 4000
-  
+
   observability:
     trace_level: info
     metrics_enabled: true
     metrics_interval_seconds: 30
     log_retention_days: 30
     structured_logging: true
-  
+
   health_check:
     enabled: true
     interval_seconds: 30

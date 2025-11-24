@@ -14,11 +14,10 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, TypedDict
 
 import yaml
-from langgraph.graph import StateGraph, START, END
-
+from langgraph.graph import END, START, StateGraph
 
 AGENTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "agents")
 MANIFEST_DIR = os.path.join(AGENTS_DIR, "manifests")
@@ -44,17 +43,17 @@ class ManifestState(TypedDict, total=False):
     instance_id: str
     author: str
     last_editor: str
-    tags: List[str]
+    tags: list[str]
     is_system_agent: bool
-    system_tier: Optional[int]
+    system_tier: int | None
 
     # Internal fields
     manifest_path: str
-    manifest: Dict[str, Any]
+    manifest: dict[str, Any]
 
     # Outputs
-    result: Dict[str, Any]
-    error: Optional[str]
+    result: dict[str, Any]
+    error: str | None
 
 
 @dataclass
@@ -91,7 +90,7 @@ class ManifestAgent:
         *,
         agent_id: str,
         agent_yaml: str,
-        yaml_path: Optional[str],
+        yaml_path: str | None,
         organization_id: str,
         organization_name: str,
         domain_id: str,
@@ -99,11 +98,11 @@ class ManifestAgent:
         environment: str,
         instance_id: str,
         author: str,
-        last_editor: Optional[str] = None,
-        tags: Optional[List[str]] = None,
+        last_editor: str | None = None,
+        tags: list[str] | None = None,
         is_system_agent: bool = False,
-        system_tier: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        system_tier: int | None = None,
+    ) -> dict[str, Any]:
         """
         High-level entrypoint: create or update an agent YAML + manifest entry.
 
@@ -151,7 +150,7 @@ class ManifestAgent:
         """Load the environment manifest, or initialize an empty one."""
         manifest_path = state["manifest_path"]
         if os.path.exists(manifest_path):
-            with open(manifest_path, "r", encoding="utf-8") as f:
+            with open(manifest_path, encoding="utf-8") as f:
                 manifest = yaml.safe_load(f) or {}
         else:
             manifest = {
@@ -197,7 +196,7 @@ class ManifestAgent:
             return state
 
         manifest = state["manifest"]
-        entries: List[Dict[str, Any]] = manifest["spec"]["entries"]
+        entries: list[dict[str, Any]] = manifest["spec"]["entries"]
 
         # Upsert by (agent_id, org, domain, instance, env)
         updated = False
@@ -263,5 +262,3 @@ class ManifestAgent:
             "instance_id": state["instance_id"],
         }
         return state
-
-

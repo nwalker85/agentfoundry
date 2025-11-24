@@ -66,7 +66,6 @@ export function UnifiedHeader({
     <>
       <header className="h-14 bg-gray-950 border-b border-gray-800 fixed top-0 w-full z-50">
         <div className="h-full flex items-center px-4">
-
           {/* Left Section - Logos & Branding */}
           <div className="flex items-center gap-6 min-w-[320px]">
             {/* Quant Logo */}
@@ -88,7 +87,6 @@ export function UnifiedHeader({
           {/* Center Section - Context Bar */}
           <div className="flex-1 flex items-center justify-center">
             <div className="flex items-center bg-gray-900 rounded-lg px-1 py-1 gap-1">
-
               {/* Agent Selector (when applicable) */}
               {showAgentSelector && agents.length > 0 && onAgentSelect && (
                 <>
@@ -103,10 +101,7 @@ export function UnifiedHeader({
               )}
 
               {/* Environment Selector */}
-              <EnvironmentSelector
-                current={environment}
-                onChange={handleEnvironmentChange}
-              />
+              <EnvironmentSelector current={environment} onChange={handleEnvironmentChange} />
 
               {/* Page-specific Actions */}
               {actions.length > 0 && (
@@ -133,14 +128,9 @@ export function UnifiedHeader({
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-8 w-8 rounded-full hover:bg-bg-2"
-                >
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-bg-2">
                   <Avatar className="h-8 w-8 bg-blue-600">
-                    <AvatarFallback className="bg-blue-600 text-white text-sm">
-                      JD
-                    </AvatarFallback>
+                    <AvatarFallback className="bg-blue-600 text-white text-sm">JD</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -148,9 +138,7 @@ export function UnifiedHeader({
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">John Doe</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      john@example.com
-                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">john@example.com</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -160,9 +148,7 @@ export function UnifiedHeader({
                 </DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">
-                  Log out
-                </DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600">Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

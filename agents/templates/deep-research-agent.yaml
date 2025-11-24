@@ -1,0 +1,90 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: Deep Research Agent
+  type: user
+  version: 1.0.0
+  description: A deep agent workflow for comprehensive research tasks using planning, execution, and quality validation
+  tags: [deep-agent, research, planner, critic, template]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Research Entry
+          description: Entry point for research requests
+
+      - id: planner
+        type: deepPlanner
+        position: { x: 300, y: 150 }
+        data:
+          label: Research Planner
+          description: Break down research task into subtasks
+          strategy: hierarchical
+          max_subtasks: 10
+
+      - id: executor
+        type: deepExecutor
+        position: { x: 300, y: 280 }
+        data:
+          label: Research Executor
+          description: Execute research subtasks with middleware support
+          model: claude-sonnet-4-5-20250929
+          enable_todos: true
+          enable_filesystem: true
+          enable_subagents: true
+          enable_summarization: true
+          max_iterations: 5
+
+      - id: critic
+        type: deepCritic
+        position: { x: 300, y: 410 }
+        data:
+          label: Quality Validator
+          description: Validate research quality and completeness
+          validation_criteria: [completeness, accuracy, clarity, relevance]
+          quality_threshold: 0.8
+          auto_replan: true
+
+      - id: context_manager
+        type: contextManager
+        position: { x: 300, y: 540 }
+        data:
+          label: Context Manager
+          description: Summarize and offload large research outputs
+          size_threshold: 170000
+          offload_strategy: auto
+          auto_summarize: true
+
+      - id: end
+        type: end
+        position: { x: 300, y: 670 }
+        data:
+          label: End
+          description: Return research results
+
+    edges:
+      - id: e1
+        source: entry
+        target: planner
+
+      - id: e2
+        source: planner
+        target: executor
+
+      - id: e3
+        source: executor
+        target: critic
+
+      - id: e4
+        source: critic
+        target: context_manager
+
+      - id: e5
+        source: context_manager
+        target: end

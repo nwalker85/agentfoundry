@@ -1,0 +1,196 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Card - Update Status (Automated)
+  type: system
+  version: 1.0.0
+  description: System automation for card status updates from external triggers
+  tags: [cibc, agent-group-1, card-lifecycle, status-update, automation]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Status Update Trigger
+          description: External system triggers status change
+
+      - id: validate_trigger
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Validate Trigger Source
+          description: Verify trigger is from authorized system
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Validate trigger source:
+
+            Authorized sources:
+            - G&D production system (card production)
+            - Core banking system (account updates)
+            - Fraud detection system (CW20, fraud holds)
+            - Card network (expired, compromised)
+
+      - id: source_validation
+        type: decision
+        position: { x: 300, y: 280 }
+        data:
+          label: Source Valid?
+          description: Check if trigger is authorized
+          conditions:
+            - label: Authorized
+              expression: source_authorized == true
+              next: identify_status_change
+            - label: Unauthorized
+              expression: source_authorized == false
+              next: log_rejected_trigger
+
+      - id: identify_status_change
+        type: process
+        position: { x: 200, y: 410 }
+        data:
+          label: Identify Status Change
+          description: Determine new status and reason
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Parse status change request:
+
+            Common status changes:
+            - issued → active (G&D production complete)
+            - active → expired (expiry date reached)
+            - active → compromised (fraud network alert)
+            - any → blocked (fraud hold)
+            - blocked → active (fraud cleared)
+
+      - id: check_blocking_rules
+        type: toolCall
+        position: { x: 200, y: 540 }
+        data:
+          label: Check Blocking Status Codes
+          description: Verify no RMU blocking codes prevent update
+          tool: func-check-blocking-status-codes
+
+      - id: rules_check
+        type: decision
+        position: { x: 200, y: 670 }
+        data:
+          label: Can Proceed?
+          description: Check if status update allowed
+          conditions:
+            - label: No Blocking Codes
+              expression: can_proceed == true
+              next: update_status
+            - label: Blocked by RMU
+              expression: can_proceed == false
+              next: create_exception_case
+
+      - id: update_status
+        type: toolCall
+        position: { x: 100, y: 800 }
+        data:
+          label: Update Card Status
+          description: Apply status change
+          tool: func-update-card-status
+
+      - id: notify_if_needed
+        type: process
+        position: { x: 100, y: 930 }
+        data:
+          label: Check Notification Rules
+          description: Determine if customer notification needed
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Notification rules:
+
+            Notify customer for:
+            - Card activated (G&D production)
+            - Card expired (proactive notice)
+            - Card compromised (security alert)
+
+            Do NOT notify for:
+            - Internal status codes
+            - Temporary holds
+            - System synchronization
+
+      - id: create_exception_case
+        type: toolCall
+        position: { x: 300, y: 800 }
+        data:
+          label: Create Exception Case
+          description: Route to manual review
+          tool: func-create-case
+
+      - id: log_rejected_trigger
+        type: process
+        position: { x: 400, y: 410 }
+        data:
+          label: Log Rejected Trigger
+          description: Security log for unauthorized attempt
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: end
+        type: end
+        position: { x: 300, y: 1060 }
+        data:
+          label: Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: validate_trigger
+
+      - id: e2
+        source: validate_trigger
+        target: source_validation
+
+      - id: e3
+        source: source_validation
+        target: identify_status_change
+        sourceHandle: Authorized
+
+      - id: e4
+        source: source_validation
+        target: log_rejected_trigger
+        sourceHandle: Unauthorized
+
+      - id: e5
+        source: identify_status_change
+        target: check_blocking_rules
+
+      - id: e6
+        source: check_blocking_rules
+        target: rules_check
+
+      - id: e7
+        source: rules_check
+        target: update_status
+        sourceHandle: No Blocking Codes
+
+      - id: e8
+        source: rules_check
+        target: create_exception_case
+        sourceHandle: Blocked by RMU
+
+      - id: e9
+        source: update_status
+        target: notify_if_needed
+
+      - id: e10
+        source: notify_if_needed
+        target: end
+
+      - id: e11
+        source: create_exception_case
+        target: end
+
+      - id: e12
+        source: log_rejected_trigger
+        target: end

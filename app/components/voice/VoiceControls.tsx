@@ -33,11 +33,7 @@ export function VoiceControls({ onDisconnect }: VoiceControlsProps) {
         {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
       </button>
 
-      <button
-        onClick={handleDisconnect}
-        className="control-button disconnect"
-        title="End call"
-      >
+      <button onClick={handleDisconnect} className="control-button disconnect" title="End call">
         <PhoneOff size={24} />
       </button>
     </div>

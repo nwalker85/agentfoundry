@@ -3,7 +3,8 @@
 **Version:** 2.1 (v0.7.0 Update)  
 **Last Updated:** November 12, 2025  
 **System:** Engineering Department MCP Server v0.7.0  
-**Test Environment:** http://localhost:8001 (backend), http://localhost:3000 (frontend)
+**Test Environment:** http://localhost:8001 (backend), http://localhost:3000
+(frontend)
 
 ---
 
@@ -24,6 +25,7 @@
 ### Prerequisites
 
 Ensure your `.env.local` has:
+
 - `OPENAI_API_KEY` (required for LangGraph agent)
 - `NOTION_API_TOKEN` (required for story creation)
 - `GITHUB_TOKEN` (required for issue creation)
@@ -40,6 +42,7 @@ python mcp_server.py
 ```
 
 Expected output:
+
 ```
 🚀 Starting Engineering Department MCP Server...
 ✅ Notion tool initialized
@@ -145,6 +148,7 @@ pytest tests/e2e/ -v
 ```
 
 **What it tests:**
+
 1. Server health and tool availability
 2. Story creation with idempotency
 3. GitHub issue creation
@@ -154,6 +158,7 @@ pytest tests/e2e/ -v
 7. PM agent workflow
 
 **Expected output:**
+
 ```
 ✅ Test 1: MCP server is running
 ✅ Test 2: Notion story creation
@@ -231,12 +236,15 @@ pytest tests/ -v --cov=agent --cov=mcp --cov-report=html
 
 ### UAT Overview
 
-**Purpose:** Validate that the Engineering Department system meets business requirements for story creation, task management, and automated GitHub integration.
+**Purpose:** Validate that the Engineering Department system meets business
+requirements for story creation, task management, and automated GitHub
+integration.
 
 **Duration:** ~30 minutes  
 **Environment:** http://localhost:8001
 
 **Scope:**
+
 - Story creation in Notion
 - GitHub issue generation
 - Idempotency protection
@@ -244,6 +252,7 @@ pytest tests/ -v --cov=agent --cov=mcp --cov-report=html
 - PM Agent automation
 
 **Out of Scope:**
+
 - WebSocket real-time features (Phase 4)
 - Multi-agent orchestration (Phase 5)
 - Production performance testing
@@ -253,12 +262,15 @@ pytest tests/ -v --cov=agent --cov=mcp --cov-report=html
 ### Test Cases
 
 #### TC-001: Basic Story Creation
+
 **Priority:** P0 - Critical  
 **Time:** 3 minutes
 
 **Steps:**
+
 1. Send POST to `/api/tools/notion/create-story`
 2. Use payload:
+
 ```json
 {
   "epic_title": "Q4 Platform Goals",
@@ -279,6 +291,7 @@ pytest tests/ -v --cov=agent --cov=mcp --cov-report=html
 ```
 
 **Expected Results:**
+
 - [ ] HTTP 200 response
 - [ ] Response contains `story_id`
 - [ ] Response contains `story_url`
@@ -286,6 +299,7 @@ pytest tests/ -v --cov=agent --cov=mcp --cov-report=html
 - [ ] Story visible in Notion workspace
 
 **cURL Command:**
+
 ```bash
 curl -X POST http://localhost:8001/api/tools/notion/create-story \
   -H "Content-Type: application/json" \
@@ -304,14 +318,17 @@ curl -X POST http://localhost:8001/api/tools/notion/create-story \
 ---
 
 #### TC-002: Idempotency Protection
+
 **Priority:** P0 - Critical  
 **Time:** 2 minutes
 
 **Steps:**
+
 1. Repeat exact same request from TC-001
 2. Compare response with TC-001
 
 **Expected Results:**
+
 - [ ] Same `story_id` as TC-001
 - [ ] Same `idempotency_key` as TC-001
 - [ ] No new story created in Notion
@@ -322,13 +339,16 @@ curl -X POST http://localhost:8001/api/tools/notion/create-story \
 ---
 
 #### TC-003: GitHub Issue Creation
+
 **Priority:** P0 - Critical  
 **Time:** 3 minutes
 
 **Steps:**
+
 1. Copy `story_url` from TC-001
 2. Send POST to `/api/tools/github/create-issue`
 3. Use payload:
+
 ```json
 {
   "title": "[P1] Implement user authentication",
@@ -339,6 +359,7 @@ curl -X POST http://localhost:8001/api/tools/notion/create-story \
 ```
 
 **Expected Results:**
+
 - [ ] HTTP 200 response
 - [ ] Response contains `issue_number`
 - [ ] Response contains `issue_url`
@@ -350,14 +371,17 @@ curl -X POST http://localhost:8001/api/tools/notion/create-story \
 ---
 
 #### TC-004: Story Listing and Filtering
+
 **Priority:** P1 - High  
 **Time:** 2 minutes
 
 **Steps:**
+
 1. Send POST to `/api/tools/notion/list-stories`
 2. Filter by P0/P1 priorities
 
 **cURL Command:**
+
 ```bash
 curl -X POST http://localhost:8001/api/tools/notion/list-stories \
   -H "Content-Type: application/json" \
@@ -365,6 +389,7 @@ curl -X POST http://localhost:8001/api/tools/notion/list-stories \
 ```
 
 **Expected Results:**
+
 - [ ] HTTP 200 response
 - [ ] Returns array of stories
 - [ ] All stories have P0 or P1 priority
@@ -375,18 +400,22 @@ curl -X POST http://localhost:8001/api/tools/notion/list-stories \
 ---
 
 #### TC-005: Audit Trail Verification
+
 **Priority:** P1 - High  
 **Time:** 2 minutes
 
 **Steps:**
+
 1. Query audit logs for Notion tool
 
 **cURL Command:**
+
 ```bash
 curl "http://localhost:8001/api/tools/audit/query?tool=notion&limit=10"
 ```
 
 **Expected Results:**
+
 - [ ] HTTP 200 response
 - [ ] Contains entries for TC-001 story creation
 - [ ] Each entry has timestamp
@@ -398,10 +427,12 @@ curl "http://localhost:8001/api/tools/audit/query?tool=notion&limit=10"
 ---
 
 #### TC-006: PM Agent End-to-End
+
 **Priority:** P1 - High  
 **Time:** 5 minutes
 
 **Steps:**
+
 ```bash
 python -c "
 from agent.pm_graph import PMAgent
@@ -424,6 +455,7 @@ asyncio.run(test())
 ```
 
 **Expected Results:**
+
 - [ ] LangGraph agent processes request with GPT-4
 - [ ] Story created in Notion
 - [ ] Issue created in GitHub
@@ -436,11 +468,14 @@ asyncio.run(test())
 ---
 
 #### TC-007: Error Handling
+
 **Priority:** P2 - Medium  
 **Time:** 3 minutes
 
 **Steps:**
+
 1. Send invalid payload (missing required fields)
+
 ```json
 {
   "story_title": "Test story without epic"
@@ -448,6 +483,7 @@ asyncio.run(test())
 ```
 
 **Expected Results:**
+
 - [ ] HTTP 422 or 400 response
 - [ ] Error message describes missing fields
 - [ ] No story created
@@ -458,10 +494,12 @@ asyncio.run(test())
 ---
 
 #### TC-008: Backlog View UI
+
 **Priority:** P1 - High  
 **Time:** 5 minutes
 
 **Steps:**
+
 1. Navigate to http://localhost:3000/backlog
 2. Verify stories load from Notion
 3. Test priority filters (P0, P1, P2, P3)
@@ -472,6 +510,7 @@ asyncio.run(test())
 8. Test mobile responsive behavior
 
 **Expected Results:**
+
 - [ ] Backlog page loads without errors
 - [ ] Stories display in card format
 - [ ] Filters work correctly (priority, status, epic)
@@ -487,6 +526,7 @@ asyncio.run(test())
 - [ ] Dark mode renders correctly
 
 **Manual Test Commands:**
+
 ```bash
 # Start frontend
 npm run dev
@@ -508,14 +548,17 @@ http://localhost:3000/backlog
 ---
 
 #### TC-009: Concurrent Requests
+
 **Priority:** P2 - Medium  
 **Time:** 3 minutes
 
 **Steps:**
+
 1. Send 3 different story creation requests simultaneously
 2. Verify all complete successfully
 
 **Expected Results:**
+
 - [ ] All 3 requests succeed
 - [ ] 3 different stories created
 - [ ] 3 different idempotency keys
@@ -528,16 +571,19 @@ http://localhost:3000/backlog
 ### Acceptance Criteria Summary
 
 **Critical (Must Pass):**
+
 - [ ] TC-001: Basic Story Creation
 - [ ] TC-002: Idempotency Protection
 - [ ] TC-003: GitHub Issue Creation
 
 **Important (Should Pass):**
+
 - [ ] TC-004: Story Listing
 - [ ] TC-005: Audit Trail
 - [ ] TC-006: PM Agent E2E
 
 **Nice to Have:**
+
 - [ ] TC-007: Error Handling
 - [ ] TC-008: Concurrent Requests
 
@@ -556,31 +602,33 @@ http://localhost:3000/backlog
 ### Test Execution Report Template
 
 **Test Session Information:**
-- Tester Name: _______________________
-- Test Date: _______________________
-- Start Time: _______________________
-- End Time: _______________________
+
+- Tester Name: **********\_\_\_**********
+- Test Date: **********\_\_\_**********
+- Start Time: **********\_\_\_**********
+- End Time: **********\_\_\_**********
 - Environment: ⬜ Local / ⬜ Staging / ⬜ Other
 
 **Test Results:**
 
-| Test Case | Priority | Status | Notes |
-|-----------|----------|--------|-------|
-| TC-001 | P0 | ⬜ PASS / ⬜ FAIL | |
-| TC-002 | P0 | ⬜ PASS / ⬜ FAIL | |
-| TC-003 | P0 | ⬜ PASS / ⬜ FAIL | |
-| TC-004 | P1 | ⬜ PASS / ⬜ FAIL | |
-| TC-005 | P1 | ⬜ PASS / ⬜ FAIL | |
-| TC-006 | P1 | ⬜ PASS / ⬜ FAIL | |
-| TC-007 | P2 | ⬜ PASS / ⬜ FAIL | |
-| TC-008 | P1 | ⬜ PASS / ⬜ FAIL | |
-| TC-009 | P2 | ⬜ PASS / ⬜ FAIL | |
+| Test Case | Priority | Status            | Notes |
+| --------- | -------- | ----------------- | ----- |
+| TC-001    | P0       | ⬜ PASS / ⬜ FAIL |       |
+| TC-002    | P0       | ⬜ PASS / ⬜ FAIL |       |
+| TC-003    | P0       | ⬜ PASS / ⬜ FAIL |       |
+| TC-004    | P1       | ⬜ PASS / ⬜ FAIL |       |
+| TC-005    | P1       | ⬜ PASS / ⬜ FAIL |       |
+| TC-006    | P1       | ⬜ PASS / ⬜ FAIL |       |
+| TC-007    | P2       | ⬜ PASS / ⬜ FAIL |       |
+| TC-008    | P1       | ⬜ PASS / ⬜ FAIL |       |
+| TC-009    | P2       | ⬜ PASS / ⬜ FAIL |       |
 
 **Statistics:**
+
 - Total Tests: 9
-- Passed: _____
-- Failed: _____
-- Pass Rate: _____%
+- Passed: **\_**
+- Failed: **\_**
+- Pass Rate: **\_**%
 
 ---
 
@@ -589,11 +637,13 @@ http://localhost:3000/backlog
 ### Testing Philosophy
 
 **POC Phase:** "Test the conversation, not the plumbing"
+
 - Focus on conversational quality
 - Validate user satisfaction
 - Prioritize user experience over technical details
 
 **Production Phase:** "Test autonomous decisions and business outcomes"
+
 - Validate autonomous operation
 - Test business value delivery
 - Ensure compliance and governance
@@ -635,12 +685,14 @@ Level 5: Load Tests (Locust)
 ### Test Frameworks & Tools
 
 **Current Stack:**
+
 - **pytest** - Unit and integration testing
 - **pytest-asyncio** - Async test support
 - **httpx** - HTTP client for integration tests
 - **JSON Schema** - Contract validation
 
 **Planned Additions:**
+
 - **Behave** - BDD / Gherkin for conversational tests
 - **Playwright** - UI testing
 - **Locust** - Load testing
@@ -652,6 +704,7 @@ Level 5: Load Tests (Locust)
 ### Testing Best Practices
 
 #### POC Testing Principles
+
 1. **User-first:** Test what users experience, not implementation
 2. **Conversation corpus:** Build from real examples
 3. **Fast feedback:** Sub-second unit tests, <5s integration tests
@@ -659,6 +712,7 @@ Level 5: Load Tests (Locust)
 5. **Forgiveness:** Allow multiple valid responses
 
 #### Production Testing Principles
+
 1. **Business outcomes:** Test value delivery, not just functionality
 2. **Autonomous operation:** Test decisions without human input
 3. **Chaos engineering:** Regularly break things in staging
@@ -670,12 +724,14 @@ Level 5: Load Tests (Locust)
 ### Test Metrics
 
 #### POC Targets
+
 - **Conversation Success Rate:** >85%
 - **Average Clarifications:** <2
 - **Response Time P95:** <3s
 - **Test Coverage:** >80%
 
 #### Production Targets
+
 - **System Availability:** 99.99%
 - **Autonomous Success Rate:** >90%
 - **MTTR:** <15 minutes
@@ -688,14 +744,14 @@ Level 5: Load Tests (Locust)
 
 ### Common Issues
 
-| Symptom | Possible Cause | Solution |
-|---------|---------------|----------|
-| Connection refused | Server not running | Start MCP server |
-| 401 Unauthorized | Missing auth header | Check .env.local |
-| 500 Server Error | Tool initialization failed | Check API tokens |
-| Notion story not visible | Wrong workspace | Verify database IDs |
-| GitHub issue not created | Invalid repo | Check GITHUB_REPO env |
-| Agent not initialized | Missing OpenAI key | Check OPENAI_API_KEY |
+| Symptom                  | Possible Cause             | Solution              |
+| ------------------------ | -------------------------- | --------------------- |
+| Connection refused       | Server not running         | Start MCP server      |
+| 401 Unauthorized         | Missing auth header        | Check .env.local      |
+| 500 Server Error         | Tool initialization failed | Check API tokens      |
+| Notion story not visible | Wrong workspace            | Verify database IDs   |
+| GitHub issue not created | Invalid repo               | Check GITHUB_REPO env |
+| Agent not initialized    | Missing OpenAI key         | Check OPENAI_API_KEY  |
 
 ### Debug Commands
 
@@ -794,10 +850,10 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.9'
-      
+
       - name: Install dependencies
         run: pip install -r requirements.txt
-      
+
       - name: Run integration tests
         run: pytest test_e2e.py -v
         env:
@@ -826,9 +882,10 @@ jobs:
 ## Success Criteria
 
 All tests should show:
+
 ```
 ✅ Server Health Check
-✅ API Status Check  
+✅ API Status Check
 ✅ Basic Story Creation
 ✅ Idempotency Protection
 ✅ GitHub Issue Creation
@@ -843,6 +900,7 @@ All tests should show:
 ## Next Steps
 
 ### Phase 4 Testing Enhancements
+
 - [ ] Add Behave for BDD conversational tests
 - [ ] Implement Playwright for UI testing
 - [ ] Add performance benchmarking
@@ -850,6 +908,7 @@ All tests should show:
 - [ ] Create test dashboard
 
 ### Phase 5 Advanced Testing
+
 - [ ] Multi-agent orchestration tests
 - [ ] Chaos engineering in staging
 - [ ] Load testing with Locust
@@ -858,6 +917,6 @@ All tests should show:
 
 ---
 
-*Testing Guide Version 2.1 - v0.7.0 Update*  
-*Last Updated: November 12, 2025*  
-*Includes: Backlog View UI Testing (TC-008)*
+_Testing Guide Version 2.1 - v0.7.0 Update_  
+_Last Updated: November 12, 2025_  
+_Includes: Backlog View UI Testing (TC-008)_

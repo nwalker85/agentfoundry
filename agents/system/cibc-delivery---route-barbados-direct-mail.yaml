@@ -1,0 +1,367 @@
+id: cibc-cibc-delivery-route-barbados-direct-mail
+metadata:
+  id: cibc-cibc-delivery-route-barbados-direct-mail
+  name: CIBC Delivery - Route Barbados Direct Mail
+  display_name: CIBC Delivery - Route Barbados Direct Mail
+  description: Barbados territory delivery via direct mail (Canada Post to Barbados
+    Post)
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-5
+    - delivery-fulfillment
+    - barbados
+    - direct-mail
+    - territory-routing
+  updated: "2025-11-18T01:28:58.475002Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Barbados Delivery Request
+          description: Card approved for Barbados territory
+      - id: validate_barbados_address
+        type: process
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Validate Barbados Address
+          description: Verify address format and completeness
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Validate Barbados postal address:
+
+
+            Required fields:
+
+            - Street address or P.O. Box
+
+            - Parish (11 parishes in Barbados)
+
+            - Postal code (BB#####)
+
+            - Country = Barbados
+
+
+            Valid parishes:
+
+            - Christ Church, St. Michael, St. George, St. Philip
+
+            - St. James, St. Thomas, St. John, St. Joseph
+
+            - St. Andrew, St. Peter, St. Lucy
+
+
+            Special handling:
+
+            - P.O. Box addresses require post office location
+
+            - Bridgetown addresses route to main post office
+
+            - Rural addresses may require additional delivery time
+
+            "
+      - id: check_delivery_restrictions
+        type: toolCall
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Check Delivery Restrictions
+          description: Verify no holds or restrictions on address
+          tool: func-check-delivery-restrictions
+      - id: restriction_decision
+        type: decision
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Any Restrictions?
+          description: Check for delivery holds or issues
+          conditions:
+            - label: No Restrictions
+              expression: has_restrictions == false
+              next: determine_delivery_method
+            - label: Restrictions Found
+              expression: has_restrictions == true
+              next: handle_restriction_exception
+      - id: determine_delivery_method
+        type: process
+        position:
+          x: 200
+          y: 540
+        data:
+          label: Determine Delivery Method
+          description: Select appropriate delivery service
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Determine Barbados delivery method:
+
+
+            Standard (8-12 business days):
+
+            - Canada Post International → Barbados Post
+
+            - Lettermail with tracking
+
+            - Cost-effective for standard replacements
+
+
+            Express (5-7 business days):
+
+            - DHL Express or FedEx International
+
+            - Full tracking and signature required
+
+            - For rush_flag = true requests
+
+
+            Local (2-3 business days):
+
+            - G&D direct to Barbados branch
+
+            - For instant cards or PWM customers
+
+            - Branch pickup required
+
+            "
+      - id: prepare_shipping_label
+        type: process
+        position:
+          x: 200
+          y: 670
+        data:
+          label: Prepare Shipping Label
+          description: Generate Canada Post international label
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Generate shipping label:
+
+
+            Sender:
+
+            CIBC Card Operations Centre
+
+            Toronto, ON, Canada
+
+
+            Recipient:
+
+            Customer name and address in Barbados
+
+
+            Label details:
+
+            - Canada Post tracking number
+
+            - Customs declaration (financial document, no commercial value)
+
+            - Service level (Lettermail International or Xpresspost)
+
+            - Barbados postal code routing
+
+            "
+      - id: calculate_delivery_date
+        type: toolCall
+        position:
+          x: 200
+          y: 800
+        data:
+          label: Calculate Estimated Delivery
+          description: Determine ETA based on service level
+          tool: func-calculate-delivery-eta
+      - id: create_delivery_instruction
+        type: toolCall
+        position:
+          x: 200
+          y: 930
+        data:
+          label: Create Delivery Instruction
+          description: Record routing and tracking details
+          tool: func-create-delivery-instruction
+      - id: assign_tracking_number
+        type: process
+        position:
+          x: 200
+          y: 1060
+        data:
+          label: Assign Tracking Number
+          description: Record Canada Post tracking ID
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: notify_customer_shipped
+        type: toolCall
+        position:
+          x: 200
+          y: 1190
+        data:
+          label: Send Shipment Notification
+          description: Notify customer card is in transit
+          tool: func-send-notification
+      - id: update_request_status
+        type: process
+        position:
+          x: 200
+          y: 1320
+        data:
+          label: Update Request Status
+          description: Mark as shipped to Barbados
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: schedule_delivery_tracking
+        type: process
+        position:
+          x: 200
+          y: 1450
+        data:
+          label: Schedule Delivery Tracking
+          description: Set up tracking checks for delivery confirmation
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Schedule tracking monitoring:
+
+
+            Check points:
+
+            - Day 3: Departed Canada
+
+            - Day 7: Arrived Barbados customs
+
+            - Day 10: Out for delivery (Barbados Post)
+
+            - Day 14: Delivery confirmed or exception alert
+
+
+            Exception handling:
+
+            - If no update by Day 7: Check customs hold
+
+            - If no update by Day 14: Initiate investigation
+
+            - If undeliverable: Route to branch pickup
+
+            "
+      - id: handle_restriction_exception
+        type: process
+        position:
+          x: 400
+          y: 540
+        data:
+          label: Handle Delivery Restriction
+          description: Address restriction prevents direct mail
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Delivery restriction detected:
+
+
+            Common restrictions:
+
+            - Previous undeliverable mail
+
+            - Invalid or incomplete address
+
+            - Customer requested hold
+
+            - Fraud hold on account
+
+
+            Alternative delivery:
+
+            - Route to nearest CIBC branch for pickup
+
+            - Request address update from customer
+
+            - Hold pending customer contact
+
+            "
+      - id: route_to_branch_pickup
+        type: process
+        position:
+          x: 400
+          y: 670
+        data:
+          label: Route to Branch Pickup
+          description: Send to branch instead of direct mail
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: notify_customer_branch
+        type: toolCall
+        position:
+          x: 400
+          y: 800
+        data:
+          label: Notify Customer (Branch Pickup)
+          description: Inform customer to collect at branch
+          tool: func-send-notification
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 1580
+        data:
+          label: Barbados Routing Complete
+    edges:
+      - id: e1
+        source: entry
+        target: validate_barbados_address
+      - id: e2
+        source: validate_barbados_address
+        target: check_delivery_restrictions
+      - id: e3
+        source: check_delivery_restrictions
+        target: restriction_decision
+      - id: e4
+        source: restriction_decision
+        target: determine_delivery_method
+        sourceHandle: No Restrictions
+      - id: e5
+        source: restriction_decision
+        target: handle_restriction_exception
+        sourceHandle: Restrictions Found
+      - id: e6
+        source: determine_delivery_method
+        target: prepare_shipping_label
+      - id: e7
+        source: prepare_shipping_label
+        target: calculate_delivery_date
+      - id: e8
+        source: calculate_delivery_date
+        target: create_delivery_instruction
+      - id: e9
+        source: create_delivery_instruction
+        target: assign_tracking_number
+      - id: e10
+        source: assign_tracking_number
+        target: notify_customer_shipped
+      - id: e11
+        source: notify_customer_shipped
+        target: update_request_status
+      - id: e12
+        source: update_request_status
+        target: schedule_delivery_tracking
+      - id: e13
+        source: schedule_delivery_tracking
+        target: end
+      - id: e14
+        source: handle_restriction_exception
+        target: route_to_branch_pickup
+      - id: e15
+        source: route_to_branch_pickup
+        target: notify_customer_branch
+      - id: e16
+        source: notify_customer_branch
+        target: end

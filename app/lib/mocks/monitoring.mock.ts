@@ -17,7 +17,9 @@ export const mockTraces: Trace[] = [
     duration_ms: 4200,
     status: 'success',
     input: { query: 'What is the status of my order #12345?' },
-    output: { response: 'Your order #12345 is currently in transit and expected to arrive tomorrow.' },
+    output: {
+      response: 'Your order #12345 is currently in transit and expected to arrive tomorrow.',
+    },
     spans: [
       {
         id: 'span-001',
@@ -206,9 +208,9 @@ export const mockCostBreakdown: CostBreakdown = {
     'claude-3-opus': 2.21,
   },
   by_tool: {
-    'web_search': 3.45,
-    'notion': 1.23,
-    'salesforce': 0.89,
+    web_search: 3.45,
+    notion: 1.23,
+    salesforce: 0.89,
   },
   by_environment: {
     prod: 24.12,
@@ -244,13 +246,13 @@ export const mockAlerts: Alert[] = [
 ];
 
 export function getTracesByAgent(agentId: string): Trace[] {
-  return mockTraces.filter(trace => trace.agent_id === agentId);
+  return mockTraces.filter((trace) => trace.agent_id === agentId);
 }
 
 export function getLogsByTraceId(traceId: string): LogEntry[] {
-  return mockLogs.filter(log => log.trace_id === traceId);
+  return mockLogs.filter((log) => log.trace_id === traceId);
 }
 
 export function getActiveAlerts(): Alert[] {
-  return mockAlerts.filter(alert => alert.status === 'active');
+  return mockAlerts.filter((alert) => alert.status === 'active');
 }

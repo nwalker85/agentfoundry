@@ -1,0 +1,324 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC FDS - Apply Card Watch Auto
+  type: system
+  version: 1.0.0
+  description: Automated CW20 card watch application based on fraud triggers
+  tags: [cibc, agent-group-2, security-fraud, card-watch, cw20, automation]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Card Watch Request
+          description: Automated or manual card watch trigger
+
+      - id: validate_watch_criteria
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Validate Watch Criteria
+          description: Confirm card watch is warranted
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Validate card watch criteria:
+
+            CW20 triggers:
+            - Fraud score 50-70 (medium risk)
+            - Address verification mismatch
+            - Suspicious transaction pattern
+            - Multiple failed PIN attempts
+            - Velocity trigger (non-critical)
+            - Customer-reported suspicious activity
+            - Geographic anomaly
+            - Device fingerprint mismatch
+
+            Card watch should NOT be applied if:
+            - Card already blocked
+            - Card already has active CW20 watch
+            - Card status = closed or lost
+
+      - id: check_existing_watches
+        type: toolCall
+        position: { x: 300, y: 280 }
+        data:
+          label: Check Existing Watches
+          description: Query active card watches for this card
+          tool: func-check-card-watch-status
+
+      - id: existing_watch_decision
+        type: decision
+        position: { x: 300, y: 410 }
+        data:
+          label: Watch Already Active?
+          description: Check if CW20 already applied
+          conditions:
+            - label: No Active Watch
+              expression: has_active_watch == false
+              next: determine_watch_duration
+            - label: Watch Already Exists
+              expression: has_active_watch == true
+              next: extend_existing_watch
+
+      - id: determine_watch_duration
+        type: process
+        position: { x: 200, y: 540 }
+        data:
+          label: Determine Watch Duration
+          description: Calculate appropriate monitoring period
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Determine CW20 watch duration:
+
+            Standard durations:
+            - 7 days: Low-medium risk, single incident
+            - 14 days: Medium risk, multiple indicators
+            - 30 days: High risk, pattern detected
+            - 60 days: Investigation pending, complex fraud
+            - 90 days: Maximum watch period (requires supervisor approval)
+
+            Factors:
+            - Fraud score level
+            - Number of suspicious events
+            - Customer history
+            - Type of fraud indicator
+
+      - id: check_supervisor_approval
+        type: decision
+        position: { x: 200, y: 670 }
+        data:
+          label: Needs Supervisor Approval?
+          description: Watch duration > 30 days requires approval
+          conditions:
+            - label: Standard Duration (≤30 days)
+              expression: watch_duration_days <= 30
+              next: apply_card_watch
+            - label: Extended Duration (>30 days)
+              expression: watch_duration_days > 30
+              next: request_supervisor_approval
+
+      - id: request_supervisor_approval
+        type: process
+        position: { x: 100, y: 800 }
+        data:
+          label: Request CIF Supervisor Approval
+          description: Extended watch requires supervisor authorization
+          model: gpt-4o
+          temperature: 0.5
+          prompt: |
+            Request supervisor approval for extended card watch:
+
+            Present to CIF Supervisor:
+            - Card ID and customer details
+            - Fraud indicators summary
+            - Proposed watch duration
+            - Justification for extended period
+            - Historical fraud memos
+            - Recommended monitoring parameters
+
+      - id: supervisor_approval_decision
+        type: decision
+        position: { x: 100, y: 930 }
+        data:
+          label: Supervisor Decision
+          description: CIF Supervisor approves extended watch
+          conditions:
+            - label: Approved
+              expression: supervisor_approved == true
+              next: apply_card_watch
+            - label: Denied - Use Standard
+              expression: supervisor_approved == false
+              next: apply_standard_watch
+
+      - id: apply_standard_watch
+        type: toolCall
+        position: { x: 50, y: 1060 }
+        data:
+          label: Apply Standard 30-Day Watch
+          description: Fallback to standard watch period
+          tool: func-apply-card-watch
+
+      - id: apply_card_watch
+        type: toolCall
+        position: { x: 250, y: 800 }
+        data:
+          label: Apply CW20 Card Watch
+          description: Enable enhanced transaction monitoring
+          tool: func-apply-card-watch
+
+      - id: configure_monitoring_rules
+        type: process
+        position: { x: 250, y: 930 }
+        data:
+          label: Configure Monitoring Rules
+          description: Set transaction thresholds and alerts
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Configure CW20 monitoring rules:
+
+            Enhanced monitoring:
+            - Transaction amount thresholds
+            - Merchant category restrictions (high-risk)
+            - Geographic restrictions (if applicable)
+            - Velocity limits (transactions per hour/day)
+            - Alert triggers for manual review
+
+            Examples:
+            - Alert on any transaction > $500
+            - Block international transactions
+            - Alert on online purchases > $200
+            - Block cash advances
+
+      - id: create_watch_memo
+        type: toolCall
+        position: { x: 250, y: 1060 }
+        data:
+          label: Create Card Watch Memo
+          description: Document watch application details
+          tool: func-create-fraud-memo
+
+      - id: extend_existing_watch
+        type: process
+        position: { x: 400, y: 540 }
+        data:
+          label: Extend Existing Watch
+          description: Modify current CW20 watch parameters
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Extend or modify existing CW20 watch:
+
+            Actions:
+            - Extend expiration date
+            - Tighten monitoring thresholds
+            - Add new fraud indicators to watch reason
+            - Update memo with new event
+
+      - id: notify_fraud_team
+        type: process
+        position: { x: 300, y: 1190 }
+        data:
+          label: Notify Fraud Team
+          description: Alert fraud investigation team
+          model: gpt-4o-mini
+          temperature: 0.5
+          prompt: |
+            Notify fraud investigation team:
+
+            Include:
+            - Card ID and customer info
+            - Watch type (CW20) and duration
+            - Fraud indicators detected
+            - Monitoring rules configured
+            - Recommendation for follow-up actions
+
+      - id: schedule_review
+        type: process
+        position: { x: 300, y: 1320 }
+        data:
+          label: Schedule Watch Review
+          description: Create reminder for watch expiration review
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Schedule watch review:
+
+            Create task for fraud team:
+            - Review date = watch_expiration_date - 2 days
+            - Task: Review CW20 watch effectiveness
+            - Decision: Remove watch | Extend watch | Escalate investigation
+            - Include: Transaction activity summary during watch period
+
+      - id: end
+        type: end
+        position: { x: 300, y: 1450 }
+        data:
+          label: Card Watch Applied
+
+    edges:
+      - id: e1
+        source: entry
+        target: validate_watch_criteria
+
+      - id: e2
+        source: validate_watch_criteria
+        target: check_existing_watches
+
+      - id: e3
+        source: check_existing_watches
+        target: existing_watch_decision
+
+      - id: e4
+        source: existing_watch_decision
+        target: determine_watch_duration
+        sourceHandle: No Active Watch
+
+      - id: e5
+        source: existing_watch_decision
+        target: extend_existing_watch
+        sourceHandle: Watch Already Exists
+
+      - id: e6
+        source: determine_watch_duration
+        target: check_supervisor_approval
+
+      - id: e7
+        source: check_supervisor_approval
+        target: apply_card_watch
+        sourceHandle: Standard Duration (≤30 days)
+
+      - id: e8
+        source: check_supervisor_approval
+        target: request_supervisor_approval
+        sourceHandle: Extended Duration (>30 days)
+
+      - id: e9
+        source: request_supervisor_approval
+        target: supervisor_approval_decision
+
+      - id: e10
+        source: supervisor_approval_decision
+        target: apply_card_watch
+        sourceHandle: Approved
+
+      - id: e11
+        source: supervisor_approval_decision
+        target: apply_standard_watch
+        sourceHandle: Denied - Use Standard
+
+      - id: e12
+        source: apply_card_watch
+        target: configure_monitoring_rules
+
+      - id: e13
+        source: configure_monitoring_rules
+        target: create_watch_memo
+
+      - id: e14
+        source: apply_standard_watch
+        target: create_watch_memo
+
+      - id: e15
+        source: extend_existing_watch
+        target: notify_fraud_team
+
+      - id: e16
+        source: create_watch_memo
+        target: notify_fraud_team
+
+      - id: e17
+        source: notify_fraud_team
+        target: schedule_review
+
+      - id: e18
+        source: schedule_review
+        target: end

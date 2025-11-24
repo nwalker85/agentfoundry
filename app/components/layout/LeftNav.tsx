@@ -1,14 +1,13 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useState, useEffect, useTransition, useRef } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Layers,
   Globe,
   Wrench,
-  Radio,
   Rocket,
   Activity,
   Database,
@@ -17,88 +16,134 @@ import {
   MessageSquare,
   ChevronLeft,
   ChevronRight,
-  Settings,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { QuantLogo } from "../logo/QuantLogo"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+  FileCode,
+  Plus,
+  FolderKanban,
+  Users,
+  Workflow,
+  GitBranch,
+  Key,
+  Loader2,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { QuantLogo } from '../logo/QuantLogo';
+import { AgentFoundryLogo } from '../logo/AgentFoundryLogo';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface NavItem {
-  icon: React.ElementType
-  label: string
-  href: string
+  icon: React.ElementType;
+  label: string;
+  href: string;
+  section?: string; // Section header (CREATE, MANAGE, LAUNCH, CONFIGURE)
+  isSeparator?: boolean;
 }
 
+const APP_BASE = '/app';
+
+// New navigation structure with sections
 const navItems: NavItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-  { icon: Layers, label: "Agents", href: "/agents" },
-  { icon: Settings, label: "System Agents", href: "/system-agents" },
-  { icon: Wrench, label: "Forge", href: "/forge" },
-  { icon: MessageSquare, label: "Playground", href: "/chat" },
-  { icon: Globe, label: "Domains", href: "/domains" },
-  { icon: Wrench, label: "Tools", href: "/tools" },
-  { icon: Radio, label: "Channels", href: "/channels" },
-  { icon: Rocket, label: "Deployments", href: "/deployments" },
-  { icon: Activity, label: "Monitoring", href: "/monitoring" },
-  { icon: Database, label: "Datasets", href: "/datasets" },
-  { icon: Store, label: "Marketplace", href: "/marketplace" },
-  { icon: Shield, label: "Admin", href: "/admin" },
-]
+  // Dashboard (standalone)
+  { icon: LayoutDashboard, label: 'Dashboard', href: `${APP_BASE}` },
+
+  // Separator
+  { icon: LayoutDashboard, label: '', href: '', isSeparator: true },
+
+  // CREATE section
+  { icon: FileCode, label: 'CREATE', href: '', section: 'CREATE' },
+  { icon: FileCode, label: 'From DIS', href: `${APP_BASE}/compiler` },
+  { icon: GitBranch, label: 'Agent Graphs', href: `${APP_BASE}/graphs` },
+
+  // MANAGE section
+  { icon: Layers, label: 'MANAGE', href: '', section: 'MANAGE' },
+  { icon: Layers, label: 'Agents', href: `${APP_BASE}/agents` },
+  { icon: Database, label: 'Datasets', href: `${APP_BASE}/datasets` },
+  { icon: Wrench, label: 'Tools', href: `${APP_BASE}/tools` },
+
+  // LAUNCH section
+  { icon: Rocket, label: 'LAUNCH', href: '', section: 'LAUNCH' },
+  { icon: MessageSquare, label: 'Test', href: `${APP_BASE}/chat` },
+  { icon: Rocket, label: 'Deploy', href: `${APP_BASE}/deployments` },
+  { icon: Activity, label: 'Monitor', href: `${APP_BASE}/monitoring` },
+
+  // CONFIGURE section
+  { icon: FolderKanban, label: 'CONFIGURE', href: '', section: 'CONFIGURE' },
+  { icon: FolderKanban, label: 'Projects', href: `${APP_BASE}/projects` },
+  { icon: Globe, label: 'Domains', href: `${APP_BASE}/domains` },
+  { icon: Users, label: 'Teams', href: `${APP_BASE}/teams` },
+  { icon: Key, label: 'Secrets', href: `${APP_BASE}/settings/secrets` },
+
+  // Bottom items (no section)
+  { icon: LayoutDashboard, label: '', href: '', isSeparator: true },
+  { icon: Store, label: 'Marketplace', href: `${APP_BASE}/marketplace` },
+  { icon: Shield, label: 'Admin', href: `${APP_BASE}/admin` },
+  { icon: Database, label: 'Manage DBs', href: `${APP_BASE}/admin/manage-dbs` },
+];
 
 export function LeftNav() {
-  const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Unsaved changes dialog state
+  const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
+  const pendingNavigationRef = useRef<string | null>(null);
+
+  // Clear pending state when navigation completes
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
 
   // Load collapsed state from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('leftNavCollapsed')
+    const saved = localStorage.getItem('leftNavCollapsed');
     if (saved !== null) {
-      setIsCollapsed(saved === 'true')
+      setIsCollapsed(saved === 'true');
     }
-  }, [])
+  }, []);
 
   // Save collapsed state to localStorage when it changes
   const toggleCollapsed = () => {
-    const newState = !isCollapsed
-    setIsCollapsed(newState)
-    localStorage.setItem('leftNavCollapsed', String(newState))
-  }
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    localStorage.setItem('leftNavCollapsed', String(newState));
+  };
 
   return (
     <TooltipProvider delayDuration={0}>
       <aside
         aria-label="Primary navigation"
         className={cn(
-          "hidden md:flex bg-bg-1 border-r border-white/10 p-4 flex-col transition-all duration-300",
-          isCollapsed ? "w-[72px]" : "w-64"
+          'hidden md:flex bg-bg-1 border-r border-white/10 p-4 flex-col transition-all duration-300',
+          isCollapsed ? 'w-[72px]' : 'w-64'
         )}
       >
-        {/* Header with Quant Logo */}
-        <div className={cn(
-          "mb-6 flex items-center",
-          isCollapsed ? "flex-col gap-3" : "justify-between"
-        )}>
+        {/* Header with Agent Foundry Logo */}
+        <div
+          className={cn(
+            'mb-6 flex items-center',
+            isCollapsed ? 'flex-col gap-3' : 'justify-between'
+          )}
+        >
           {!isCollapsed ? (
             <div className="flex items-center gap-2 px-2">
-              <QuantLogo className="h-6 w-auto" />
+              <AgentFoundryLogo className="h-7 w-7 flex-shrink-0" />
+              <span className="text-fg-0 font-semibold text-base">Agent Foundry</span>
             </div>
           ) : (
             <div className="mx-auto">
-              <QuantLogo className="h-6 w-6" />
+              <AgentFoundryLogo className="h-7 w-7" />
             </div>
           )}
           <button
             onClick={toggleCollapsed}
             className={cn(
-              "p-1.5 rounded-lg hover:bg-bg-2 text-fg-2 hover:text-fg-0 transition-colors flex-shrink-0",
-              isCollapsed && "mx-auto"
+              'p-1.5 rounded-lg hover:bg-bg-2 text-fg-2 hover:text-fg-0 transition-colors flex-shrink-0',
+              isCollapsed && 'mx-auto'
             )}
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isCollapsed ? (
               <ChevronRight className="w-4 h-4" />
@@ -109,29 +154,88 @@ export function LeftNav() {
         </div>
 
         {/* Primary Navigation */}
-        <nav aria-label="Main menu" className="space-y-1 flex-1">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
+        <nav aria-label="Main menu" className="flex-1 overflow-y-auto">
+          {navItems.map((item, index) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
 
+            // Render separator
+            if (item.isSeparator) {
+              return (
+                <div
+                  key={`separator-${index}`}
+                  className="my-3 border-t border-white/10"
+                  aria-hidden="true"
+                />
+              );
+            }
+
+            // Render section header
+            if (item.section) {
+              if (isCollapsed) {
+                // Don't show section headers when collapsed
+                return null;
+              }
+              return (
+                <div
+                  key={`section-${item.section}`}
+                  className="px-3 pt-4 pb-2 text-xs font-semibold uppercase text-fg-3 tracking-wider"
+                  aria-label={`${item.section} section`}
+                >
+                  {item.section}
+                </div>
+              );
+            }
+
+            // Render navigation link
+            const isLoading = pendingHref === item.href && isPending;
             const linkContent = (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-label={item.label}
-                aria-current={isActive ? "page" : undefined}
+                aria-current={isActive ? 'page' : undefined}
+                onClick={(e) => {
+                  // Skip if already on this page
+                  if (pathname === item.href) return;
+
+                  // Check for unsaved changes when navigating away from graphs section
+                  const isLeavingGraphs =
+                    pathname?.startsWith('/app/graphs') && !item.href.startsWith('/app/graphs');
+                  if (isLeavingGraphs) {
+                    const hasUnsavedChanges =
+                      sessionStorage.getItem('graphsHasUnsavedChanges') === 'true';
+                    if (hasUnsavedChanges) {
+                      e.preventDefault();
+                      pendingNavigationRef.current = item.href;
+                      setUnsavedDialogOpen(true);
+                      return;
+                    }
+                  }
+
+                  e.preventDefault();
+                  setPendingHref(item.href);
+                  startTransition(() => {
+                    router.push(item.href);
+                  });
+                }}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1',
                   isActive
-                    ? "bg-blue-600/10 text-blue-500 hover:bg-blue-600/20"
-                    : "text-fg-1 hover:text-fg-0 hover:bg-bg-2",
-                  isCollapsed && "justify-center"
+                    ? 'bg-blue-600/10 text-blue-500 hover:bg-blue-600/20'
+                    : 'text-fg-1 hover:text-fg-0 hover:bg-bg-2',
+                  isLoading && 'bg-blue-600/5 text-blue-400',
+                  isCollapsed ? 'justify-center' : 'ml-2' // Indent 8px when expanded
                 )}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 flex-shrink-0 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                )}
                 {!isCollapsed && <span>{item.label}</span>}
               </Link>
-            )
+            );
 
             if (isCollapsed) {
               return (
@@ -141,34 +245,57 @@ export function LeftNav() {
                     {item.label}
                   </TooltipContent>
                 </Tooltip>
-              )
+              );
             }
 
-            return linkContent
+            return linkContent;
           })}
         </nav>
 
-        {/* Footer */}
+        {/* Footer - Quant Logo */}
         <div className="mt-4 pt-4 border-t border-white/10">
           {!isCollapsed ? (
-            <div className="text-xs text-fg-2 px-3">
-              <p className="font-semibold">Agent Foundry</p>
-              <p className="text-fg-2/60 mt-1">v0.9.0-dev</p>
+            <div className="flex items-center justify-center px-3">
+              <QuantLogo className="h-6 w-auto" />
             </div>
           ) : (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="text-xs text-fg-2 text-center cursor-default">
-                  <p className="font-semibold">AF</p>
+                <div className="flex items-center justify-center">
+                  <QuantLogo className="h-6 w-6" />
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right" className="bg-bg-2 border-white/10">
-                Agent Foundry v0.9.0-dev
+                Quant
               </TooltipContent>
             </Tooltip>
           )}
         </div>
       </aside>
+
+      {/* Unsaved Changes Confirmation Dialog */}
+      <ConfirmDialog
+        open={unsavedDialogOpen}
+        onOpenChange={setUnsavedDialogOpen}
+        title="Unsaved Changes"
+        description="You have unsaved changes in your agent graphs. Are you sure you want to leave? Your changes will be lost."
+        confirmLabel="Leave"
+        cancelLabel="Stay"
+        variant="destructive"
+        onConfirm={() => {
+          const href = pendingNavigationRef.current;
+          if (href) {
+            setPendingHref(href);
+            startTransition(() => {
+              router.push(href);
+            });
+            pendingNavigationRef.current = null;
+          }
+        }}
+        onCancel={() => {
+          pendingNavigationRef.current = null;
+        }}
+      />
     </TooltipProvider>
-  )
+  );
 }

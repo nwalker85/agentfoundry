@@ -1,0 +1,390 @@
+id: cibc-cibc-orchestrator
+metadata:
+  id: cibc-cibc-orchestrator
+  name: CIBC Voice Orchestrator
+  display_name: CIBC Voice Orchestrator
+  description: Deep agent orchestrator for CIBC card operations - proactively greets
+    callers, breaks down requests into tasks, and executes using 35 CIBC tools and
+    33 agent workflows
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - orchestrator
+    - deep-agent
+    - voice
+    - card-operations
+    - task-management
+  updated: "2025-11-18T01:28:58.561627Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  voice:
+    enabled: true
+    greeting: Thank you for calling CIBC. How can I help you today?
+    greeting_language: en-US
+    proactive_greeting: true
+  cibc_config:
+    organization_id: cibc
+    domain_id: card-services
+    enable_tool_discovery: true
+    enable_agent_discovery: true
+    tool_count: 35
+    agent_count: 33
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 400
+          y: 50
+        data:
+          label: Voice Entry
+          description: Entry point for CIBC voice calls with proactive greeting
+      - id: initialize_session
+        type: process
+        position:
+          x: 400
+          y: 150
+        data:
+          label: Initialize CIBC Session
+          description: Set up session context and discover available tools/agents
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Initialize CIBC orchestrator session:\n\n1. Extract session metadata:\n\
+            \   - session_id\n   - customer_id (if available from ANI/caller ID)\n \
+            \  - agent_id (should be \"cibc-orchestrator\")\n\n2. Prepare for tool/agent\
+            \ discovery:\n   - Mark discovery as pending\n   - Initialize empty task\
+            \ list\n   - Set context: CIBC Card Operations\n"
+      - id: planner
+        type: deepPlanner
+        position:
+          x: 400
+          y: 280
+        data:
+          label: CIBC Task Planner
+          description: Break down customer request into executable tasks using available
+            CIBC tools and agents
+          strategy: hierarchical
+          max_subtasks: 15
+          model: claude-sonnet-4-5-20250929
+          temperature: 0.4
+          planning_prompt: "You are the CIBC Card Operations task planner.\n\nYour job\
+            \ is to break down the customer's request into specific, executable tasks.\n\
+            \nAvailable Resources:\n- 35 CIBC tools across 5 categories:\n  * Card Lifecycle\
+            \ (6 tools): activate, block, cancel, update-status, etc.\n  * Security\
+            \ & Fraud (6 tools): fraud scoring, watches, memos, transaction verification\n\
+            \  * Request Orchestration (9 tools): replacement requests, risk assessment,\
+            \ routing\n  * Session & Verification (9 tools): 5Q protocol, fraud score\
+            \ evaluation, notifications\n  * Delivery & Fulfillment (5 tools): territory\
+            \ routing, transit validation, production submission\n\n- 33 CIBC agent\
+            \ workflows across 5 groups:\n  * Agent Group 1: Card Lifecycle (6 agents)\n\
+            \  * Agent Group 2: Security & Fraud (4 agents)\n  * Agent Group 3: Request\
+            \ Orchestration (9 agents)\n  * Agent Group 4: Session & Verification (8\
+            \ agents)\n  * Agent Group 5: Delivery & Fulfillment (5 agents)\n\nPlanning\
+            \ Guidelines:\n1. Listen to the full customer request\n2. Query available\
+            \ tools and agents for relevant capabilities\n3. Create a task list with\
+            \ clear, sequential steps\n4. Prioritize security (fraud checks, verification)\
+            \ before actions\n5. Use agent workflows for complex multi-step processes\n\
+            6. Use direct tools for simple, atomic operations\n7. Always verify customer\
+            \ identity before sensitive operations\n8. Log all interactions for audit\
+            \ trail\n\nOutput Format:\nCreate a structured task list with:\n- Task ID\n\
+            - Description\n- Tool or Agent to use\n- Dependencies (which tasks must\
+            \ complete first)\n- Success criteria\n"
+      - id: executor
+        type: deepExecutor
+        position:
+          x: 400
+          y: 450
+        data:
+          label: CIBC Task Executor
+          description: Execute planned tasks using CIBC tools and delegate to agent
+            workflows
+          model: claude-sonnet-4-5-20250929
+          temperature: 0.3
+          enable_todos: true
+          enable_filesystem: false
+          enable_subagents: true
+          enable_summarization: true
+          max_iterations: 20
+          cibc_execution:
+            enable_tool_discovery: true
+            enable_agent_discovery: true
+            require_verification: true
+            enable_fraud_checks: true
+            enable_audit_logging: true
+          execution_prompt: "You are the CIBC Card Operations task executor.
+
+
+            Your job is to execute each task in the plan by:
+
+            1. Checking task dependencies are complete
+
+            2. Discovering and calling the appropriate CIBC tool or agent
+
+            3. Handling errors and retries gracefully
+
+            4. Updating task status (pending → in_progress → completed)
+
+            5. Collecting results for the critic to validate
+
+
+            Execution Rules:
+
+            - ALWAYS verify customer identity before sensitive operations
+
+            - ALWAYS check fraud score for high-risk operations
+
+            - NEVER skip security checkpoints
+
+            - Log all tool calls to infrastructure logs
+
+            - If a tool fails, try alternative approach or escalate
+
+            - Keep customer informed via voice responses
+
+            - Maintain conversation context across tasks
+
+
+            Available Middleware:
+
+            - TodoList: Manage task status and dependencies
+
+            - SubAgent: Delegate to CIBC agent workflows
+
+            - Summarization: Keep conversation summaries for long calls
+
+
+            CIBC Tool Discovery:
+
+            Query function_catalog API for available tools:
+
+            - GET /api/function-catalog?organization_id=cibc
+
+            - Filter by category, agent_group, or tags
+
+            - Check input_schema before calling
+
+
+            CIBC Agent Discovery:
+
+            Query agents API for available workflows:
+
+            - GET /api/agents?organization_id=cibc&domain_id=card-services
+
+            - Match user intent to agent description
+
+            - Delegate complex workflows to specialized agents
+
+            "
+      - id: critic
+        type: deepCritic
+        position:
+          x: 400
+          y: 620
+        data:
+          label: Quality & Compliance Validator
+          description: Validate task completion, security compliance, and customer satisfaction
+          model: claude-sonnet-4-5-20250929
+          temperature: 0.3
+          validation_criteria:
+            - completeness
+            - accuracy
+            - security_compliance
+            - customer_satisfaction
+            - audit_trail
+          quality_threshold: 0.85
+          auto_replan: true
+          critic_prompt: "You are the CIBC quality and compliance critic.\n\nValidation\
+            \ Criteria:\n\n1. Completeness (25%):\n   - All tasks in the plan completed\
+            \ successfully\n   - Customer's original request fully addressed\n   - No\
+            \ pending or failed tasks\n\n2. Accuracy (20%):\n   - Tools and agents called\
+            \ with correct parameters\n   - Data retrieved/updated accurately\n   -\
+            \ No logical errors in execution\n\n3. Security Compliance (30%):\n   -\
+            \ Customer verification performed when required\n   - Fraud checks completed\
+            \ for high-risk operations\n   - PCI-DSS compliance maintained (no PAN logging)\n\
+            \   - Proper access controls enforced\n\n4. Customer Satisfaction (15%):\n\
+            \   - Clear, professional voice responses\n   - Reasonable wait times\n\
+            \   - Customer informed of all actions taken\n   - Empathetic handling of\
+            \ issues\n\n5. Audit Trail (10%):\n   - All interactions logged to contact_sessions\n\
+            \   - Verification attempts recorded\n   - Case summary generated\n   -\
+            \ Infrastructure events logged\n\nScoring:\n- Each criterion scored 0.0\
+            \ - 1.0\n- Overall score = weighted average\n- Threshold: 0.85 (85%)\n\n\
+            If score < threshold:\n- Identify gaps and missing tasks\n- Trigger replanning\
+            \ with feedback\n- Add missing validation steps\n\nIf score >= threshold:\n\
+            - Mark session as successful\n- Generate final case summary\n- Proceed to\
+            \ completion\n"
+      - id: replan_decision
+        type: decision
+        position:
+          x: 400
+          y: 790
+        data:
+          label: Replan Required?
+          description: Decide if replanning is needed based on critic feedback
+          conditions:
+            - label: Quality Score Met - Complete
+              expression: quality_score >= 0.85 && should_replan == false
+              next: finalize_session
+            - label: Quality Score Low - Replan
+              expression: quality_score < 0.85 || should_replan == true
+              next: handle_replan
+            - label: Max Replans Reached - Escalate
+              expression: plan_revision_count >= 3
+              next: escalate_to_human
+      - id: handle_replan
+        type: process
+        position:
+          x: 200
+          y: 920
+        data:
+          label: Handle Replanning
+          description: Process critic feedback and trigger replanning
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Process critic feedback for replanning:
+
+
+            1. Extract gap analysis from critic feedback
+
+            2. Identify missing tasks or validation steps
+
+            3. Increment plan_revision_count
+
+            4. Set should_replan = true
+
+            5. Return control to planner with feedback
+
+            "
+      - id: replan_loop
+        type: process
+        position:
+          x: 200
+          y: 1050
+        data:
+          label: Loop Back to Planner
+          description: Send back to planner with critic feedback
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: escalate_to_human
+        type: process
+        position:
+          x: 600
+          y: 920
+        data:
+          label: Escalate to Human Agent
+          description: Max replanning attempts reached - transfer to human
+          model: gpt-4o
+          temperature: 0.5
+          prompt: 'Escalate to human agent:
+
+
+            Message to customer:
+
+            "I want to make sure you get the best assistance. Let me transfer you to
+            one of our specialists who can help you further."
+
+
+            Actions:
+
+            1. Create escalation case with full context
+
+            2. Log all attempted tasks and failures
+
+            3. Route to appropriate specialist queue (PWM, CIF Officer, etc.)
+
+            4. Preserve session transcript
+
+            5. Initiate warm transfer
+
+            '
+      - id: finalize_session
+        type: process
+        position:
+          x: 400
+          y: 920
+        data:
+          label: Finalize CIBC Session
+          description: Generate case summary, log final state, thank customer
+          model: gpt-4o
+          temperature: 0.5
+          prompt: "Finalize successful CIBC session:\n\n1. Generate AI case summary\
+            \ in YAML format:\n   ```yaml\n   case_summary:\n     interaction_type:\
+            \ [card_activation | replacement_request | fraud_verification | other]\n\
+            \     customer_sentiment: [satisfied | neutral | frustrated]\n     resolution_status:\
+            \ resolved\n     key_actions:\n       - [list all major actions taken]\n\
+            \     follow_up_required: [yes | no]\n     tags: [relevant tags]\n   ```\n\
+            \n2. Log final session state:\n   - Update contact_session with end_time\n\
+            \   - Save complete transcript\n   - Record total_duration\n   - Mark session\
+            \ status = completed\n\n3. Voice closing message:\n   \"Thank you for calling\
+            \ CIBC. Is there anything else I can help you with today?\"\n\n   If customer\
+            \ says no:\n   \"You're welcome! Have a great day.\"\n\n4. Clean up:\n \
+            \  - Clear sensitive data from memory\n   - Archive session logs\n   - Update\
+            \ metrics\n"
+      - id: context_manager
+        type: contextManager
+        position:
+          x: 400
+          y: 1050
+        data:
+          label: Context Manager
+          description: Summarize long conversations and manage session state
+          size_threshold: 100000
+          offload_strategy: auto
+          auto_summarize: true
+      - id: end
+        type: end
+        position:
+          x: 400
+          y: 1180
+        data:
+          label: Session Complete
+          description: CIBC orchestrator session completed
+    edges:
+      - id: e1
+        source: entry
+        target: initialize_session
+      - id: e2
+        source: initialize_session
+        target: planner
+      - id: e3
+        source: planner
+        target: executor
+      - id: e4
+        source: executor
+        target: critic
+      - id: e5
+        source: critic
+        target: replan_decision
+      - id: e6
+        source: replan_decision
+        target: finalize_session
+        sourceHandle: Quality Score Met - Complete
+      - id: e7
+        source: replan_decision
+        target: handle_replan
+        sourceHandle: Quality Score Low - Replan
+      - id: e8
+        source: replan_decision
+        target: escalate_to_human
+        sourceHandle: Max Replans Reached - Escalate
+      - id: e9
+        source: handle_replan
+        target: replan_loop
+      - id: e10
+        source: replan_loop
+        target: planner
+      - id: e11
+        source: finalize_session
+        target: context_manager
+      - id: e12
+        source: context_manager
+        target: end
+      - id: e13
+        source: escalate_to_human
+        target: end

@@ -65,20 +65,17 @@ export function EnvironmentSelector({ current, onChange }: EnvironmentSelectorPr
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-md",
-          "hover:bg-gray-800 transition-colors",
-          isOpen && "bg-gray-800"
+          'flex items-center gap-2 px-3 py-1.5 rounded-md',
+          'hover:bg-gray-800 transition-colors',
+          isOpen && 'bg-gray-800'
         )}
       >
-        <Circle className={cn("w-2 h-2", currentConfig.dotColor)} />
-        <span className={cn("text-sm font-medium", currentConfig.color)}>
+        <Circle className={cn('w-2 h-2', currentConfig.dotColor)} />
+        <span className={cn('text-sm font-medium', currentConfig.color)}>
           {currentConfig.label}
         </span>
         <ChevronDown
-          className={cn(
-            "w-4 h-4 text-gray-400 transition-transform",
-            isOpen && "rotate-180"
-          )}
+          className={cn('w-4 h-4 text-gray-400 transition-transform', isOpen && 'rotate-180')}
         />
       </button>
 
@@ -94,15 +91,13 @@ export function EnvironmentSelector({ current, onChange }: EnvironmentSelectorPr
                   setIsOpen(false);
                 }}
                 className={cn(
-                  "w-full px-3 py-2.5 flex items-center gap-3",
-                  "hover:bg-gray-800 transition-colors",
-                  current === env && "bg-gray-800"
+                  'w-full px-3 py-2.5 flex items-center gap-3',
+                  'hover:bg-gray-800 transition-colors',
+                  current === env && 'bg-gray-800'
                 )}
               >
-                <Circle className={cn("w-2 h-2", config.dotColor)} />
-                <span className={cn("text-sm font-medium", config.color)}>
-                  {config.label}
-                </span>
+                <Circle className={cn('w-2 h-2', config.dotColor)} />
+                <span className={cn('text-sm font-medium', config.color)}>{config.label}</span>
               </button>
             );
           })}

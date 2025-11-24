@@ -18,11 +18,11 @@ interface EnhancedMessageProps {
   onRetry?: () => void;
 }
 
-export function EnhancedMessage({ 
-  message, 
+export function EnhancedMessage({
+  message,
   isGrouped = false,
   showTimestamp = true,
-  onRetry 
+  onRetry,
 }: EnhancedMessageProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const isUser = message.role === 'user';
@@ -30,13 +30,14 @@ export function EnhancedMessage({
   const messageVariants = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 }
+    exit: { opacity: 0, y: -20 },
   };
 
   // Truncate message for display if collapsed
-  const displayContent = !isExpanded && message.content.length > 500 
-    ? message.content.substring(0, 497) + '...' 
-    : message.content;
+  const displayContent =
+    !isExpanded && message.content.length > 500
+      ? message.content.substring(0, 497) + '...'
+      : message.content;
 
   return (
     <motion.div
@@ -51,10 +52,12 @@ export function EnhancedMessage({
         {/* Avatar and Name (only if not grouped) */}
         {!isGrouped && (
           <div className={`flex items-center gap-2 mb-1 ${isUser ? 'flex-row-reverse' : ''}`}>
-            <div className={`
+            <div
+              className={`
               w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
               ${isUser ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}
-            `}>
+            `}
+            >
               {isUser ? 'U' : 'PM'}
             </div>
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -72,56 +75,71 @@ export function EnhancedMessage({
         <div
           className={`
             px-4 py-3 rounded-2xl shadow-sm
-            ${isUser 
-              ? 'bg-blue-600 text-white rounded-br-sm' 
-              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm'
+            ${
+              isUser
+                ? 'bg-blue-600 text-white rounded-br-sm'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm'
             }
           `}
         >
           {/* Markdown Content */}
-          <div className={`prose ${isUser ? 'prose-invert' : 'dark:prose-invert'} max-w-none prose-sm`}>
+          <div
+            className={`prose ${isUser ? 'prose-invert' : 'dark:prose-invert'} max-w-none prose-sm`}
+          >
             <ReactMarkdown
               remarkPlugins={[remarkGfm, remarkBreaks]}
               components={{
                 // Enhanced headings with better hierarchy
                 h1({ children }) {
                   return (
-                    <h1 className={`text-2xl font-bold mb-3 mt-4 ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                    <h1
+                      className={`text-2xl font-bold mb-3 mt-4 ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}
+                    >
                       {children}
                     </h1>
                   );
                 },
                 h2({ children }) {
                   return (
-                    <h2 className={`text-xl font-bold mb-2 mt-3 ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                    <h2
+                      className={`text-xl font-bold mb-2 mt-3 ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}
+                    >
                       {children}
                     </h2>
                   );
                 },
                 h3({ children }) {
                   return (
-                    <h3 className={`text-lg font-semibold mb-2 mt-3 ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                    <h3
+                      className={`text-lg font-semibold mb-2 mt-3 ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}
+                    >
                       {children}
                     </h3>
                   );
                 },
                 h4({ children }) {
                   return (
-                    <h4 className={`text-base font-semibold mb-1 mt-2 ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                    <h4
+                      className={`text-base font-semibold mb-1 mt-2 ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}
+                    >
                       {children}
                     </h4>
                   );
                 },
                 h5({ children }) {
                   return (
-                    <h5 className={`text-sm font-semibold mb-1 mt-2 ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                    <h5
+                      className={`text-sm font-semibold mb-1 mt-2 ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}
+                    >
                       {children}
                     </h5>
                   );
                 },
                 h6({ children }) {
                   return (
-                    <h6 className={`text-sm font-medium mb-1 mt-2 ${isUser ? 'text-blue-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                    <h6
+                      className={`text-sm font-medium mb-1 mt-2 ${isUser ? 'text-blue-100' : 'text-gray-700 dark:text-gray-300'}`}
+                    >
                       {children}
                     </h6>
                   );
@@ -131,16 +149,19 @@ export function EnhancedMessage({
                   const match = /language-(\w+)/.exec(className || '');
                   const codeString = String(children).replace(/\n$/, '');
                   const language = match ? match[1] : 'text';
-                  
+
                   if (!inline && match) {
                     return <CodeBlock code={codeString} language={language} isUser={isUser} />;
                   }
-                  
+
                   return (
-                    <code className={`
+                    <code
+                      className={`
                       px-1.5 py-0.5 rounded font-mono text-sm
                       ${isUser ? 'bg-blue-700 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}
-                    `} {...props}>
+                    `}
+                      {...props}
+                    >
                       {children}
                     </code>
                   );
@@ -200,17 +221,21 @@ export function EnhancedMessage({
                 },
                 th({ children }) {
                   return (
-                    <th className={`
+                    <th
+                      className={`
                       px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider
                       ${isUser ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
-                    `}>
+                    `}
+                    >
                       {children}
                     </th>
                   );
                 },
                 td({ children }) {
                   return (
-                    <td className={`px-4 py-2 text-sm ${isUser ? 'text-blue-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                    <td
+                      className={`px-4 py-2 text-sm ${isUser ? 'text-blue-100' : 'text-gray-700 dark:text-gray-300'}`}
+                    >
                       {children}
                     </td>
                   );
@@ -218,12 +243,16 @@ export function EnhancedMessage({
                 // Enhanced blockquotes
                 blockquote({ children }) {
                   return (
-                    <blockquote className={`
+                    <blockquote
+                      className={`
                       border-l-4 pl-4 py-2 my-3 italic
-                      ${isUser 
-                        ? 'border-blue-400 bg-blue-700/30 text-blue-100' 
-                        : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300'}
-                    `}>
+                      ${
+                        isUser
+                          ? 'border-blue-400 bg-blue-700/30 text-blue-100'
+                          : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300'
+                      }
+                    `}
+                    >
                       {children}
                     </blockquote>
                   );
@@ -248,62 +277,52 @@ export function EnhancedMessage({
                   // Task list detection
                   const isTaskList = className?.includes('contains-task-list');
                   return (
-                    <ul className={`
+                    <ul
+                      className={`
                       ${isTaskList ? 'space-y-1' : 'list-disc list-inside space-y-1'} 
                       my-3
-                    `}>
+                    `}
+                    >
                       {children}
                     </ul>
                   );
                 },
                 ol({ children }) {
-                  return (
-                    <ol className="list-decimal list-inside space-y-1 my-3">
-                      {children}
-                    </ol>
-                  );
+                  return <ol className="list-decimal list-inside space-y-1 my-3">{children}</ol>;
                 },
                 li({ children, className }) {
                   const isTaskItem = className?.includes('task-list-item');
-                  return (
-                    <li className={`${isTaskItem ? 'flex items-start' : ''}`}>
-                      {children}
-                    </li>
-                  );
+                  return <li className={`${isTaskItem ? 'flex items-start' : ''}`}>{children}</li>;
                 },
                 // Horizontal rules
                 hr() {
                   return (
-                    <hr className={`
+                    <hr
+                      className={`
                       my-4 border-t
                       ${isUser ? 'border-blue-400' : 'border-gray-300 dark:border-gray-600'}
-                    `} />
+                    `}
+                    />
                   );
                 },
                 // Strikethrough (GFM)
                 del({ children }) {
                   return (
-                    <del className={`${isUser ? 'text-blue-200' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <del
+                      className={`${isUser ? 'text-blue-200' : 'text-gray-500 dark:text-gray-400'}`}
+                    >
                       {children}
                     </del>
                   );
                 },
                 // Strong emphasis
                 strong({ children }) {
-                  return (
-                    <strong className="font-bold">
-                      {children}
-                    </strong>
-                  );
+                  return <strong className="font-bold">{children}</strong>;
                 },
                 // Emphasis
                 em({ children }) {
-                  return (
-                    <em className="italic">
-                      {children}
-                    </em>
-                  );
-                }
+                  return <em className="italic">{children}</em>;
+                },
               }}
             >
               {displayContent}
@@ -358,11 +377,7 @@ export function EnhancedMessage({
             animate={{ opacity: 1, y: 0 }}
             className="mt-2"
           >
-            <ErrorCard 
-              error={message.error} 
-              onRetry={onRetry}
-              isUser={isUser}
-            />
+            <ErrorCard error={message.error} onRetry={onRetry} isUser={isUser} />
           </motion.div>
         )}
       </div>
@@ -374,10 +389,12 @@ export function EnhancedMessage({
 
 function ErrorCard({ error, onRetry, isUser }: any) {
   return (
-    <div className={`
+    <div
+      className={`
       p-3 rounded-lg border
       ${isUser ? 'bg-red-900/20 border-red-700' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}
-    `}>
+    `}
+    >
       <div className="flex items-start gap-2">
         <span className="text-red-500 dark:text-red-400">⚠️</span>
         <div className="flex-1">

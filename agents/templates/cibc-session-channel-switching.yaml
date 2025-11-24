@@ -1,0 +1,121 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Session - Channel Switching
+  type: system
+  version: 1.0.0
+  description: Preserve context when customer switches between channels
+  tags: [cibc, agent-group-4, session, channel-switching, context-preservation]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Channel Switch Detected
+          description: Customer switches from phone to chat, web, etc.
+
+      - id: retrieve_original_session
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Retrieve Original Session
+          description: Find active session from previous channel
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Query for active session:
+            - Match by customer_id
+            - Session started within last 24 hours
+            - Session not ended
+
+      - id: load_session_context
+        type: toolCall
+        position: { x: 300, y: 280 }
+        data:
+          label: Load Session Context
+          description: Get full context from original session
+          tool: func-get-customer-context
+
+      - id: create_new_session
+        type: toolCall
+        position: { x: 300, y: 410 }
+        data:
+          label: Create New Session
+          description: Create session for new channel
+          tool: func-create-contact-session
+
+      - id: link_sessions
+        type: process
+        position: { x: 300, y: 540 }
+        data:
+          label: Link Sessions
+          description: Create session linkage for continuity
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: prepare_greeting
+        type: process
+        position: { x: 300, y: 670 }
+        data:
+          label: Prepare Context-Aware Greeting
+          description: Acknowledge channel switch and resume conversation
+          model: gpt-4o
+          temperature: 0.7
+          prompt: |
+            Create greeting that:
+            - Acknowledges channel switch
+            - Summarizes current status
+            - Confirms continuation of request
+
+            Example: "I see you were just speaking with us about your lost card.
+            I have all the details from that conversation. Let's continue
+            with your replacement request."
+
+      - id: resume_workflow
+        type: process
+        position: { x: 300, y: 800 }
+        data:
+          label: Resume Workflow
+          description: Continue from where customer left off
+          model: gpt-4o
+          temperature: 0.7
+
+      - id: end
+        type: end
+        position: { x: 300, y: 930 }
+        data:
+          label: Context Preserved
+
+    edges:
+      - id: e1
+        source: entry
+        target: retrieve_original_session
+
+      - id: e2
+        source: retrieve_original_session
+        target: load_session_context
+
+      - id: e3
+        source: load_session_context
+        target: create_new_session
+
+      - id: e4
+        source: create_new_session
+        target: link_sessions
+
+      - id: e5
+        source: link_sessions
+        target: prepare_greeting
+
+      - id: e6
+        source: prepare_greeting
+        target: resume_workflow
+
+      - id: e7
+        source: resume_workflow
+        target: end

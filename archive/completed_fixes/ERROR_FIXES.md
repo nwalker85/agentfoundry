@@ -3,21 +3,25 @@
 ## Issues Identified from Logs
 
 ### 1. ❌ LangGraph Recursion Limit Error
-**Problem:** PM Agent hitting recursion limit of 50
-**Cause:** Infinite loop between `understand` → `clarify` → `understand` nodes
-**Fix Applied:** 
+
+**Problem:** PM Agent hitting recursion limit of 50 **Cause:** Infinite loop
+between `understand` → `clarify` → `understand` nodes **Fix Applied:**
+
 - Changed clarify node to go to `validate` instead of back to `understand`
 - Added explicit clarification count limit (max 2)
 - Ensure clarifications_needed is cleared after processing
 - Added debug logging to trace node transitions
 
 ### 2. ❌ Notion API 400 Bad Request
+
 **Potential Causes:**
+
 - Field mismatch (fixed with Title rename)
 - Select option doesn't exist
 - URL fields cannot be null (should be empty string or omitted)
 
 **Debug Steps Created:**
+
 1. `debug_notion_errors.py` - Captures detailed error responses
 2. `test_pm_recursion.py` - Tests PM agent recursion fix
 3. Enhanced error logging in notion.py
@@ -25,6 +29,7 @@
 ## Files Modified
 
 ### `/agent/pm_graph.py`
+
 ```python
 # Key changes:
 # 1. Changed edge from clarify → validate (not back to understand)
@@ -39,6 +44,7 @@ if state["clarification_count"] > 2:
 ```
 
 ### `/mcp/tools/notion.py`
+
 ```python
 # Fixed GitHub URL fields - remove null URLs
 # OLD:
@@ -74,6 +80,7 @@ python test_pm_agent.py
 ## Expected Resolution
 
 After these fixes:
+
 - PM Agent should complete without recursion errors
 - Notion story creation should succeed
 - GitHub issue creation should follow

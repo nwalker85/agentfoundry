@@ -1,0 +1,196 @@
+apiVersion: foundry.ai/v1
+kind: Agent
+metadata:
+  id: observability-agent
+  name: Observability Agent
+  displayName: Activity & Analytics Agent
+  description: >
+    Queries session history, analyzes metrics, and answers questions about agent activity.
+    Supports both natural language queries and structured API access.
+  version: 1.0.0
+  tags:
+    - system
+    - observability
+    - analytics
+    - monitoring
+
+spec:
+  capabilities:
+    - session_history_query
+    - activity_search
+    - metrics_analysis
+    - error_analysis
+    - natural_language_query
+
+  implementation:
+    type: langgraph
+    file: agents/observability_agent_graph.py
+    entrypoint: observability_agent
+
+  tools:
+    - name: save_activity
+      description: Persist an activity event to the database
+      source: mcp.tools.observability_tools
+      parameters:
+        - name: session_id
+          type: string
+          required: true
+        - name: agent_id
+          type: string
+          required: true
+        - name: agent_name
+          type: string
+          required: true
+        - name: event_type
+          type: string
+          required: true
+        - name: timestamp
+          type: number
+          required: true
+        - name: message
+          type: string
+          required: true
+        - name: metadata
+          type: object
+          required: false
+
+    - name: get_session_activities
+      description: Get all activities for a specific session
+      source: mcp.tools.observability_tools
+      parameters:
+        - name: session_id
+          type: string
+          required: true
+        - name: limit
+          type: integer
+          required: false
+          default: 100
+        - name: offset
+          type: integer
+          required: false
+          default: 0
+
+    - name: get_agent_activities
+      description: Get recent activities for a specific agent
+      source: mcp.tools.observability_tools
+      parameters:
+        - name: agent_id
+          type: string
+          required: true
+        - name: hours
+          type: integer
+          required: false
+          default: 24
+        - name: limit
+          type: integer
+          required: false
+          default: 100
+
+    - name: search_activities
+      description: Search activities with flexible filters
+      source: mcp.tools.observability_tools
+      parameters:
+        - name: query
+          type: string
+          required: false
+        - name: event_types
+          type: array
+          required: false
+        - name: agent_id
+          type: string
+          required: false
+        - name: session_id
+          type: string
+          required: false
+        - name: start_time
+          type: number
+          required: false
+        - name: end_time
+          type: number
+          required: false
+        - name: limit
+          type: integer
+          required: false
+          default: 50
+
+    - name: get_session_metrics
+      description: Get aggregated metrics for a session
+      source: mcp.tools.observability_tools
+      parameters:
+        - name: session_id
+          type: string
+          required: true
+
+    - name: get_recent_sessions
+      description: Get list of recent sessions with summary info
+      source: mcp.tools.observability_tools
+      parameters:
+        - name: limit
+          type: integer
+          required: false
+          default: 20
+
+    - name: get_error_summary
+      description: Get error statistics and recent errors
+      source: mcp.tools.observability_tools
+      parameters:
+        - name: agent_id
+          type: string
+          required: false
+        - name: hours
+          type: integer
+          required: false
+          default: 24
+
+  llm:
+    model: gpt-4o-mini
+    temperature: 0.1
+    max_tokens: 2000
+
+  observability:
+    trace_level: info
+    metrics_enabled: true
+    self_observe: false # Prevent infinite loops - don't observe this agent
+
+  health_check:
+    enabled: true
+    interval_seconds: 120
+    timeout_seconds: 10
+
+  api:
+    endpoints:
+      - path: /api/observability/query
+        method: POST
+        action: invoke
+        description: Natural language query
+        auth: required
+
+      - path: /api/observability/sessions
+        method: GET
+        action: recent_sessions
+        description: List recent sessions
+        auth: required
+
+      - path: /api/observability/sessions/{session_id}
+        method: GET
+        action: session_history
+        description: Get session activities
+        auth: required
+
+      - path: /api/observability/sessions/{session_id}/metrics
+        method: GET
+        action: session_metrics
+        description: Get session metrics
+        auth: required
+
+      - path: /api/observability/errors
+        method: GET
+        action: errors
+        description: Get error summary
+        auth: required
+
+      - path: /api/observability/search
+        method: GET
+        action: search
+        description: Search activities
+        auth: required

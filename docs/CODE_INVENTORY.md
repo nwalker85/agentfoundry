@@ -10,15 +10,16 @@
 
 ### Code Distribution
 
-| Category | Files | Lines | Percentage |
-|----------|-------|-------|------------|
-| **Backend (Python)** | 9 | 1,948 | 93% |
-| **Frontend (TypeScript/React)** | 3 | 144 | 7% |
-| **Total** | 12 | 2,092 | 100% |
+| Category                        | Files | Lines | Percentage |
+| ------------------------------- | ----- | ----- | ---------- |
+| **Backend (Python)**            | 9     | 1,948 | 93%        |
+| **Frontend (TypeScript/React)** | 3     | 144   | 7%         |
+| **Total**                       | 12    | 2,092 | 100%       |
 
 ### Technology Stack
 
 **Backend:**
+
 - Python 3.9.6
 - FastAPI 0.115.5
 - LangChain/LangGraph 0.2.x
@@ -26,6 +27,7 @@
 - httpx 0.27.2
 
 **Frontend:**
+
 - Next.js 14.2.33 (App Router)
 - React 18
 - TypeScript 5
@@ -42,6 +44,7 @@
 **Role:** Main application entry point, FastAPI server
 
 **Purpose:**
+
 - MCP server implementation
 - HTTP endpoint definitions
 - Tool initialization and lifecycle management
@@ -51,6 +54,7 @@
 **Dependencies:**
 
 **Standard Library:**
+
 - `os` - Environment variables
 - `time` - Performance tracking
 - `contextlib.asynccontextmanager` - Lifespan management
@@ -58,6 +62,7 @@
 - `typing` - Type hints
 
 **Third-Party:**
+
 - `fastapi` - Web framework
   - `FastAPI` - App instance
   - `HTTPException` - Error handling
@@ -68,6 +73,7 @@
 - `uvicorn` - ASGI server
 
 **Internal:**
+
 - `mcp.schemas` - Data models
   - `CreateStoryRequest`
   - `CreateStoryResponse`
@@ -85,6 +91,7 @@
   - `PMAgent`
 
 **Key Endpoints:**
+
 - `GET /` - Health check
 - `GET /api/status` - Integration status
 - `POST /api/tools/notion/create-story` - Create Notion story
@@ -94,6 +101,7 @@
 - `GET /api/tools/schema` - Get tool schemas
 
 **Dependency Graph:**
+
 ```
 mcp_server.py
 ├── mcp/schemas.py (models)
@@ -113,6 +121,7 @@ mcp_server.py
 **Role:** Data models and validation
 
 **Purpose:**
+
 - Pydantic models for request/response
 - Enums for priority and status
 - Data validation
@@ -122,6 +131,7 @@ mcp_server.py
 **Dependencies:**
 
 **Standard Library:**
+
 - `typing` - Type hints (List, Optional, Dict, Any, Literal)
 - `datetime` - Timestamps
 - `hashlib` - Idempotency keys
@@ -129,12 +139,14 @@ mcp_server.py
 - `enum.Enum` - Enumerations
 
 **Third-Party:**
+
 - `pydantic` - Data validation
   - `BaseModel` - Base class
   - `Field` - Field definitions
   - `validator` - Custom validation
 
 **Models Defined:**
+
 - `Priority` - P0, P1, P2, P3
 - `StoryStatus` - Backlog, Todo, In Progress, etc.
 - `CreateStoryRequest` - Story creation input
@@ -148,12 +160,14 @@ mcp_server.py
 - `AuditEntry` - Audit log entry
 
 **Used By:**
+
 - `mcp_server.py` - API endpoints
 - `mcp/tools/notion.py` - Notion tool
 - `mcp/tools/github.py` - GitHub tool
 - `mcp/tools/audit.py` - Audit tool
 
 **Dependency Graph:**
+
 ```
 mcp/schemas.py
 ├── (no internal dependencies)
@@ -175,10 +189,12 @@ mcp/schemas.py
 **Role:** Package exports
 
 **Purpose:**
+
 - Export tool classes
 - Define public API
 
 **Exports:**
+
 - `NotionTool`
 - `GitHubTool`
 - `AuditTool`
@@ -192,6 +208,7 @@ mcp/schemas.py
 **Role:** Notion API integration
 
 **Purpose:**
+
 - Create stories in Notion
 - Find and create epics
 - List/filter stories
@@ -201,16 +218,19 @@ mcp/schemas.py
 **Dependencies:**
 
 **Standard Library:**
+
 - `os` - Environment variables
 - `hashlib` - Idempotency keys
 - `typing` - Type hints
 - `datetime` - Timestamps
 
 **Third-Party:**
+
 - `httpx.AsyncClient` - HTTP client
 - `pydantic.BaseModel` - Models
 
 **Internal:**
+
 - `mcp.schemas`
   - `CreateStoryRequest`
   - `CreateStoryResponse`
@@ -222,9 +242,11 @@ mcp/schemas.py
   - `AuditEntry`
 
 **External APIs:**
+
 - Notion API v1 (https://api.notion.com/v1)
 
 **Key Methods:**
+
 - `create_story()` - Create story with idempotency
 - `list_stories()` - Query and filter stories
 - `_find_epic_by_title()` - Find existing epic
@@ -233,11 +255,13 @@ mcp/schemas.py
 - `_query_stories()` - Query stories database
 
 **Configuration Required:**
+
 - `NOTION_API_TOKEN` - API authentication
 - `NOTION_DATABASE_STORIES_ID` - Stories database ID
 - `NOTION_DATABASE_EPICS_ID` - Epics database ID
 
 **Dependency Graph:**
+
 ```
 mcp/tools/notion.py
 ├── mcp/schemas.py (models)
@@ -253,6 +277,7 @@ mcp/tools/notion.py
 **Role:** GitHub API integration
 
 **Purpose:**
+
 - Create GitHub issues
 - Link issues to Notion stories
 - Idempotency protection
@@ -262,15 +287,18 @@ mcp/tools/notion.py
 **Dependencies:**
 
 **Standard Library:**
+
 - `os` - Environment variables
 - `typing` - Type hints
 - `datetime` - Timestamps
 
 **Third-Party:**
+
 - `httpx.AsyncClient` - HTTP client
 - `pydantic.BaseModel` - Models
 
 **Internal:**
+
 - `mcp.schemas`
   - `CreateIssueRequest`
   - `CreateIssueResponse`
@@ -278,20 +306,24 @@ mcp/tools/notion.py
   - `AuditEntry`
 
 **External APIs:**
+
 - GitHub API v3 (https://api.github.com)
 
 **Key Methods:**
+
 - `create_issue()` - Create issue with idempotency
 - `_format_issue_body()` - Format issue description
 - `_embed_metadata()` - Embed idempotency key
 - `close()` - Cleanup HTTP client
 
 **Configuration Required:**
+
 - `GITHUB_TOKEN` - API authentication
 - `GITHUB_REPO` - Repository (format: owner/repo)
 - `GITHUB_DEFAULT_BRANCH` - Default branch (optional)
 
 **Dependency Graph:**
+
 ```
 mcp/tools/github.py
 ├── mcp/schemas.py (models)
@@ -307,6 +339,7 @@ mcp/tools/github.py
 **Role:** Audit logging and querying
 
 **Purpose:**
+
 - Append-only audit logs
 - JSONL format
 - Query interface
@@ -316,6 +349,7 @@ mcp/tools/github.py
 **Dependencies:**
 
 **Standard Library:**
+
 - `os` - Environment variables
 - `json` - Serialization
 - `hashlib` - Content hashing
@@ -325,28 +359,34 @@ mcp/tools/github.py
 - `asyncio` - Async locking
 
 **Third-Party:**
+
 - `aiofiles` - Async file I/O
 
 **Internal:**
+
 - `mcp.schemas.AuditEntry` - Audit model
 
 **Key Methods:**
+
 - `log_action()` - Write audit entry
 - `query()` - Query audit logs with filters
 - `_generate_hash()` - Generate content hash
 - `_parse_audit_line()` - Parse JSONL entry
 
 **Configuration Required:**
+
 - `AUDIT_DIR` - Audit directory (default: ./audit)
 - `TENANT_ID` - Tenant identifier
 - `ENVIRONMENT` - Environment name
 
 **Storage:**
+
 - File pattern: `audit/actions_YYYYMMDD.jsonl`
 - Format: One JSON object per line
 - Rotation: Daily
 
 **Dependency Graph:**
+
 ```
 mcp/tools/audit.py
 ├── mcp/schemas.py (AuditEntry)
@@ -366,17 +406,21 @@ mcp/tools/audit.py
 **Status:** ⚠️ **NOT IN USE** - Replaced by LangGraph PMAgent
 
 **Purpose:**
+
 - Message parsing (regex-based)
 - Story creation workflow
 - GitHub issue creation
 - Error handling
 - No LangGraph dependencies
 
-**Note:** This was a temporary implementation to avoid LangGraph compatibility issues. Now that LangGraph is operational, this agent is no longer used by the MCP server.
+**Note:** This was a temporary implementation to avoid LangGraph compatibility
+issues. Now that LangGraph is operational, this agent is no longer used by the
+MCP server.
 
 **Dependencies:**
 
 **Standard Library:**
+
 - `os` - Environment variables
 - `typing` - Type hints
 - `datetime` - Timestamps
@@ -385,12 +429,15 @@ mcp/tools/audit.py
 - `re` - Regex for parsing
 
 **Third-Party:**
+
 - `httpx.AsyncClient` - HTTP client for MCP server
 
 **Internal:**
+
 - None (standalone)
 
 **Key Methods:**
+
 - `process_message()` - Main processing pipeline
 - `_parse_message()` - Extract story details from text
 - `_create_story()` - Call MCP to create story
@@ -398,6 +445,7 @@ mcp/tools/audit.py
 - `close()` - Cleanup HTTP client
 
 **State Machine:**
+
 - `UNDERSTANDING` - Initial state
 - `NEEDS_CLARIFICATION` - Missing info
 - `PLANNING` - Planning execution
@@ -407,6 +455,7 @@ mcp/tools/audit.py
 - `ERROR` - Error state
 
 **Dependency Graph:**
+
 ```
 agent/simple_pm.py
 ├── (no internal dependencies)
@@ -423,6 +472,7 @@ agent/simple_pm.py
 **Role:** LangGraph-based PM agent with AI
 
 **Purpose:**
+
 - AI-powered task understanding (GPT-4)
 - Conversation management
 - Multi-turn clarification
@@ -435,12 +485,14 @@ agent/simple_pm.py
 **Dependencies:**
 
 **Standard Library:**
+
 - `typing` - Type hints (TypedDict, Annotated, Sequence, etc.)
 - `datetime` - Timestamps
 - `enum.Enum` - Enumerations
 - `os` - Environment variables
 
 **Third-Party:**
+
 - `httpx.AsyncClient` - HTTP client
 - `langgraph` - Agent framework
   - `StateGraph` - State machine
@@ -461,9 +513,11 @@ agent/simple_pm.py
   - `Field`
 
 **Internal:**
+
 - None (standalone)
 
 **Key Components:**
+
 - `AgentState` - State definition (TypedDict)
 - `PMAgent` - Main agent class
 - `understand_task` - Task comprehension node
@@ -475,10 +529,12 @@ agent/simple_pm.py
 - `complete_task` - Completion node
 
 **Configuration Required:**
+
 - `OPENAI_API_KEY` - OpenAI API key
 - MCP server running on port 8001
 
 **Dependency Graph:**
+
 ```
 agent/pm_graph.py
 ├── LangChain/LangGraph (external)
@@ -498,6 +554,7 @@ agent/pm_graph.py
 **Role:** Next.js root layout component
 
 **Purpose:**
+
 - Define HTML structure
 - Apply global styles
 - Set metadata
@@ -505,17 +562,21 @@ agent/pm_graph.py
 **Dependencies:**
 
 **Next.js:**
+
 - `Metadata` type from "next"
 - `ReactNode` type from "react"
 
 **Internal:**
+
 - `./globals.css` - Global styles
 
 **Exports:**
+
 - `metadata` - Page metadata
 - `RootLayout` component
 
 **Dependency Graph:**
+
 ```
 app/layout.tsx
 ├── app/globals.css (styles)
@@ -531,6 +592,7 @@ app/layout.tsx
 **Role:** Next.js home page component
 
 **Purpose:**
+
 - Display system status
 - Show integration health
 - Provide navigation
@@ -539,21 +601,26 @@ app/layout.tsx
 **Dependencies:**
 
 **React:**
+
 - `useEffect` - Side effects
 - `useState` - State management
 
 **External:**
+
 - MCP Server API (http://localhost:8001/api/status)
 
 **Components:**
+
 - `HomePage` - Main page component
 - `IntegrationRow` - Status display
 - `NavLink` - Navigation button
 
 **Environment Variables:**
+
 - `NEXT_PUBLIC_API_URL` - MCP server URL
 
 **Dependency Graph:**
+
 ```
 app/page.tsx
 ├── React (external)
@@ -569,11 +636,13 @@ app/page.tsx
 **Role:** Tailwind CSS configuration
 
 **Purpose:**
+
 - Configure Tailwind CSS
 - Define content paths
 - Set theme extensions
 
 **Dependency Graph:**
+
 ```
 app/tailwind.config.js
 ├── (configuration only)
@@ -651,6 +720,7 @@ Backend (FastAPI)
 ### 4.1 Python Packages (requirements.txt)
 
 **Core:**
+
 - `fastapi==0.115.5` - Web framework
 - `uvicorn[standard]==0.32.1` - ASGI server
 - `python-dotenv==1.0.1` - Environment config
@@ -659,6 +729,7 @@ Backend (FastAPI)
 - `pydantic-settings==2.6.1` - Settings management
 
 **LangChain/LangGraph:**
+
 - `langchain==0.2.16` - LangChain framework
 - `langchain-core==0.2.41` - Core components
 - `langchain-openai==0.1.25` - OpenAI integration
@@ -666,16 +737,20 @@ Backend (FastAPI)
 - `langsmith==0.1.134` - LangSmith tracing
 
 **AI/ML:**
+
 - `openai==1.57.0` - OpenAI SDK
 
 **Async:**
+
 - `aiofiles==24.1.0` - Async file I/O
 
 **Testing:**
+
 - `pytest==8.3.4` - Testing framework
 - `pytest-asyncio==0.24.0` - Async test support
 
 **Development:**
+
 - `black==24.10.0` - Code formatter
 - `ruff==0.8.2` - Linter
 - `mypy==1.13.0` - Type checker
@@ -683,40 +758,47 @@ Backend (FastAPI)
 ### 4.2 Node Packages (package.json)
 
 **Core:**
+
 - `next@14.2.33` - Next.js framework
 - `react@^18` - React library
 - `react-dom@^18` - React DOM
 
 **Styling:**
+
 - `tailwindcss@^3.4.1` - CSS framework
 - `autoprefixer@^10.4.18` - CSS post-processor
 - `postcss@^8.4.35` - CSS processor
 
 **TypeScript:**
+
 - `typescript@^5` - TypeScript compiler
 - `@types/node@^20` - Node.js types
 - `@types/react@^18` - React types
 - `@types/react-dom@^18` - React DOM types
 
 **Development:**
+
 - `eslint@^8` - Linter
 - `eslint-config-next@14.2.33` - Next.js ESLint config
 
 ### 4.3 External APIs
 
 **Notion API:**
+
 - Base URL: https://api.notion.com/v1
 - Version: 2022-06-28
 - Authentication: Bearer token
 - Used by: `mcp/tools/notion.py`
 
 **GitHub API:**
+
 - Base URL: https://api.github.com
 - Version: v3 (2022-11-28)
 - Authentication: Bearer token
 - Used by: `mcp/tools/github.py`
 
 **OpenAI API:**
+
 - Used by: `agent/pm_graph.py`
 - Model: GPT-4
 - Authentication: API key
@@ -727,24 +809,25 @@ Backend (FastAPI)
 
 ### 5.1 Lines of Code by File
 
-| File | Lines | Category |
-|------|-------|----------|
-| `mcp_server.py` | 407 | Backend/Server |
-| `agent/pm_graph.py` ✅ | 406 | Backend/Agent (ACTIVE) |
-| `mcp/tools/notion.py` | 335 | Backend/Tool |
-| `mcp/tools/audit.py` | 224 | Backend/Tool |
-| `mcp/tools/github.py` | 214 | Backend/Tool |
-| `agent/simple_pm.py` ⚠️ | 196 | Backend/Agent (LEGACY) |
-| `mcp/schemas.py` | 159 | Backend/Model |
-| `app/page.tsx` | 117 | Frontend/Page |
-| `app/layout.tsx` | 16 | Frontend/Layout |
-| `app/tailwind.config.js` | 11 | Frontend/Config |
-| `mcp/tools/__init__.py` | 7 | Backend/Package |
-| **Total** | **2,092** | |
+| File                     | Lines     | Category               |
+| ------------------------ | --------- | ---------------------- |
+| `mcp_server.py`          | 407       | Backend/Server         |
+| `agent/pm_graph.py` ✅   | 406       | Backend/Agent (ACTIVE) |
+| `mcp/tools/notion.py`    | 335       | Backend/Tool           |
+| `mcp/tools/audit.py`     | 224       | Backend/Tool           |
+| `mcp/tools/github.py`    | 214       | Backend/Tool           |
+| `agent/simple_pm.py` ⚠️  | 196       | Backend/Agent (LEGACY) |
+| `mcp/schemas.py`         | 159       | Backend/Model          |
+| `app/page.tsx`           | 117       | Frontend/Page          |
+| `app/layout.tsx`         | 16        | Frontend/Layout        |
+| `app/tailwind.config.js` | 11        | Frontend/Config        |
+| `mcp/tools/__init__.py`  | 7         | Backend/Package        |
+| **Total**                | **2,092** |                        |
 
 ### 5.2 Code Distribution
 
 **By Layer:**
+
 - Server Layer: 407 lines (19%)
 - Tool Layer: 780 lines (37%)
 - Agent Layer: 602 lines (29%)
@@ -752,6 +835,7 @@ Backend (FastAPI)
 - Frontend Layer: 144 lines (7%)
 
 **By Language:**
+
 - Python: 1,948 lines (93%)
 - TypeScript/React: 133 lines (6%)
 - JavaScript: 11 lines (1%)
@@ -759,11 +843,13 @@ Backend (FastAPI)
 ### 5.3 Complexity Metrics
 
 **Backend (Python):**
+
 - Average file size: ~216 lines
 - Largest file: `mcp_server.py` (407 lines)
 - Smallest file: `mcp/tools/__init__.py` (7 lines)
 
 **Frontend (TypeScript/React):**
+
 - Average file size: ~48 lines
 - Largest file: `app/page.tsx` (117 lines)
 - Smallest file: `app/tailwind.config.js` (11 lines)
@@ -775,6 +861,7 @@ Backend (FastAPI)
 ### 6.1 Most Used Modules
 
 **Standard Library:**
+
 1. `typing` - Used in 9 files
 2. `os` - Used in 7 files
 3. `datetime` - Used in 6 files
@@ -782,31 +869,37 @@ Backend (FastAPI)
 5. `json` - Used in 3 files
 
 **Third-Party:**
+
 1. `httpx` - Used in 5 files (HTTP communication)
 2. `pydantic` - Used in 4 files (data validation)
 3. `fastapi` - Used in 1 file (web framework)
 4. `langchain` - Used in 1 file (agent framework)
 
 **Internal:**
+
 1. `mcp.schemas` - Imported by 4 files (most depended upon)
 2. `mcp.tools` - Imported by 1 file
 
 ### 6.2 Dependency Depth
 
 **Leaf Nodes (no internal dependencies):**
+
 - `mcp/schemas.py` - Core data models
 - `agent/simple_pm.py` - Standalone agent (LEGACY - not in use)
 
 **Level 1 (depends on leaf nodes):**
+
 - `mcp/tools/notion.py` - Depends on schemas
 - `mcp/tools/github.py` - Depends on schemas
 - `mcp/tools/audit.py` - Depends on schemas
 
 **Level 2 (depends on level 1):**
+
 - `mcp/tools/__init__.py` - Exports from level 1
 - `agent/pm_graph.py` - Calls MCP tools via HTTP ✅ (ACTIVE)
 
 **Root (depends on all):**
+
 - `mcp_server.py` - Orchestrates everything
 
 ---
@@ -816,25 +909,30 @@ Backend (FastAPI)
 ### 7.1 Environment Variables Required
 
 **Notion Integration:**
+
 - `NOTION_API_TOKEN` - Notion API token
 - `NOTION_DATABASE_STORIES_ID` - Stories database ID
 - `NOTION_DATABASE_EPICS_ID` - Epics database ID
 
 **GitHub Integration:**
+
 - `GITHUB_TOKEN` - GitHub personal access token
 - `GITHUB_REPO` - Repository (format: owner/repo)
 - `GITHUB_DEFAULT_BRANCH` - Default branch (optional, default: main)
 
 **OpenAI Integration:**
+
 - `OPENAI_API_KEY` - OpenAI API key
 
 **Server Configuration:**
+
 - `ENVIRONMENT` - Environment name (default: development)
 - `TENANT_ID` - Tenant identifier (default: local-dev)
 - `AUDIT_DIR` - Audit directory (default: ./audit)
 - `MCP_AUTH_TOKEN` - MCP server auth token (default: dev-token)
 
 **Frontend Configuration:**
+
 - `NEXT_PUBLIC_API_URL` - MCP server URL
 
 ---
@@ -844,20 +942,24 @@ Backend (FastAPI)
 ### 8.1 Strengths
 
 1. **Clear Separation of Concerns**
+
    - Models, tools, agents, and server are well-separated
    - Each component has a single responsibility
 
 2. **Type Safety**
+
    - Pydantic models provide runtime validation
    - TypeScript provides compile-time type checking
    - Comprehensive type hints in Python
 
 3. **Modular Design**
+
    - Tools are independent and swappable
    - Agents are separate from server
    - Clean dependency boundaries
 
 4. **Async Throughout**
+
    - All I/O operations are async
    - Non-blocking architecture
    - Scalable design
@@ -870,18 +972,22 @@ Backend (FastAPI)
 ### 8.2 Areas for Improvement
 
 1. **Circular Dependency Risk**
+
    - Agent calls MCP server via HTTP (tight coupling)
    - Consider: Direct tool imports vs HTTP calls
 
 2. **Configuration Management**
+
    - Environment variables scattered across files
    - Consider: Centralized config module
 
 3. **Error Handling**
+
    - Not standardized across tools
    - Consider: Common error handling framework
 
 4. **Testing Coverage**
+
    - Unit tests needed for core functions
    - Consider: Test doubles for external APIs
 
@@ -892,15 +998,18 @@ Backend (FastAPI)
 ### 8.3 Technical Debt
 
 1. **Legacy Agent Cleanup**
+
    - `agent/simple_pm.py` is no longer in use
    - Consider archiving or removing
    - Update tests that reference it
 
 2. **In-Memory Caches**
+
    - Idempotency caches lost on restart
    - Need: Redis or persistent storage
 
 3. **Hardcoded URLs**
+
    - MCP server URL hardcoded in agents
    - Need: Configuration injection
 
@@ -915,11 +1024,13 @@ Backend (FastAPI)
 ### 9.1 Immediate Actions
 
 1. **Resolve LangGraph Issues**
+
    - Fix dependency conflicts
    - Or remove `pm_graph.py`
    - Document decision in ADR
 
 2. **Add Unit Tests**
+
    - Test message parsing
    - Test schema validation
    - Test idempotency logic
@@ -932,11 +1043,13 @@ Backend (FastAPI)
 ### 9.2 Short-Term Improvements
 
 1. **Improve Error Handling**
+
    - Create custom exception hierarchy
    - Standardize error responses
    - Add error recovery logic
 
 2. **Add Logging**
+
    - Structured logging throughout
    - Correlation IDs
    - Debug mode support
@@ -949,11 +1062,13 @@ Backend (FastAPI)
 ### 9.3 Long-Term Enhancements
 
 1. **Add Redis**
+
    - Persistent idempotency cache
    - Session storage
    - Rate limiting
 
 2. **Add WebSocket Support**
+
    - Real-time updates
    - Streaming responses
    - Connection management
@@ -1006,5 +1121,5 @@ pytest tests/ -v
 ---
 
 **Inventory Complete** | Generated: November 10, 2025  
-*For questions or updates, see [docs/PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)*
-
+_For questions or updates, see
+[docs/PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)_

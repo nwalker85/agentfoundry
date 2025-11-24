@@ -7,14 +7,9 @@ interface QuantLogoProps {
   className?: string;
 }
 
-export function QuantLogo({ className = "h-8 w-auto" }: QuantLogoProps) {
+export function QuantLogo({ className = 'h-8 w-auto' }: QuantLogoProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 120 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className={className} viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Q Symbol */}
       <circle cx="16" cy="16" r="12" stroke="url(#quantGradient)" strokeWidth="2.5" fill="none" />
       <path

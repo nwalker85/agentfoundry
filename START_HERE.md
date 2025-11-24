@@ -1,24 +1,36 @@
-## Agent Foundry – Start Here
+## Agent Foundry – Start Here (v0.9)
 
-**Goal:** Get a new engineer productive in \<30 minutes with a clear path for local development, AWS deployment, and where to learn about Domain Intelligence (DIS) and Forge.
+**Goal:** Get a new engineer productive in <30 minutes with a clear path for
+local development, AWS deployment, and the Forge visual editor.
 
 ---
 
-## 1. TL;DR – What You’re Looking At
+## 1. TL;DR – What You're Looking At
 
-- **Agent Foundry** is an **agentic platform**:
-  - LangGraph-based agents (`agent/`, `agents/`)
-  - Visual Forge builder (`app/forge/*`, `forge_service/`)
-  - DIS dossiers compiled into runtime agents (`compiler/`)
-  - Voice capabilities via LiveKit (`backend/livekit_service.py`, `backend/voice_agent_worker.py`)
-- **Runtime topology**
-  - Local: Docker Compose (LiveKit, Redis, backend, compiler) + Next.js dev server
-  - AWS: ECR → ECS Fargate → ALB → `foundry.ravenhelm.ai`
-- **You should read, in this order:**
-  1. This file – `START_HERE.md`
-  2. Local dev guide – `DOCKER_DEV_WORKFLOW.md`
-  3. AWS deployment – `DEPLOYMENT.md`
-  4. DIS / Forge / LangGraph – `docs/FOUNDARY_INSTANCE_ARCHITECTURE.md`, `docs/FORGE_LANGGRAPH_GAP_ANALYSIS.md`
+**Agent Foundry v0.9** is a production-ready **agentic platform**:
+
+### Core Features
+- **Forge Visual Graph Editor** - Build LangGraph agents with drag-and-drop
+- **Agent Version Control** - Auto-increment versions, deploy specific versions
+- **Voice Integration** - LiveKit WebRTC with Deepgram STT + OpenAI TTS
+- **Multi-Tenant** - Organizations → Domains with RBAC and Zitadel SSO
+- **7 System Agents** - IO, Supervisor, Context, Coherence, Exception, Observability, Governance
+
+### Key Locations
+- **Frontend**: `app/app/` - 18 pages (graphs, agents, chat, tools, admin)
+- **Backend**: `backend/main.py` - 47+ API endpoints
+- **Agents**: `agents/` - YAML manifests + runtime registry
+- **Compiler**: `compiler/` - DIS → Agent conversion
+
+### Runtime Topology
+- **Local**: Docker Compose (LiveKit, Redis, PostgreSQL, backend) + Next.js
+- **AWS**: ECR → ECS Fargate → ALB → `foundry.ravenhelm.ai`
+
+### Reading Order
+1. This file – `START_HERE.md`
+2. Local dev guide – `docs/DOCKER_DEV_WORKFLOW.md`
+3. Forge guide – `docs/FORGE_AI_USER_GUIDE.md`
+4. AWS deployment – `docs/DEPLOYMENT.md`
 
 ---
 
@@ -44,10 +56,12 @@ Edit `.env.local`:
 - **Required**
   - `OPENAI_API_KEY=sk-...`
 - **Recommended (for real integrations)**
-  - Notion: `NOTION_API_TOKEN`, `NOTION_DATABASE_STORIES_ID`, `NOTION_DATABASE_EPICS_ID`
+  - Notion: `NOTION_API_TOKEN`, `NOTION_DATABASE_STORIES_ID`,
+    `NOTION_DATABASE_EPICS_ID`
   - GitHub: `GITHUB_TOKEN`, `GITHUB_REPO`
 - **LiveKit / voice**
-  - For local Docker LiveKit, defaults in `.env.example` are fine; see `LIVEKIT_SETUP.md` for details.
+  - For local Docker LiveKit, defaults in `.env.example` are fine; see
+    `LIVEKIT_SETUP.md` for details.
 
 ### 2.3 Start Core Services (Docker)
 
@@ -98,19 +112,23 @@ Open:
   - See `DOCKER_DEV_WORKFLOW.md`
 - Feature-specific debugging:
   - Backlog / stories: `docs/BACKLOG_DEBUGGING_GUIDE.md`
-  - WebSockets: `docs/WEBSOCKET_IMPLEMENTATION_PLAN.md`, `docs/WEBSOCKET_IMPLEMENTATION_SUMMARY.md`
+  - WebSockets: `docs/WEBSOCKET_IMPLEMENTATION_PLAN.md`,
+    `docs/WEBSOCKET_IMPLEMENTATION_SUMMARY.md`
 
 ---
 
 ## 3. Deploy to AWS Dev (ECS / Fargate)
 
-Use this once you’re comfortable locally. This is the **current, supported** path for Agent Foundry in AWS.
+Use this once you’re comfortable locally. This is the **current, supported**
+path for Agent Foundry in AWS.
 
 ### 3.1 One-Time AWS Setup
 
 1. **AWS account & credentials**
-   - Configure AWS CLI with the target account (e.g. the `122441748701` dev account).
+   - Configure AWS CLI with the target account (e.g. the `122441748701` dev
+     account).
 2. **Terraform `infra/`**
+
    - `cd infra`
    - `cp terraform.tfvars.example terraform.tfvars`
    - Fill in:
@@ -129,7 +147,8 @@ Use this once you’re comfortable locally. This is the **current, supported** p
 
    - VPC, subnets, security groups
    - ALB `agentfoundry-alb`
-   - Target groups `agentfoundry-ui-tg` (port 3000) and `agentfoundry-api-tg` (port 8000)
+   - Target groups `agentfoundry-ui-tg` (port 3000) and `agentfoundry-api-tg`
+     (port 8000)
    - ECS cluster `agentfoundry-cluster`
    - ECS services `agentfoundry-ui-svc` and `agentfoundry-api-svc`
    - ECR repositories for UI/backend/compiler/forge
@@ -175,68 +194,98 @@ What it does:
 ./scripts/check_alb_targets.sh
 ```
 
-See `DEPLOYMENT.md` for the full AWS deployment guide (including DNS, SSL, and teardown).
+See `DEPLOYMENT.md` for the full AWS deployment guide (including DNS, SSL, and
+teardown).
 
 ---
 
-## 4. Domain Intelligence (DIS), Forge, and LangGraph
+## 4. Forge Visual Graph Editor
 
-Once you can run locally and understand the AWS path, dig into the core “agentic OS” concepts:
+The Forge editor is the primary way to create and manage agents in v0.9.
 
-- **Foundry instances & DIS**
-  - `docs/FOUNDARY_INSTANCE_ARCHITECTURE.md` – how DIS dossiers, agents, and instances fit together
-  - `docs/FULLY_AGENTIC_FOUNDRY_ROADMAP.md` – roadmap toward a fully agentic platform
-- **Forge visual builder & LangGraph**
-  - `docs/FORGE_AI_USER_GUIDE.md` – UX of the Forge visual builder
-  - `docs/FORGE_LANGGRAPH_GAP_ANALYSIS.md` – what’s implemented vs full LangGraph feature set (state schema, routing, tools, execution, codegen, etc.)
-  - `docs/FORGE_VS_SYSTEM_AGENTS_ARCHITECTURE.md` – how Forge relates to system agents
-- **System Agents**
-  - `docs/SYSTEM_AGENTS_DESIGN.md`
-  - `docs/SYSTEM_AGENTS_IMPLEMENTATION.md`
-  - `docs/SYSTEM_AGENTS_INTEGRATION_GUIDE.md`
+### Quick Tour
 
-For concrete code, start with:
+1. **Navigate to Graphs**: `http://localhost:3000/app/graphs`
+2. **Create New Agent**: Click "New Graph" → Enter name → Select organization/domain
+3. **Add Nodes**: Right-click canvas → Add Process, Decision, Tool Call nodes
+4. **Connect Nodes**: Drag from output handle to input handle
+5. **Configure Nodes**: Click node → Edit in side panel (name, prompts, conditions)
+6. **Save**: Cmd+S or click Save → Version auto-increments (0.0.1 → 0.0.2)
+7. **Deploy**: Open version dropdown → Click "Deploy" on desired version
 
-- `agent/pm_graph.py` – main LangGraph PM agent
-- `forge_service/main.py` – Forge runtime API
-- `compiler/dis_compiler.py` – DIS → agent compilation pipeline
+### Key Features
+- **Version History**: Dropdown shows all saved versions with timestamps
+- **Deploy Workflow**: Mark a specific version as "deployed" for production
+- **State Schema**: Define state variables in the "State" tab
+- **Triggers**: Configure event triggers in the "Triggers" tab
+- **Unsaved Changes**: Dialog warns before navigating away with unsaved work
 
----
-
-## 5. LiveKit / Voice Stack
-
-You don’t need to understand LiveKit on day one, but you should know where the pieces live:
-
-- **Docs**
-  - `LIVEKIT_SETUP.md` – current LiveKit + Docker + backend wiring
-  - `LIVEKIT_DOCKER_MIGRATION.md` – history and validation of the Docker migration (marked as legacy/migration record)
-- **Code**
-  - `backend/livekit_service.py` – session creation, tokens, room naming
-  - `backend/voice_agent_worker.py` – starting point for voice I/O agents
-  - `livekit-config.yaml` – server config used by the Docker LiveKit service
-
-See `LIVEKIT_SETUP.md` for end‑to‑end examples (creating a voice session, testing LiveKit HTTP, and future voice UI plans).
+### Documentation
+- `docs/FORGE_AI_USER_GUIDE.md` – Full Forge user guide
+- `docs/FORGE_LANGGRAPH_GAP_ANALYSIS.md` – LangGraph feature coverage
 
 ---
 
-## 6. Where to Go Next
+## 5. System Agents
 
-- **Day 1**
-  - Get the stack running locally (`./start_foundry.sh`, `npm run dev`)
-  - Read `DOCKER_DEV_WORKFLOW.md`
-  - Skim `docs/ARCHITECTURE.md`
-- **Day 2–3**
-  - Explore `agent/pm_graph.py`, `backend/main.py`, and `app/chat/page.tsx`
-  - Review DIS and Forge docs:
-    - `docs/FOUNDARY_INSTANCE_ARCHITECTURE.md`
-    - `docs/FORGE_LANGGRAPH_GAP_ANALYSIS.md`
-- **When touching infra**
-  - Read `DEPLOYMENT.md`, `infra/REFACTOR_SUMMARY.md`
-  - Use `./scripts/monitor_aws_health.sh` and `./scripts/check_alb_targets.sh`
+Agent Foundry includes 7 system agents that handle platform-level concerns:
 
-After you’ve gone through this file and the links above, you should be able to:
+| Agent | Purpose |
+|-------|---------|
+| **IO Agent** | Input/output adapter, channel routing |
+| **Supervisor** | Orchestration and worker agent routing |
+| **Context** | State management and session context |
+| **Coherence** | Response assembly and consistency |
+| **Exception** | Error handling and resilience |
+| **Observability** | Metrics, tracing, activity logging |
+| **Governance** | Security policies and compliance |
 
-- Run Agent Foundry locally
-- Understand the major services (UI, backend, compiler, LiveKit)
-- Know how the AWS deployment pipeline works
-- Know where to learn more about DIS, Forge, and the LangGraph runtime
+### Documentation
+- `docs/SYSTEM_AGENTS_DESIGN.md` – Architecture overview
+- `docs/SYSTEM_AGENTS_IMPLEMENTATION.md` – Implementation details
+
+---
+
+## 6. LiveKit / Voice Stack
+
+Voice is optional but powerful. Here's where the pieces live:
+
+### Code
+- `backend/livekit_service.py` – Session creation, tokens, room management
+- `backend/voice_agent_worker.py` – Voice I/O agent handling
+- `livekit-config.yaml` – Server config for Docker LiveKit service
+
+### Documentation
+- `docs/LIVEKIT_SETUP.md` – LiveKit + Docker + backend wiring
+
+---
+
+## 7. Where to Go Next
+
+### Day 1
+- Get the stack running locally (`./start_foundry.sh`, `npm run dev`)
+- Open Forge at `http://localhost:3000/app/graphs`
+- Create your first agent graph
+
+### Day 2-3
+- Explore the codebase:
+  - `backend/main.py` – API endpoints
+  - `backend/db.py` – Database layer
+  - `app/app/graphs/` – Forge frontend
+- Review Forge docs: `docs/FORGE_AI_USER_GUIDE.md`
+
+### When Touching Infra
+- Read `docs/DEPLOYMENT.md`
+- Use `./scripts/monitor_aws_health.sh`
+
+---
+
+## Summary
+
+After completing this guide, you should be able to:
+
+- Run Agent Foundry locally with Docker Compose + Next.js
+- Create and deploy agents using the Forge visual editor
+- Understand the multi-agent architecture (IO → Supervisor → Workers)
+- Know where to find documentation for each subsystem
+- Deploy to AWS ECS/Fargate when ready

@@ -2,17 +2,19 @@
 
 **Date**: November 11, 2025  
 **Version**: v0.8.0 Target  
-**Priority**: P1 - Core Operations Feature  
+**Priority**: P1 - Core Operations Feature
 
 ---
 
 ## Overview
 
-Administrative interface for viewing, monitoring, and configuring AI agents in the Engineering Department environment.
+Administrative interface for viewing, monitoring, and configuring AI agents in
+the Engineering Department environment.
 
 ## User Stories
 
 ### As a System Administrator
+
 - I need to see all active agents in the environment
 - I need to view each agent's configuration and capabilities
 - I need to monitor agent performance and health
@@ -21,6 +23,7 @@ Administrative interface for viewing, monitoring, and configuring AI agents in t
 - I need to view agent execution history and logs
 
 ### As a DevOps Engineer
+
 - I need to debug agent behavior in production
 - I need to see which tools each agent has access to
 - I need to monitor token usage and costs per agent
@@ -28,6 +31,7 @@ Administrative interface for viewing, monitoring, and configuring AI agents in t
 - I need to export agent configurations
 
 ### As a Product Owner
+
 - I need to understand what agents can do
 - I need to see agent usage metrics
 - I need to plan agent capacity and scaling
@@ -152,12 +156,14 @@ Administrative interface for viewing, monitoring, and configuring AI agents in t
 ## Key Features
 
 ### 1. Agent Discovery
+
 - **Auto-detection** of agents in the system
 - **Agent registry** with metadata
 - **Health checks** for each agent
 - **Dependency tracking** (which agents depend on which tools)
 
 ### 2. Configuration Management
+
 - **Live editing** of agent parameters
 - **Version control** for configurations
 - **Environment-specific** settings (dev/staging/prod)
@@ -165,6 +171,7 @@ Administrative interface for viewing, monitoring, and configuring AI agents in t
 - **Validation** before applying changes
 
 ### 3. Monitoring & Observability
+
 - **Real-time metrics** dashboard
 - **Performance graphs** (latency, throughput, errors)
 - **Cost tracking** per agent
@@ -172,6 +179,7 @@ Administrative interface for viewing, monitoring, and configuring AI agents in t
 - **Alert configuration** for anomalies
 
 ### 4. Workflow Visualization
+
 - **Interactive graph** of agent state machine
 - **Node execution counts** (which nodes run most often)
 - **Path analysis** (common execution paths)
@@ -179,6 +187,7 @@ Administrative interface for viewing, monitoring, and configuring AI agents in t
 - **Export to Graphviz/Mermaid**
 
 ### 5. Execution History
+
 - **Request/response logs**
 - **State transitions** for each execution
 - **Error traces** with stack traces
@@ -186,6 +195,7 @@ Administrative interface for viewing, monitoring, and configuring AI agents in t
 - **Search and filter** by date, status, user
 
 ### 6. Security & Access Control
+
 - **Role-based access** (admin, operator, viewer)
 - **Audit trail** of configuration changes
 - **API key management** per agent
@@ -246,29 +256,29 @@ class AgentMetadata(BaseModel):
     type: str  # "langgraph", "react", "function_calling"
     version: str
     status: str  # "active", "inactive", "error"
-    
+
     # Configuration
     llm_model: str
     temperature: float
     max_tokens: int
     timeout: int
     recursion_limit: Optional[int]
-    
+
     # Workflow
     nodes: List[str]
     edges: List[Dict[str, str]]
     entry_point: str
-    
+
     # Tools
     tools: List[ToolInfo]
-    
+
     # Metrics
     total_requests: int
     success_rate: float
     avg_response_time: float
     avg_tokens_used: float
     total_cost: float
-    
+
     # Timestamps
     created_at: datetime
     updated_at: datetime
@@ -282,27 +292,28 @@ class AgentMetadata(BaseModel):
 ### Phase 1: Backend Infrastructure (3-4 hours)
 
 #### 1.1 Agent Registry
+
 ```python
 # File: mcp/registry/agent_registry.py
 
 class AgentRegistry:
     """Central registry for all agents."""
-    
+
     def __init__(self):
         self.agents: Dict[str, AgentMetadata] = {}
-    
+
     def register(self, agent: AgentMetadata):
         """Register a new agent."""
         self.agents[agent.id] = agent
-    
+
     def get(self, agent_id: str) -> Optional[AgentMetadata]:
         """Get agent by ID."""
         return self.agents.get(agent_id)
-    
+
     def list_all(self) -> List[AgentMetadata]:
         """List all registered agents."""
         return list(self.agents.values())
-    
+
     def update_metrics(self, agent_id: str, metrics: Dict):
         """Update agent metrics."""
         if agent_id in self.agents:
@@ -312,25 +323,26 @@ class AgentRegistry:
 ```
 
 #### 1.2 Agent Discovery
+
 ```python
 # File: mcp/registry/agent_discovery.py
 
 class AgentDiscovery:
     """Automatically discover agents in the system."""
-    
+
     async def discover_agents(self) -> List[AgentMetadata]:
         """Scan codebase for agent implementations."""
         agents = []
-        
+
         # Scan agent directory
         agent_files = Path("agent").glob("*_agent.py")
-        
+
         for file in agent_files:
             metadata = await self._extract_metadata(file)
             agents.append(metadata)
-        
+
         return agents
-    
+
     async def _extract_metadata(self, file: Path) -> AgentMetadata:
         """Extract metadata from agent file."""
         # Parse file, extract class, read docstrings, etc.
@@ -338,6 +350,7 @@ class AgentDiscovery:
 ```
 
 #### 1.3 Admin API Endpoints
+
 ```python
 # File: mcp_server.py
 
@@ -372,11 +385,11 @@ async def update_agent_config(
     agent = registry.get(agent_id)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
-    
+
     # Validate config
     # Update agent
     # Reload if needed
-    
+
     return {"success": True, "agent": agent.dict()}
 
 @app.get("/api/admin/agents/{agent_id}/metrics")
@@ -413,6 +426,7 @@ async def get_agent_history(
 ### Phase 2: Frontend UI (4-6 hours)
 
 #### 2.1 Create Admin Layout
+
 ```typescript
 // app/admin/layout.tsx
 export default function AdminLayout({ children }) {
@@ -426,6 +440,7 @@ export default function AdminLayout({ children }) {
 ```
 
 #### 2.2 Agents List Page
+
 ```typescript
 // app/admin/agents/page.tsx
 'use client';
@@ -435,22 +450,22 @@ import { useState, useEffect } from 'react';
 export default function AgentsPage() {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     fetchAgents();
   }, []);
-  
+
   const fetchAgents = async () => {
     const response = await fetch('/api/admin/agents');
     const data = await response.json();
     setAgents(data.agents);
     setLoading(false);
   };
-  
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Agents</h1>
-      
+
       <div className="grid gap-4">
         {agents.map(agent => (
           <AgentCard key={agent.id} agent={agent} />
@@ -462,14 +477,15 @@ export default function AgentsPage() {
 ```
 
 #### 2.3 Agent Detail Page
+
 ```typescript
 // app/admin/agents/[id]/page.tsx
 export default function AgentDetailPage({ params }) {
   const { id } = params;
   const [agent, setAgent] = useState(null);
-  
+
   // Fetch agent details, metrics, history
-  
+
   return (
     <div className="p-6">
       <AgentOverview agent={agent} />
@@ -483,12 +499,13 @@ export default function AgentDetailPage({ params }) {
 ```
 
 #### 2.4 Configuration Editor
+
 ```typescript
 // app/admin/agents/[id]/components/ConfigurationEditor.tsx
 export function ConfigurationEditor({ agent, onSave }) {
   const [config, setConfig] = useState(agent.config);
   const [dirty, setDirty] = useState(false);
-  
+
   const handleSave = async () => {
     await fetch(`/api/admin/agents/${agent.id}/config`, {
       method: 'PUT',
@@ -496,22 +513,22 @@ export function ConfigurationEditor({ agent, onSave }) {
     });
     onSave();
   };
-  
+
   return (
     <div className="space-y-4">
-      <ConfigField 
+      <ConfigField
         label="LLM Model"
         value={config.llm_model}
         onChange={(v) => setConfig({...config, llm_model: v})}
       />
-      <ConfigField 
+      <ConfigField
         label="Temperature"
         type="number"
         value={config.temperature}
         onChange={(v) => setConfig({...config, temperature: v})}
       />
       {/* More fields */}
-      
+
       {dirty && (
         <div className="flex gap-2">
           <button onClick={handleSave}>Save Changes</button>
@@ -526,6 +543,7 @@ export function ConfigurationEditor({ agent, onSave }) {
 ### Phase 3: Visualization & Monitoring (3-4 hours)
 
 #### 3.1 Workflow Graph Visualization
+
 ```typescript
 // Using React Flow or D3.js
 import ReactFlow from 'reactflow';
@@ -536,13 +554,13 @@ export function WorkflowGraph({ agent }) {
     data: { label: node },
     position: calculatePosition(node)
   }));
-  
+
   const edges = agent.edges.map(edge => ({
     id: `${edge.source}-${edge.target}`,
     source: edge.source,
     target: edge.target
   }));
-  
+
   return (
     <ReactFlow nodes={nodes} edges={edges} />
   );
@@ -550,25 +568,26 @@ export function WorkflowGraph({ agent }) {
 ```
 
 #### 3.2 Metrics Dashboard
+
 ```typescript
 // Using Recharts
 import { LineChart, Line, XAxis, YAxis } from 'recharts';
 
 export function MetricsDashboard({ agentId }) {
   const [metrics, setMetrics] = useState([]);
-  
+
   useEffect(() => {
     fetchMetrics(agentId);
   }, [agentId]);
-  
+
   return (
     <div className="grid grid-cols-2 gap-4">
-      <MetricCard 
+      <MetricCard
         title="Response Time"
         value={metrics.avgResponseTime}
         chart={<ResponseTimeChart data={metrics.timeSeries} />}
       />
-      <MetricCard 
+      <MetricCard
         title="Success Rate"
         value={`${metrics.successRate}%`}
         chart={<SuccessRateChart data={metrics.timeSeries} />}
@@ -584,18 +603,21 @@ export function MetricsDashboard({ agentId }) {
 ## Security Considerations
 
 ### Authentication
+
 - Admin routes require authentication
 - JWT tokens with admin role
 - Session management
 - API key rotation
 
 ### Authorization
+
 - Role-based access control (RBAC)
 - Permissions: `agent:read`, `agent:write`, `agent:execute`
 - Audit all configuration changes
 - IP whitelisting for admin endpoints
 
 ### Data Protection
+
 - Sensitive config values encrypted
 - API keys stored in secrets manager
 - Logs sanitized (no PII)
@@ -606,18 +628,21 @@ export function MetricsDashboard({ agentId }) {
 ## Testing Requirements
 
 ### Unit Tests
+
 - Agent registry CRUD operations
 - Configuration validation
 - Metrics aggregation
 - Access control logic
 
 ### Integration Tests
+
 - API endpoints
 - Agent discovery
 - Configuration updates
 - Metrics collection
 
 ### E2E Tests
+
 - Admin login flow
 - View agents list
 - Edit configuration
@@ -628,12 +653,14 @@ export function MetricsDashboard({ agentId }) {
 ## Documentation
 
 ### Admin Guide
+
 - How to access admin UI
 - How to configure agents
 - How to interpret metrics
 - Troubleshooting common issues
 
 ### API Documentation
+
 - OpenAPI spec for admin endpoints
 - Authentication guide
 - Rate limits

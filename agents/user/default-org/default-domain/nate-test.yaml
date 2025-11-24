@@ -1,0 +1,51 @@
+metadata:
+  name: nate test
+  display_name: nate test
+  description: ""
+  type: user
+  organization_id: default-org
+  domain_id: default-domain
+  version: 1.0.0
+  status: draft
+  id: 37acc0b5-2fe7-4783-9dab-bc9b3c5a1b8f
+  updated: "2025-11-18T02:43:42.629751Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entryPoint-1763433798641
+        type: entryPoint
+        position:
+          x: 376.31125359485156
+          y: 340.0460192110426
+        data:
+          label: Entry Point
+          description: ""
+        width: 180
+        height: 68
+      - id: process-1763433799289
+        type: process
+        position:
+          x: 370.84276206411175
+          y: 450.63368325931793
+        data:
+          label: New Process
+          description: ""
+          model: gpt-4o-mini
+          temperature: 0.7
+          maxTokens: 1000
+        width: 200
+        height: 78
+        selected: false
+        positionAbsolute:
+          x: 370.84276206411175
+          y: 450.63368325931793
+        dragging: false
+    edges:
+      - source: entryPoint-1763433798641
+        sourceHandle: null
+        target: process-1763433799289
+        targetHandle: null
+        animated: true
+        id: reactflow__edge-entryPoint-1763433798641-process-1763433799289

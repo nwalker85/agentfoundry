@@ -1,0 +1,429 @@
+id: cibc-cibc-delivery-route-bahamas-bulk-shipment
+metadata:
+  id: cibc-cibc-delivery-route-bahamas-bulk-shipment
+  name: CIBC Delivery - Route Bahamas Bulk Shipment
+  display_name: CIBC Delivery - Route Bahamas Bulk Shipment
+  description: Bahamas territory delivery via bulk shipment to Nassau branch for distribution
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-5
+    - delivery-fulfillment
+    - bahamas
+    - bulk-shipment
+    - territory-routing
+  updated: "2025-11-18T01:28:58.458537Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Bahamas Delivery Request
+          description: Card approved for Bahamas territory
+      - id: validate_bahamas_address
+        type: process
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Validate Bahamas Address
+          description: Verify address format and island routing
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Validate Bahamas address:
+
+
+            Required fields:
+
+            - Street address or P.O. Box
+
+            - Island name
+
+            - Settlement/city name
+
+            - Country = Bahamas
+
+
+            Major islands:
+
+            - New Providence (Nassau) - hub for distribution
+
+            - Grand Bahama (Freeport) - secondary hub
+
+            - Abaco, Eleuthera, Exuma, Andros, Bimini, etc. - outer islands
+
+
+            Routing strategy:
+
+            - Nassau/Paradise Island: Bulk shipment to Nassau branch
+
+            - Freeport: Bulk shipment to Freeport branch
+
+            - Outer islands: Bulk to Nassau → local distribution
+
+            "
+      - id: determine_island_routing
+        type: process
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Determine Island Routing
+          description: Classify island for bulk shipment routing
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Classify island routing:
+
+
+            Hub islands (direct bulk shipment):
+
+            - New Providence → Nassau Operations Centre
+
+            - Grand Bahama → Freeport branch
+
+
+            Outer islands (route via Nassau):
+
+            - Abaco, Eleuthera, Exuma, Andros
+
+            - Long Island, Cat Island, San Salvador
+
+            - Bimini, Berry Islands, Inagua
+
+
+            Special handling:
+
+            - PWM customers: Express courier regardless of island
+
+            - Rush requests: Express courier via Nassau
+
+            - Standard requests: Weekly bulk shipment
+
+            "
+      - id: island_routing_decision
+        type: decision
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Island Routing Type
+          description: Route based on island classification
+          conditions:
+            - label: Nassau/Providence (Hub)
+              expression: island == 'new_providence'
+              next: queue_nassau_bulk
+            - label: Freeport (Hub)
+              expression: island == 'grand_bahama'
+              next: queue_freeport_bulk
+            - label: Outer Island
+              expression: island_type == 'outer'
+              next: queue_outer_island_routing
+            - label: Rush or PWM
+              expression: rush_flag == true || customer_type == 'pwm'
+              next: route_express_courier
+      - id: queue_nassau_bulk
+        type: process
+        position:
+          x: 100
+          y: 540
+        data:
+          label: Queue for Nassau Bulk Shipment
+          description: Add to weekly Nassau bulk shipment
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Add to Nassau bulk shipment queue:
+
+
+            Bulk shipment schedule:
+
+            - Collection deadline: Tuesday 2:00 PM EST
+
+            - Departure: Tuesday evening via FedEx
+
+            - Arrival Nassau: Wednesday morning
+
+            - Branch distribution: Wednesday afternoon
+
+            - Customer pickup available: Thursday
+
+
+            Estimated timeline: 5-7 business days from production
+
+            "
+      - id: queue_freeport_bulk
+        type: process
+        position:
+          x: 250
+          y: 540
+        data:
+          label: Queue for Freeport Bulk Shipment
+          description: Add to bi-weekly Freeport bulk shipment
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Add to Freeport bulk shipment queue:
+
+
+            Bulk shipment schedule:
+
+            - Collection deadline: Every other Monday 2:00 PM EST
+
+            - Departure: Monday evening via DHL
+
+            - Arrival Freeport: Tuesday afternoon
+
+            - Branch distribution: Wednesday
+
+            - Customer pickup available: Thursday
+
+
+            Estimated timeline: 7-10 business days from production
+
+            "
+      - id: queue_outer_island_routing
+        type: process
+        position:
+          x: 400
+          y: 540
+        data:
+          label: Queue for Outer Island Routing
+          description: Route via Nassau to outer island
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Outer island two-stage routing:
+
+
+            Stage 1: Toronto → Nassau (bulk shipment)
+
+            - Weekly bulk shipment to Nassau
+
+            - Arrival: Wednesday
+
+
+            Stage 2: Nassau → Outer Island (local distribution)
+
+            - Bahamas Post or inter-island courier
+
+            - Frequency varies by island (2-7 days)
+
+            - Some islands: customer pickup at Nassau branch recommended
+
+
+            Total estimated timeline: 10-15 business days
+
+            "
+      - id: route_express_courier
+        type: process
+        position:
+          x: 550
+          y: 540
+        data:
+          label: Route Express Courier
+          description: Rush or PWM - bypass bulk shipment
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Express courier delivery:
+
+
+            Service: DHL Express or FedEx International Priority
+
+
+            Timeline:
+
+            - Collection: Daily pickup from G&D
+
+            - Transit: 2-3 business days
+
+            - Delivery: Direct to customer address or branch
+
+
+            Cost: Higher but guarantees fast delivery
+
+            "
+      - id: create_bulk_manifest_entry
+        type: process
+        position:
+          x: 250
+          y: 670
+        data:
+          label: Create Bulk Manifest Entry
+          description: Add card to bulk shipment manifest
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Bulk manifest entry:
+
+
+            Include:
+
+            - Card tracking number
+
+            - Customer name (last name, first initial)
+
+            - Destination island and settlement
+
+            - Branch for pickup or local delivery
+
+            - Special handling flags
+
+            "
+      - id: calculate_shipment_date
+        type: toolCall
+        position:
+          x: 250
+          y: 800
+        data:
+          label: Calculate Next Bulk Shipment Date
+          description: Determine which bulk shipment this card will join
+          tool: func-calculate-delivery-eta
+      - id: create_delivery_instruction
+        type: toolCall
+        position:
+          x: 300
+          y: 930
+        data:
+          label: Create Delivery Instruction
+          description: Record Bahamas routing details
+          tool: func-create-delivery-instruction
+      - id: assign_manifest_number
+        type: process
+        position:
+          x: 300
+          y: 1060
+        data:
+          label: Assign Manifest Number
+          description: Record bulk shipment manifest ID
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: notify_customer_queued
+        type: toolCall
+        position:
+          x: 300
+          y: 1190
+        data:
+          label: Send Queued Notification
+          description: Notify customer card queued for shipment
+          tool: func-send-notification
+      - id: notify_customer_shipped
+        type: toolCall
+        position:
+          x: 300
+          y: 1320
+        data:
+          label: Send Shipped Notification
+          description: Notify when bulk shipment departs
+          tool: func-send-notification
+      - id: notify_branch_arrival
+        type: process
+        position:
+          x: 300
+          y: 1450
+        data:
+          label: Notify Branch of Arrival
+          description: Alert Bahamas branch of incoming cards
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Notify receiving branch:
+
+
+            Send manifest to branch operations:
+
+            - Expected arrival date
+
+            - Number of cards in shipment
+
+            - Customer pickup list
+
+            - Local delivery list
+
+            - Special handling instructions
+
+            "
+      - id: notify_customer_ready
+        type: toolCall
+        position:
+          x: 300
+          y: 1580
+        data:
+          label: Send Ready for Pickup Notification
+          description: Notify customer card arrived at branch
+          tool: func-send-notification
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 1710
+        data:
+          label: Bahamas Routing Complete
+    edges:
+      - id: e1
+        source: entry
+        target: validate_bahamas_address
+      - id: e2
+        source: validate_bahamas_address
+        target: determine_island_routing
+      - id: e3
+        source: determine_island_routing
+        target: island_routing_decision
+      - id: e4
+        source: island_routing_decision
+        target: queue_nassau_bulk
+        sourceHandle: Nassau/Providence (Hub)
+      - id: e5
+        source: island_routing_decision
+        target: queue_freeport_bulk
+        sourceHandle: Freeport (Hub)
+      - id: e6
+        source: island_routing_decision
+        target: queue_outer_island_routing
+        sourceHandle: Outer Island
+      - id: e7
+        source: island_routing_decision
+        target: route_express_courier
+        sourceHandle: Rush or PWM
+      - id: e8
+        source: queue_nassau_bulk
+        target: create_bulk_manifest_entry
+      - id: e9
+        source: queue_freeport_bulk
+        target: create_bulk_manifest_entry
+      - id: e10
+        source: queue_outer_island_routing
+        target: create_bulk_manifest_entry
+      - id: e11
+        source: route_express_courier
+        target: create_delivery_instruction
+      - id: e12
+        source: create_bulk_manifest_entry
+        target: calculate_shipment_date
+      - id: e13
+        source: calculate_shipment_date
+        target: create_delivery_instruction
+      - id: e14
+        source: create_delivery_instruction
+        target: assign_manifest_number
+      - id: e15
+        source: assign_manifest_number
+        target: notify_customer_queued
+      - id: e16
+        source: notify_customer_queued
+        target: notify_customer_shipped
+      - id: e17
+        source: notify_customer_shipped
+        target: notify_branch_arrival
+      - id: e18
+        source: notify_branch_arrival
+        target: notify_customer_ready
+      - id: e19
+        source: notify_customer_ready
+        target: end

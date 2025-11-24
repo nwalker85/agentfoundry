@@ -1,0 +1,113 @@
+id: cibc-cibc-session-send-shipped-notification
+metadata:
+  id: cibc-cibc-session-send-shipped-notification
+  name: CIBC Session - Card Shipped Notification
+  display_name: CIBC Session - Card Shipped Notification
+  description: Send multi-channel notification when card is shipped
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-4
+    - session
+    - notification
+    - shipped
+  updated: "2025-11-18T01:28:58.718225Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Card Shipped Event
+          description: G&D reports card shipped
+      - id: get_preferences
+        type: toolCall
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Get Communication Preferences
+          description: Check customer consent and preferred channels
+          tool: func-get-customer-communication-preferences
+      - id: prepare_message
+        type: process
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Prepare Notification Message
+          description: Generate notification content
+          model: gpt-4o-mini
+          temperature: 0.5
+          prompt: "Create card shipped notification message:
+
+
+            Include:
+
+            - Card type
+
+            - Expected delivery date
+
+            - Tracking number (if available)
+
+            - Activation instructions
+
+            - Customer service contact
+
+
+            Tone: Professional, reassuring
+
+            "
+      - id: send_notification
+        type: toolCall
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Send Multi-Channel Notification
+          description: Send via SMS, email, push, in-app
+          tool: func-send-notification
+      - id: record_notification
+        type: process
+        position:
+          x: 300
+          y: 540
+        data:
+          label: Record Notification
+          description: Log notification in case history
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 670
+        data:
+          label: Notification Sent
+    edges:
+      - id: e1
+        source: entry
+        target: get_preferences
+      - id: e2
+        source: get_preferences
+        target: prepare_message
+      - id: e3
+        source: prepare_message
+        target: send_notification
+      - id: e4
+        source: send_notification
+        target: record_notification
+      - id: e5
+        source: record_notification
+        target: end

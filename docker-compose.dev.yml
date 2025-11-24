@@ -1,7 +1,7 @@
 # Development overrides for Agent Foundry
 # Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 
-version: '3.8'
+version: "3.8"
 
 services:
   # Backend - ensure reload is explicit

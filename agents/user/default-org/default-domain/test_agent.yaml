@@ -1,0 +1,53 @@
+metadata:
+  name: test_agent
+  display_name: test_agent
+  description: ""
+  type: user
+  organization_id: default-org
+  domain_id: default-domain
+  version: 1.0.0
+  status: draft
+  id: 27dc4c96-42db-434c-bf5d-9ae3145d2b3b
+  updated: "2025-11-18T02:39:29.789993Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entryPoint-1763433510079
+        type: entryPoint
+        position:
+          x: 418.34026622283795
+          y: 232.2083601954953
+        data:
+          label: Entry Point
+          description: ""
+        width: 180
+        height: 68
+      - id: process-1763433512354
+        type: process
+        position:
+          x: 392.9481131346108
+          y: 403.4321772568792
+        data:
+          label: New Process
+          description: Process the user's first utterance and then generate a response
+            greeting them, acknowledging their response, and asking for a moment to
+            look into it.
+          model: gpt-4o-mini
+          temperature: 0.7
+          maxTokens: 1000
+        width: 320
+        height: 150
+        selected: true
+        positionAbsolute:
+          x: 392.9481131346108
+          y: 403.4321772568792
+        dragging: false
+    edges:
+      - source: entryPoint-1763433510079
+        sourceHandle: null
+        target: process-1763433512354
+        targetHandle: null
+        animated: true
+        id: reactflow__edge-entryPoint-1763433510079-process-1763433512354

@@ -1,0 +1,182 @@
+id: cibc-cibc-card-activate-phone
+metadata:
+  id: cibc-cibc-card-activate-phone
+  name: CIBC Card - Activate via Phone Agent
+  display_name: CIBC Card - Activate via Phone Agent
+  description: Human or AI agent-assisted card activation
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-1
+    - card-lifecycle
+    - activation
+    - phone
+    - agent-assisted
+  updated: "2025-11-18T01:28:58.355089Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Agent-Assisted Activation
+          description: Customer speaks with phone agent
+      - id: verify_customer
+        type: toolCall
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Verify Customer Identity
+          description: Execute full 5Q verification + fraud score
+          tool: func-verify-5-question-protocol
+      - id: collect_card_details
+        type: process
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Collect Card Details
+          description: Ask for card number confirmation
+          model: gpt-4o
+          temperature: 0.6
+          prompt: 'Agent script:
+
+            "To activate your card, I''ll need to confirm a few details.
+
+            Can you please provide the last 4 digits of the card you''d like to activate?"
+
+            '
+      - id: check_card_status
+        type: process
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Check Card Status
+          description: Verify card is eligible for activation
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Check:
+
+            - Card exists in system
+
+            - Status is 'issued' (not already active)
+
+            - No blocking codes present
+
+            - Matches customer account
+
+            "
+      - id: status_check_decision
+        type: decision
+        position:
+          x: 300
+          y: 540
+        data:
+          label: Eligibility Check
+          description: Determine if card can be activated
+          conditions:
+            - label: Eligible
+              expression: eligible_for_activation == true
+              next: activate_card
+            - label: Already Active
+              expression: card_status == 'active'
+              next: inform_already_active
+            - label: Blocked
+              expression: has_blocking_codes == true
+              next: escalate_cif
+      - id: activate_card
+        type: toolCall
+        position:
+          x: 100
+          y: 670
+        data:
+          label: Activate Card
+          description: Process activation
+          tool: func-activate-card
+      - id: inform_already_active
+        type: process
+        position:
+          x: 300
+          y: 670
+        data:
+          label: Inform Already Active
+          description: Let customer know card is already active
+          model: gpt-4o
+          temperature: 0.6
+      - id: escalate_cif
+        type: process
+        position:
+          x: 500
+          y: 670
+        data:
+          label: Escalate to CIF Officer
+          description: Blocking codes require investigation
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: confirm_to_customer
+        type: process
+        position:
+          x: 300
+          y: 800
+        data:
+          label: Confirm to Customer
+          description: Verbal confirmation of activation
+          model: gpt-4o
+          temperature: 0.7
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 930
+        data:
+          label: Call Complete
+    edges:
+      - id: e1
+        source: entry
+        target: verify_customer
+      - id: e2
+        source: verify_customer
+        target: collect_card_details
+      - id: e3
+        source: collect_card_details
+        target: check_card_status
+      - id: e4
+        source: check_card_status
+        target: status_check_decision
+      - id: e5
+        source: status_check_decision
+        target: activate_card
+        sourceHandle: Eligible
+      - id: e6
+        source: status_check_decision
+        target: inform_already_active
+        sourceHandle: Already Active
+      - id: e7
+        source: status_check_decision
+        target: escalate_cif
+        sourceHandle: Blocked
+      - id: e8
+        source: activate_card
+        target: confirm_to_customer
+      - id: e9
+        source: inform_already_active
+        target: confirm_to_customer
+      - id: e10
+        source: escalate_cif
+        target: end
+      - id: e11
+        source: confirm_to_customer
+        target: end

@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from mcp.schemas import ToolResponse
 from agent.data_agent import DataAgent
+from mcp.schemas import ToolResponse
 
 
 class DataQueryRequest(BaseModel):
@@ -31,5 +31,3 @@ class DataTool:
             return ToolResponse(success=True, data={"sql": state.get("sql"), "rows": state.get("rows", [])})
         except Exception as e:
             return ToolResponse(success=False, error=str(e))
-
-

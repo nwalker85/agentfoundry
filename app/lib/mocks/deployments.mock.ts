@@ -49,7 +49,13 @@ export const mockDeployments: Deployment[] = [
     can_rollback: true,
     test_results: [
       { id: 'test-001', name: 'Lead qualification flow', status: 'passed', duration_ms: 2300 },
-      { id: 'test-002', name: 'CRM integration', status: 'failed', duration_ms: 4100, error_message: 'Salesforce API timeout' },
+      {
+        id: 'test-002',
+        name: 'CRM integration',
+        status: 'failed',
+        duration_ms: 4100,
+        error_message: 'Salesforce API timeout',
+      },
     ],
   },
   {
@@ -113,10 +119,26 @@ export const mockPipelineStatus: Record<string, PipelineStatus> = {
     deployment_id: 'dep-004',
     current_stage: 'deploy',
     stages: {
-      design: { status: 'complete', started_at: '2025-01-16T11:30:15Z', completed_at: '2025-01-16T11:30:18Z' },
-      validate: { status: 'complete', started_at: '2025-01-16T11:30:18Z', completed_at: '2025-01-16T11:30:25Z' },
-      test: { status: 'complete', started_at: '2025-01-16T11:30:25Z', completed_at: '2025-01-16T11:31:45Z' },
-      package: { status: 'complete', started_at: '2025-01-16T11:31:45Z', completed_at: '2025-01-16T11:31:52Z' },
+      design: {
+        status: 'complete',
+        started_at: '2025-01-16T11:30:15Z',
+        completed_at: '2025-01-16T11:30:18Z',
+      },
+      validate: {
+        status: 'complete',
+        started_at: '2025-01-16T11:30:18Z',
+        completed_at: '2025-01-16T11:30:25Z',
+      },
+      test: {
+        status: 'complete',
+        started_at: '2025-01-16T11:30:25Z',
+        completed_at: '2025-01-16T11:31:45Z',
+      },
+      package: {
+        status: 'complete',
+        started_at: '2025-01-16T11:31:45Z',
+        completed_at: '2025-01-16T11:31:52Z',
+      },
       deploy: { status: 'running', started_at: '2025-01-16T11:31:52Z' },
       observe: { status: 'pending' },
       promote: { status: 'pending' },
@@ -125,11 +147,11 @@ export const mockPipelineStatus: Record<string, PipelineStatus> = {
 };
 
 export function getDeploymentsByAgent(agentId: string): Deployment[] {
-  return mockDeployments.filter(dep => dep.agent_id === agentId);
+  return mockDeployments.filter((dep) => dep.agent_id === agentId);
 }
 
 export function getDeploymentsByStatus(status: DeploymentStatus): Deployment[] {
-  return mockDeployments.filter(dep => dep.status === status);
+  return mockDeployments.filter((dep) => dep.status === status);
 }
 
 export function getRecentDeployments(limit: number = 10): Deployment[] {

@@ -8,6 +8,7 @@
 ## Quick Debug Checklist
 
 Run the automated debug script first:
+
 ```bash
 cd "/Users/nwalker/Development/Projects/Engineering Department/engineeringdepartment"
 chmod +x debug_backlog.sh
@@ -15,6 +16,7 @@ chmod +x debug_backlog.sh
 ```
 
 This will check:
+
 - ✅ Server status (MCP + Next.js)
 - ✅ File structure
 - ✅ Environment variables
@@ -28,6 +30,7 @@ This will check:
 ### 1. Blank Page / White Screen
 
 **Symptoms:**
+
 - Page loads but shows nothing
 - No error in browser console
 - Network requests show 200 OK
@@ -35,6 +38,7 @@ This will check:
 **Causes & Solutions:**
 
 **A. React Component Error**
+
 ```bash
 # Check browser console (F12) for:
 # "Error: Minified React error #..."
@@ -46,6 +50,7 @@ This will check:
 ```
 
 **B. CSS Not Loading**
+
 ```bash
 # Check if Tailwind is compiling
 rm -rf .next
@@ -57,6 +62,7 @@ ls -la postcss.config.js
 ```
 
 **C. TypeScript Compilation Error**
+
 ```bash
 # Check Next.js terminal for TypeScript errors
 # Look for lines like:
@@ -70,6 +76,7 @@ ls -la postcss.config.js
 ### 2. "Failed to Fetch Stories" Error
 
 **Symptoms:**
+
 - Red error banner at top of page
 - Browser console shows fetch error
 - Network tab shows failed request
@@ -77,6 +84,7 @@ ls -la postcss.config.js
 **Debugging Steps:**
 
 **A. Check MCP Server**
+
 ```bash
 # Test MCP server directly
 curl -X POST http://localhost:8001/api/tools/notion/list-stories \
@@ -91,6 +99,7 @@ curl -X POST http://localhost:8001/api/tools/notion/list-stories \
 ```
 
 **B. Check Next.js API Route**
+
 ```bash
 # Test Next.js proxy
 curl http://localhost:3000/api/stories?limit=5
@@ -103,6 +112,7 @@ curl http://localhost:3000/api/stories?limit=5
 ```
 
 **C. Check CORS**
+
 ```bash
 # Open browser DevTools (F12)
 # Go to Console tab
@@ -115,6 +125,7 @@ curl http://localhost:3000/api/stories?limit=5
 ```
 
 **D. Check Network Tab**
+
 ```
 1. Open DevTools (F12) → Network tab
 2. Reload page
@@ -130,6 +141,7 @@ curl http://localhost:3000/api/stories?limit=5
 ### 3. Stories Not Displaying (Empty State)
 
 **Symptoms:**
+
 - Page loads successfully
 - Shows "No stories found"
 - But you know stories exist in Notion
@@ -137,6 +149,7 @@ curl http://localhost:3000/api/stories?limit=5
 **Debugging Steps:**
 
 **A. Check Notion API Connection**
+
 ```bash
 # Verify Notion token is set
 grep NOTION_API_TOKEN .env.local
@@ -157,6 +170,7 @@ python3
 ```
 
 **B. Check Notion Database Schema**
+
 ```bash
 # Verify database has expected fields:
 # - Title (title type)
@@ -169,6 +183,7 @@ python3
 ```
 
 **C. Check MCP Server Logs**
+
 ```bash
 # Look at MCP server terminal output
 # Should show:
@@ -179,6 +194,7 @@ python3
 ```
 
 **D. Use Mock Mode**
+
 ```bash
 # Test without Notion API
 # In .env.local, temporarily remove:
@@ -194,6 +210,7 @@ python3
 ### 4. Filters Not Working
 
 **Symptoms:**
+
 - Can click filters but nothing happens
 - Story count doesn't change
 - No API request in Network tab
@@ -201,6 +218,7 @@ python3
 **Debugging Steps:**
 
 **A. Check Console for Errors**
+
 ```javascript
 // Open Console (F12)
 // Look for errors like:
@@ -211,6 +229,7 @@ python3
 ```
 
 **B. Check Filter State**
+
 ```javascript
 // Add temporary debugging in app/backlog/page.tsx
 // After line "const [filters, setFilters] = useState<StoriesFilters>({"
@@ -224,13 +243,14 @@ useEffect(() => {
 ```
 
 **C. Verify FilterSidebar Props**
+
 ```typescript
 // Check app/backlog/components/FilterSidebar.tsx
 // Verify props are correctly typed:
 
 interface FilterSidebarProps {
-  filters: StoriesFilters;           // ✓ Should match
-  onFiltersChange: (filters: StoriesFilters) => void;  // ✓ Should match
+  filters: StoriesFilters; // ✓ Should match
+  onFiltersChange: (filters: StoriesFilters) => void; // ✓ Should match
   isOpen: boolean;
   onClose: () => void;
 }
@@ -243,6 +263,7 @@ interface FilterSidebarProps {
 ### 5. Dark Mode Not Working
 
 **Symptoms:**
+
 - Dark mode toggle doesn't work
 - Colors don't change
 - Some components light, some dark
@@ -250,6 +271,7 @@ interface FilterSidebarProps {
 **Debugging Steps:**
 
 **A. Check ThemeProvider**
+
 ```typescript
 // Verify app/layout.tsx has ThemeProvider wrapper
 // Should look like:
@@ -274,15 +296,17 @@ export default function RootLayout({ children }) {
 ```
 
 **B. Check Tailwind Config**
+
 ```javascript
 // Verify tailwind.config.js has darkMode setting
 module.exports = {
-  darkMode: 'class',  // ← Must be 'class'
+  darkMode: 'class', // ← Must be 'class'
   // ...
-}
+};
 ```
 
 **C. Test Dark Classes**
+
 ```bash
 # In browser DevTools:
 # 1. Inspect any element
@@ -301,6 +325,7 @@ document.documentElement.classList.add('dark')
 ### 6. Mobile View Issues
 
 **Symptoms:**
+
 - Layout broken on mobile
 - Filter sidebar doesn't collapse
 - Text overflows
@@ -308,12 +333,13 @@ document.documentElement.classList.add('dark')
 **Debugging Steps:**
 
 **A. Test Responsive Breakpoints**
+
 ```bash
 # In DevTools:
 # 1. Toggle device toolbar (Cmd+Shift+M / Ctrl+Shift+M)
 # 2. Test these widths:
 #    - 375px (iPhone SE)
-#    - 768px (iPad portrait) 
+#    - 768px (iPad portrait)
 #    - 1024px (iPad landscape)
 
 # Filter sidebar should be:
@@ -322,6 +348,7 @@ document.documentElement.classList.add('dark')
 ```
 
 **B. Check Tailwind Breakpoints**
+
 ```typescript
 // Verify responsive classes are used correctly
 // In FilterSidebar.tsx:
@@ -340,6 +367,7 @@ className="
 ### 7. Performance Issues (Slow Loading)
 
 **Symptoms:**
+
 - Page takes >3 seconds to load
 - Filters lag when clicking
 - Scrolling is janky
@@ -347,6 +375,7 @@ className="
 **Debugging Steps:**
 
 **A. Check API Response Time**
+
 ```bash
 # Time the API request
 time curl http://localhost:3000/api/stories?limit=50
@@ -359,6 +388,7 @@ time curl http://localhost:3000/api/stories?limit=50
 ```
 
 **B. Check Bundle Size**
+
 ```bash
 # Build production bundle
 npm run build
@@ -372,6 +402,7 @@ du -sh .next/standalone
 ```
 
 **C. Profile React Performance**
+
 ```javascript
 // In browser:
 // 1. Open DevTools → Performance tab
@@ -393,12 +424,14 @@ du -sh .next/standalone
 ### Browser DevTools
 
 **Console Tab:**
+
 - JavaScript errors
 - Network fetch errors
 - React errors
 - Custom console.log statements
 
 **Network Tab:**
+
 - API request/response
 - Status codes
 - Response times
@@ -406,12 +439,14 @@ du -sh .next/standalone
 - CORS errors
 
 **Elements Tab:**
+
 - Inspect DOM structure
 - Check applied CSS classes
 - Test dark mode classes
 - Mobile responsive layout
 
 **React DevTools Extension:**
+
 ```bash
 # Install React DevTools
 # Chrome: https://chrome.google.com/webstore/detail/react-developer-tools/...
@@ -427,6 +462,7 @@ du -sh .next/standalone
 ### Server Logs
 
 **MCP Server Terminal:**
+
 ```bash
 # Start with verbose logging
 python mcp_server.py
@@ -439,6 +475,7 @@ python mcp_server.py
 ```
 
 **Next.js Terminal:**
+
 ```bash
 # Start dev server
 npm run dev
@@ -453,6 +490,7 @@ npm run dev
 ### Curl Commands
 
 **Test MCP Server:**
+
 ```bash
 # Health check
 curl http://localhost:8001/health
@@ -473,6 +511,7 @@ curl -X POST http://localhost:8001/api/tools/notion/list-stories \
 ```
 
 **Test Next.js API:**
+
 ```bash
 # Basic request
 curl http://localhost:3000/api/stories?limit=5
@@ -505,6 +544,7 @@ grep -E 'OPENAI_API_KEY|NEXT_PUBLIC_API_URL' .env.local
 ### Common Mistakes
 
 **Wrong Variable Name:**
+
 ```bash
 # WRONG (client-side variables must start with NEXT_PUBLIC_)
 API_URL=http://localhost:8001
@@ -514,6 +554,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8001
 ```
 
 **Variable Not Loading:**
+
 ```bash
 # Restart dev server after changing .env.local
 # Environment variables are only loaded at startup
@@ -523,6 +564,7 @@ npm run dev
 ```
 
 **Using .env instead of .env.local:**
+
 ```bash
 # Next.js loads files in this order:
 # 1. .env.local (highest priority, gitignored)
@@ -539,23 +581,24 @@ npm run dev
 ### Add Debug Logs
 
 **In React Components:**
+
 ```typescript
 // app/backlog/page.tsx
 
 const fetchStories = async () => {
   console.log('🔍 Fetching stories with filters:', filters);
-  
+
   try {
     const params = new URLSearchParams();
     params.append('limit', filters.limit.toString());
     console.log('📤 Request params:', params.toString());
-    
+
     const response = await fetch(`/api/stories?${params.toString()}`);
     console.log('📥 Response status:', response.status);
-    
+
     const data = await response.json();
     console.log('📊 Data received:', data);
-    
+
     setStories(data.stories);
     console.log('✅ Stories updated:', data.stories.length);
   } catch (err) {
@@ -565,24 +608,29 @@ const fetchStories = async () => {
 ```
 
 **In API Routes:**
+
 ```typescript
 // app/api/stories/route.ts
 
 export async function GET(request: NextRequest) {
   console.log('🔍 API route called');
-  
+
   const searchParams = request.nextUrl.searchParams;
   console.log('📤 Search params:', Object.fromEntries(searchParams));
-  
-  const requestBody = { /* ... */ };
+
+  const requestBody = {
+    /* ... */
+  };
   console.log('📤 Request body:', requestBody);
-  
-  const response = await fetch(url, { /* ... */ });
+
+  const response = await fetch(url, {
+    /* ... */
+  });
   console.log('📥 MCP response status:', response.status);
-  
+
   const data = await response.json();
   console.log('📊 MCP data:', data);
-  
+
   return NextResponse.json(data);
 }
 ```
@@ -636,17 +684,20 @@ export default function Error({
 When asking for help, provide:
 
 1. **Error Messages:**
+
    - Browser console errors (full stack trace)
    - Server terminal output
    - Network tab errors
 
 2. **Environment:**
+
    - Node version: `node --version`
    - npm version: `npm --version`
    - Python version: `python --version`
    - OS: `uname -a`
 
 3. **Steps to Reproduce:**
+
    - What you clicked/typed
    - What you expected
    - What actually happened
@@ -660,29 +711,32 @@ When asking for help, provide:
 ### Quick Fixes to Try First
 
 1. **Restart Everything:**
+
    ```bash
    # Kill servers
    pkill -f mcp_server
    pkill -f next-server
-   
+
    # Clear cache
    rm -rf .next
-   
+
    # Restart
    python mcp_server.py & npm run dev
    ```
 
 2. **Rebuild Node Modules:**
+
    ```bash
    rm -rf node_modules package-lock.json
    npm install
    ```
 
 3. **Check Git Status:**
+
    ```bash
    git status
    # Make sure all new files are committed
-   
+
    git diff
    # Check for unintended changes
    ```
@@ -701,7 +755,7 @@ When backlog view is working correctly, you should see:
 ✅ Dark mode toggle works  
 ✅ Mobile responsive (sidebar collapses)  
 ✅ No errors in browser console  
-✅ No errors in server terminals  
+✅ No errors in server terminals
 
 ---
 

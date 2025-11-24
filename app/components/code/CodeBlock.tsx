@@ -23,18 +23,21 @@ export function CodeBlock({ code, language, isUser = false }: CodeBlockProps) {
   return (
     <div className="relative group my-4 rounded-lg overflow-hidden">
       {/* Language label and copy button */}
-      <div className={`
+      <div
+        className={`
         flex items-center justify-between px-4 py-2 text-xs font-mono
         ${isUser ? 'bg-blue-800 text-blue-200' : 'bg-gray-800 text-gray-300'}
-      `}>
+      `}
+      >
         <span className="font-medium uppercase">{language}</span>
         <button
           onClick={copyToClipboard}
           className={`
             flex items-center gap-1.5 px-2 py-1 rounded transition-colors
-            ${isUser 
-              ? 'bg-blue-700 hover:bg-blue-600 text-white' 
-              : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+            ${
+              isUser
+                ? 'bg-blue-700 hover:bg-blue-600 text-white'
+                : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
             }
           `}
           title="Copy code"
@@ -54,18 +57,14 @@ export function CodeBlock({ code, language, isUser = false }: CodeBlockProps) {
       </div>
 
       {/* Syntax highlighted code */}
-      <Highlight
-        theme={themes.vsDark}
-        code={codeString}
-        language={language as any}
-      >
+      <Highlight theme={themes.vsDark} code={codeString} language={language as any}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
             className={`${className} p-4 text-sm overflow-x-auto`}
             style={{
               ...style,
               backgroundColor: isUser ? '#1e40af' : '#1e293b', // blue-700 or slate-800
-              margin: 0
+              margin: 0,
             }}
           >
             {tokens.map((line, i) => (

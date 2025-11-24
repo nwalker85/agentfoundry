@@ -10,7 +10,8 @@
 
 ## What Was Actually Accomplished
 
-This wasn't just "voice integration" - this was a **complete platform modernization** while maintaining architectural integrity.
+This wasn't just "voice integration" - this was a **complete platform
+modernization** while maintaining architectural integrity.
 
 ### 1. LangChain/LangGraph Major Version Upgrade
 
@@ -18,6 +19,7 @@ This wasn't just "voice integration" - this was a **complete platform modernizat
 **To:** Modern LangChain 1.0.7, LangGraph 1.0.3
 
 #### Breaking Changes Handled
+
 - ✅ Complete agent refactoring from legacy patterns to `create_react_agent`
 - ✅ Migration to Python 3.12 (required for new API)
 - ✅ Updated all import paths and module structures
@@ -27,6 +29,7 @@ This wasn't just "voice integration" - this was a **complete platform modernizat
 - ✅ Dependency resolution for entire ecosystem
 
 #### Architectural Impact
+
 - **Maintained:** Strict LangGraph-first architecture (no shortcuts)
 - **Preserved:** Multi-agent orchestration (io_agent, supervisor_agent, workers)
 - **Enhanced:** State machine capabilities with 1.0 features
@@ -38,19 +41,20 @@ This wasn't just "voice integration" - this was a **complete platform modernizat
 **After:** Fully containerized production-ready stack
 
 #### Services Containerized
+
 ```yaml
-livekit:          # WebRTC voice server
+livekit: # WebRTC voice server
   - Health checks: ✅
   - Port mapping: ✅
   - Volume mounts: ✅
   - Network isolation: ✅
 
-redis:            # State persistence
+redis: # State persistence
   - Health checks: ✅
   - Data persistence: ✅
   - Connection pooling: ✅
 
-foundry-backend:  # FastAPI + LangGraph
+foundry-backend: # FastAPI + LangGraph
   - Depends on: livekit (healthy) + redis (healthy)
   - Environment config: ✅
   - Agent hot-reload: ✅
@@ -63,6 +67,7 @@ foundry-compiler: # DIS compiler service
 ```
 
 #### Infrastructure Achievements
+
 - ✅ One-command deployment: `docker-compose up`
 - ✅ Service dependencies with health checks
 - ✅ Internal Docker networking (no host.docker.internal hacks)
@@ -72,9 +77,11 @@ foundry-compiler: # DIS compiler service
 
 ### 3. LiveKit WebRTC Voice Integration
 
-**Full stack:** Browser → LiveKit → Backend → LangGraph Agent → STT → LLM → TTS → Audio
+**Full stack:** Browser → LiveKit → Backend → LangGraph Agent → STT → LLM → TTS
+→ Audio
 
 #### Voice Pipeline
+
 ```
 User speaks
   ↓
@@ -100,6 +107,7 @@ Browser audio playback
 ```
 
 #### Technical Complexity
+
 - ✅ WebRTC peer connection management
 - ✅ NAT traversal (STUN/TURN configuration)
 - ✅ UDP port range (40000-40100) for media streams
@@ -110,9 +118,11 @@ Browser audio playback
 
 ### 4. Dynamic Agent Composition from YAML
 
-**Critical Achievement:** Agents are composed at runtime from YAML manifests, not hardcoded.
+**Critical Achievement:** Agents are composed at runtime from YAML manifests,
+not hardcoded.
 
 #### Marshal Agent System
+
 ```python
 YAML Manifest
   ↓
@@ -130,6 +140,7 @@ Runtime Agent (LangGraph StateGraph)
 ```
 
 #### What This Means
+
 - Upload a YAML file → Agent is live in < 60 seconds
 - No code deployment required
 - No container rebuilds
@@ -137,6 +148,7 @@ Runtime Agent (LangGraph StateGraph)
 - **Pure configuration-driven agent creation**
 
 Example YAML:
+
 ```yaml
 name: support-agent
 description: Customer support specialist
@@ -159,6 +171,7 @@ workflow:
 **Critical:** Did NOT collapse into monolithic agent despite complexity.
 
 #### Agent Hierarchy
+
 ```
 io_agent (I/O Adapter)
   ↓ coordinates
@@ -170,6 +183,7 @@ Worker Agents (domain-specific)
 ```
 
 #### Architectural Principles Maintained
+
 - ✅ No direct LLM calls bypassing LangGraph
 - ✅ No moving LangGraph logic into LiveKit callbacks
 - ✅ Strict separation of concerns (I/O, orchestration, domain logic)
@@ -183,6 +197,7 @@ Worker Agents (domain-specific)
 ### Test Scenarios Passed
 
 #### 1. Basic Voice Interaction
+
 ```
 User: "What projects are in the backlog?"
   ↓ STT processing (800ms)
@@ -195,6 +210,7 @@ Agent: [Speaks list of 3 projects from Notion]
 ```
 
 #### 2. Multi-turn Conversation with Context
+
 ```
 User: "Create a story for the login feature"
 Agent: [Creates Notion story, confirms]
@@ -203,6 +219,7 @@ Agent: [Updates story with sprint assignment using context]
 ```
 
 #### 3. Agent Hot-Reload During Conversation
+
 ```
 1. Start conversation with agent
 2. Edit agent YAML (add new tool)
@@ -215,31 +232,32 @@ Agent: [Updates story with sprint assignment using context]
 
 ### Performance Metrics
 
-| Metric | Target | Achieved |
-|--------|--------|----------|
-| Voice round-trip | < 5s | 2.5-5.5s ✅ |
-| Connection establishment | < 3s | < 2s ✅ |
-| STT processing | < 2s | < 1s ✅ |
-| LLM response | < 3s | 1-3s ✅ |
-| TTS generation | < 2s | < 1s ✅ |
-| Audio latency | < 1s | < 500ms ✅ |
-| Agent hot-reload | < 60s | < 30s ✅ |
+| Metric                   | Target | Achieved    |
+| ------------------------ | ------ | ----------- |
+| Voice round-trip         | < 5s   | 2.5-5.5s ✅ |
+| Connection establishment | < 3s   | < 2s ✅     |
+| STT processing           | < 2s   | < 1s ✅     |
+| LLM response             | < 3s   | 1-3s ✅     |
+| TTS generation           | < 2s   | < 1s ✅     |
+| Audio latency            | < 1s   | < 500ms ✅  |
+| Agent hot-reload         | < 60s  | < 30s ✅    |
 
 ### Browser Compatibility
 
-| Browser | Version | Status |
-|---------|---------|--------|
-| Chrome | 120+ | ✅ Tested |
-| Safari | 17+ | ✅ Tested |
-| Firefox | 121+ | ✅ Tested |
-| Edge | 120+ | ⚠️ Untested |
-| Mobile Safari | - | ⚠️ Untested |
+| Browser       | Version | Status      |
+| ------------- | ------- | ----------- |
+| Chrome        | 120+    | ✅ Tested   |
+| Safari        | 17+     | ✅ Tested   |
+| Firefox       | 121+    | ✅ Tested   |
+| Edge          | 120+    | ⚠️ Untested |
+| Mobile Safari | -       | ⚠️ Untested |
 
 ---
 
 ## Deployment Architecture Validated
 
 ### Docker Compose Stack
+
 ```
 Single Host (Development/Production)
   ├─ livekit:7880        (Voice/WebRTC)
@@ -253,6 +271,7 @@ Frontend (Next.js)
 ```
 
 ### Network Configuration
+
 - **Frontend to LiveKit:** `ws://localhost:7880` (browser, via port mapping)
 - **Backend to LiveKit:** `ws://livekit:7880` (Docker internal network)
 - **Backend to Redis:** `redis://redis:6379` (Docker internal network)
@@ -260,6 +279,7 @@ Frontend (Next.js)
 - **Native Docker DNS resolution**
 
 ### Volume Mounts
+
 ```
 ./backend/agents:/app/agents        # Agent YAML hot-reload
 ./data:/data                        # SQLite persistence
@@ -271,7 +291,9 @@ Frontend (Next.js)
 ## What Makes This Achievement Significant
 
 ### 1. Version Upgrade Complexity
+
 Most projects would:
+
 - Stay on deprecated versions
 - Create new project from scratch
 - Abandon LangGraph for simpler approach
@@ -279,7 +301,9 @@ Most projects would:
 **We:** Upgraded in place, maintained architecture, preserved all features.
 
 ### 2. Docker Migration Complexity
+
 Most projects would:
+
 - Use Docker for backend only
 - Keep LiveKit external
 - Mix container/native services
@@ -287,7 +311,9 @@ Most projects would:
 **We:** Containerized everything, proper orchestration, production-ready.
 
 ### 3. Voice Integration Complexity
+
 Most projects would:
+
 - Use simple text-to-speech libraries
 - Skip real-time bidirectional audio
 - Avoid WebRTC complexity
@@ -295,7 +321,9 @@ Most projects would:
 **We:** Full WebRTC stack, LiveKit integration, production-grade voice pipeline.
 
 ### 4. Dynamic Agent Composition
+
 Most projects would:
+
 - Hardcode agents in Python
 - Require code deployment for changes
 - No runtime composition
@@ -303,7 +331,9 @@ Most projects would:
 **We:** YAML-driven, hot-reload, file watcher, zero-downtime updates.
 
 ### 5. Architectural Discipline
+
 Most projects would:
+
 - Collapse to monolithic agent
 - Bypass orchestration for "simplicity"
 - Direct LLM calls everywhere
@@ -315,6 +345,7 @@ Most projects would:
 ## Production Readiness Assessment
 
 ### ✅ Ready for Production
+
 - Docker Compose stack validated
 - All services healthy
 - Voice pipeline working
@@ -323,6 +354,7 @@ Most projects would:
 - Performance targets met
 
 ### ⚠️ Needs Before Production
+
 - [ ] SSL/TLS certificates (wss:// instead of ws://)
 - [ ] Production LiveKit credentials (not dev keys)
 - [ ] Rate limiting on voice endpoints
@@ -332,6 +364,7 @@ Most projects would:
 - [ ] Terraform infrastructure automation
 
 ### 🚫 Not Required for MVP
+
 - Multi-user voice rooms (single user sufficient)
 - Advanced error recovery (basic recovery working)
 - Mobile optimization (desktop focus for MVP)
@@ -342,17 +375,20 @@ Most projects would:
 ## Risk Assessment
 
 ### Low Risk ✅
+
 - Docker containerization (proven, stable)
 - LangChain 1.0 (LTS version)
 - LiveKit (production-grade)
 - WebRTC (mature protocol)
 
 ### Medium Risk ⚠️
+
 - Agent hot-reload race conditions (mitigated with file watcher debouncing)
 - WebRTC firewall traversal (STUN configured, TURN may be needed)
 - Voice quality at scale (tested single user, needs load testing)
 
 ### High Risk 🔴
+
 - Speech service costs at scale (Deepgram, OpenAI TTS)
 - Latency in production environment (need CDN for audio delivery)
 - Agent YAML schema evolution (backwards compatibility strategy needed)
@@ -382,6 +418,7 @@ Per MVP Implementation Plan and Migration Doc:
 **To:** 0.8.0
 
 **Rationale:**
+
 1. Major architectural upgrade (LangChain 0.2 → 1.0)
 2. Complete containerization (dev → production-ready)
 3. New major feature (voice integration)
@@ -390,12 +427,14 @@ Per MVP Implementation Plan and Migration Doc:
 6. Ready for internal testing/demos
 
 **Not a minor release because:**
+
 - Breaking changes in agent composition
 - Infrastructure changes (Docker migration)
 - New runtime requirements (Python 3.12)
 - API changes (LangGraph 1.0)
 
 **Not a patch release because:**
+
 - New features added (voice)
 - Architectural changes (containerization)
 - Performance characteristics changed
@@ -406,6 +445,7 @@ Per MVP Implementation Plan and Migration Doc:
 ## What's Next
 
 ### v0.8.1 - Production Hardening
+
 - SSL/TLS configuration
 - Production credentials
 - Load testing
@@ -413,12 +453,14 @@ Per MVP Implementation Plan and Migration Doc:
 - CI/CD pipeline
 
 ### v0.9.0 - DIS Compiler (Week 2 of MVP)
+
 - DIS 1.6.0 parser
 - Agent YAML generator
 - Mock API generator
 - End-to-end: DIS dossier → Live agent
 
 ### v1.0.0 - Production Release
+
 - AWS EC2 deployment
 - Domain configuration (foundry.ravenhelm.dev)
 - Let's Encrypt SSL

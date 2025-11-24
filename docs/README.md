@@ -1,122 +1,116 @@
-# Project Status Overview
+# Agent Foundry Documentation
 
-**Last Updated:** November 11, 2025  
-**Version:** 0.5.0
+**Version:** 0.9.0
+**Last Updated:** November 2024
 
-## Quick Links
+## Documentation Index
 
-- [Current State](../progressaudit/CURRENT_STATE_20251111.md) - Detailed implementation status
-- [Implementation Progress](../progressaudit/IMPLEMENTATION_PROGRESS_20251111.md) - Metrics and validation
-- [Frontend Development Plan](FRONTEND_DEVELOPMENT_PLAN.md) - UI/UX roadmap
-- [Architecture](ARCHITECTURE.md) - System design documentation
-- [Testing Guide](TESTING_GUIDE.md) - Testing instructions
+This directory contains all technical documentation for Agent Foundry. Documentation is organized into the following structure:
 
-## Current Status
+### Getting Started
 
-### ✅ What's Working
-- **LangGraph PM Agent** - Sophisticated multi-step workflow with GPT-4
-- **MCP Server** - 8 operational endpoints with tool orchestration
-- **Chat Interface** - Full conversational UI at `/chat`
-- **Notion Integration** - Story creation with idempotency (mock mode available)
-- **GitHub Integration** - Automated issue creation (mock mode available)
-- **Audit Logging** - Complete compliance trail
+| Document | Description |
+|----------|-------------|
+| [START_HERE.md](../START_HERE.md) | New engineer onboarding (30 min) |
+| [DOCKER_DEV_WORKFLOW.md](DOCKER_DEV_WORKFLOW.md) | Local development with Docker |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | AWS ECS deployment guide |
+| [DEVELOPER_QUICK_START.md](DEVELOPER_QUICK_START.md) | Quick reference for developers |
 
-### 🔄 In Progress
-- Tool result cards for better UI/UX
-- Markdown rendering for messages
-- Backlog view for story management
-- WebSocket streaming support
+### Architecture
 
-### ❌ Not Started
-- Docker containerization
-- CI/CD pipeline
-- Production authentication
-- Multi-tenant support
-- Observability setup
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture overview |
+| [AGENT_ARCHITECTURE.md](AGENT_ARCHITECTURE.md) | Agent design patterns |
+| [MULTI_AGENT_ARCHITECTURE.md](MULTI_AGENT_ARCHITECTURE.md) | Multi-agent orchestration |
+| [FOUNDARY_INSTANCE_ARCHITECTURE.md](FOUNDARY_INSTANCE_ARCHITECTURE.md) | DIS and instance design |
+| [architecture/SERVICE_DISCOVERY.md](architecture/SERVICE_DISCOVERY.md) | Infrastructure-as-Registry pattern |
+| [architecture/PLATFORM_ROADMAP_WISHLIST.md](architecture/PLATFORM_ROADMAP_WISHLIST.md) | Strategic gaps & wishlist items |
 
-## Completion Metrics
+### Feature Documentation
 
-| Component | Status | Completion |
-|-----------|--------|------------|
-| Backend Core | ✅ Operational | 90% |
-| LangGraph Agent | ✅ Working | 100% |
-| Frontend Core | ✅ Functional | 75% |
-| Tool Integrations | ✅ Working | 95% |
-| Testing | ⚠️ Basic | 40% |
-| Documentation | ✅ Comprehensive | 85% |
-| DevOps | ❌ Not started | 0% |
-| **Overall POC** | **✅ Demo Ready** | **80%** |
+#### Forge (Visual Agent Builder)
+Located in `docs/forge/`:
+- [FORGE_AI_USER_GUIDE.md](forge/FORGE_AI_USER_GUIDE.md) - User guide
+- [FORGE_LANGGRAPH_GAP_ANALYSIS.md](forge/FORGE_LANGGRAPH_GAP_ANALYSIS.md) - LangGraph feature coverage
+- [FORGE_VS_SYSTEM_AGENTS_ARCHITECTURE.md](forge/FORGE_VS_SYSTEM_AGENTS_ARCHITECTURE.md) - Architecture comparison
 
-## Key Documentation
+#### LiveKit (Voice Integration)
+Located in `docs/livekit/`:
+- [LIVEKIT_SETUP.md](livekit/LIVEKIT_SETUP.md) - Setup and configuration
+- [LIVEKIT_QUICK_REFERENCE.md](livekit/LIVEKIT_QUICK_REFERENCE.md) - Quick reference
+- [LIVEKIT_TESTING_GUIDE.md](livekit/LIVEKIT_TESTING_GUIDE.md) - Testing voice features
 
-### Architecture & Design
-- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and design decisions
-- [POC_SCOPE.md](POC_SCOPE.md) - Proof of concept requirements
-- [PROD_IMPLEMENTATION_REQUIREMENTS.md](PROD_IMPLEMENTATION_REQUIREMENTS.md) - Production roadmap
+#### MCP (Model Context Protocol)
+Located in `docs/mcp/`:
+- [MCP_SERVER_SETUP_GUIDE.md](mcp/MCP_SERVER_SETUP_GUIDE.md) - Server setup
+- [MCP_N8N_ARCHITECTURE.md](mcp/MCP_N8N_ARCHITECTURE.md) - N8N integration
+- [MCP_SDK_MIGRATION_PLAN.md](mcp/MCP_SDK_MIGRATION_PLAN.md) - SDK migration
 
-### Development Guides
-- [FRONTEND_DEVELOPMENT_PLAN.md](FRONTEND_DEVELOPMENT_PLAN.md) - Frontend implementation roadmap
-- [TESTING_GUIDE.md](TESTING_GUIDE.md) - Testing strategies and examples
-- [Environment Setup](../README.md#environment-variables) - Configuration guide
+#### OpenFGA (Authorization)
+Located in `docs/openfga/`:
+- [OPENFGA_QUICKSTART.md](openfga/OPENFGA_QUICKSTART.md) - Quick start guide
+- [OPENFGA_ARCHITECTURE.md](openfga/OPENFGA_ARCHITECTURE.md) - Architecture overview
+- [OPENFGA_LOCALSTACK_SETUP.md](openfga/OPENFGA_LOCALSTACK_SETUP.md) - LocalStack integration
 
-### Progress Tracking
-- [Progress Audits](../progressaudit/) - Development milestone tracking
-  - [Day 1 Frontend Complete](../progressaudit/DAY1_FRONTEND_COMPLETE.md)
-  - [LangGraph Integration](../progressaudit/LANGGRAPH_INTEGRATION_COMPLETE.md)
-  - [API Mock Mode](../progressaudit/API_MOCK_MODE_IMPLEMENTED.md)
+#### RBAC (Role-Based Access Control)
+Located in `docs/rbac/`:
+- [RBAC_QUICKSTART.md](rbac/RBAC_QUICKSTART.md) - Quick start guide
+- [RBAC_IMPLEMENTATION.md](rbac/RBAC_IMPLEMENTATION.md) - Implementation details
+- [RBAC_QUICK_REFERENCE.md](rbac/RBAC_QUICK_REFERENCE.md) - Quick reference
 
-### Technical Specifications
-- [API Endpoints](../README.md#api-endpoints) - REST API documentation
-- [Schemas](POC_SCOPE.md#4-technical-architecture) - Data models and contracts
-- [Testing Framework](TESTING_GUIDE.md) - Test implementation details
+#### System Agents
+Located in `docs/system-agents/`:
+- [SYSTEM_AGENTS_DESIGN.md](system-agents/SYSTEM_AGENTS_DESIGN.md) - Design document
+- [SYSTEM_AGENTS_IMPLEMENTATION.md](system-agents/SYSTEM_AGENTS_IMPLEMENTATION.md) - Implementation guide
+- [SYSTEM_AGENTS_INTEGRATION_GUIDE.md](system-agents/SYSTEM_AGENTS_INTEGRATION_GUIDE.md) - Integration guide
 
-## Quick Start Guide
+#### WebSocket
+Located in `docs/websocket/`:
+- [WEBSOCKET_IMPLEMENTATION_PLAN.md](websocket/WEBSOCKET_IMPLEMENTATION_PLAN.md) - Implementation plan
+- [WEBSOCKET_IMPLEMENTATION_SUMMARY.md](websocket/WEBSOCKET_IMPLEMENTATION_SUMMARY.md) - Summary
 
-```bash
-# 1. Clone and setup
-cd engineeringdepartment
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-npm install
+### Operations
 
-# 2. Configure environment
-cp .env.example .env.local
-# Add OPENAI_API_KEY (required)
-# Other APIs optional (mock mode available)
+| Document | Description |
+|----------|-------------|
+| [AWS_DEPLOYMENT_ECS.md](AWS_DEPLOYMENT_ECS.md) | AWS ECS deployment |
+| [DATABASE_IMPORT_EXPORT_GUIDE.md](DATABASE_IMPORT_EXPORT_GUIDE.md) | Database management |
+| [SECRETS_MANAGEMENT.md](SECRETS_MANAGEMENT.md) | Secrets and configuration |
+| [TESTING_GUIDE.md](TESTING_GUIDE.md) | Testing strategies |
 
-# 3. Start services
-./start_dev.sh
+### Reference
 
-# 4. Access application
-open http://localhost:3000/chat
-```
+| Document | Description |
+|----------|-------------|
+| [CODE_INVENTORY.md](CODE_INVENTORY.md) | Codebase overview |
+| [DEPENDENCY_DIAGRAM.md](DEPENDENCY_DIAGRAM.md) | Dependency visualization |
+| [LANGGRAPH_AGENTS_OVERVIEW.md](LANGGRAPH_AGENTS_OVERVIEW.md) | LangGraph patterns |
 
-## Next Steps
+### Archive
 
-### Week 1 Priority: UI Polish
-1. Create professional tool result cards
-2. Add markdown rendering support
-3. Implement backlog view
-4. Enhance error handling displays
-
-### Week 2 Priority: Production Prep
-1. Docker containerization
-2. Redis for persistence
-3. CI/CD pipeline setup
-4. WebSocket implementation
-
-See [Frontend Development Plan](FRONTEND_DEVELOPMENT_PLAN.md) for detailed roadmap.
-
-## Contact & Support
-
-For questions or issues:
-1. Check [Progress Audits](../progressaudit/) for known issues
-2. Review [Testing Guide](TESTING_GUIDE.md) for troubleshooting
-3. See [Current State](../progressaudit/CURRENT_STATE_20251111.md) for latest updates
+Historical documentation, implementation summaries, and session notes are in `docs/archive/`:
+- `archive/sessions/` - Session handoff documents
+- `archive/implementations/` - Implementation completion docs
+- `archive/fixes/` - Bug fix documentation
+- `archive/phases/` - Phase completion docs
+- `archive/cibc/` - CIBC agent implementation docs
+- `archive/migrations/` - Migration documentation
 
 ---
 
-**Project Phase:** POC Implementation  
-**Demo Readiness:** ✅ Ready  
-**Production Readiness:** 3-4 weeks
+## Documentation Guidelines
+
+When adding new documentation:
+
+1. **Feature docs** go in the appropriate subdirectory (forge/, livekit/, etc.)
+2. **Architecture docs** stay in the main docs/ directory
+3. **Implementation summaries** go in archive/implementations/
+4. **Session handoffs** go in archive/sessions/
+
+## Quick Links
+
+- **Main README:** [../README.md](../README.md)
+- **Changelog:** [../CHANGELOG.md](../CHANGELOG.md)
+- **Roadmap:** [../ROADMAP.md](../ROADMAP.md)
+- **Scripts Reference:** [../scripts/README.md](../scripts/README.md)

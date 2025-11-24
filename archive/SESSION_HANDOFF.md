@@ -3,6 +3,7 @@
 ## What We Accomplished
 
 1. ✅ Created complete state system (`core/state.py`)
+
    - Task/Epic/Story/Release types
    - Proper SDLC statuses
    - Agent queues
@@ -10,6 +11,7 @@
    - QA states
 
 2. ✅ Established project structure
+
    - `/Users/nate/Development/1. Projects/Engineering Department/`
    - Git repo initialized
    - Folders: agents/, core/, qa/
@@ -23,12 +25,14 @@
 ## Critical Next Session Tasks
 
 1. **Product Owner Agent** (`agents/product_owner.py`)
+
    - Conducts interviews with Director
    - Creates Release → Epic → Story → Task breakdown
    - Adds Definition of Done to each task
    - Submits to backlog
 
 2. **Project Manager Agent** (`agents/project_manager.py`)
+
    - Monitors backlog
    - Prioritizes tasks (P0-P3)
    - Assigns to agent queues
@@ -36,6 +40,7 @@
    - Tracks capacity and velocity
 
 3. **Queue System** (`core/queue_manager.py`)
+
    - Each agent has a queue (list of task IDs)
    - Agents poll their queue
    - Pick highest priority available task
@@ -50,8 +55,10 @@
 
 ## Files to Reuse from Previous Work
 
-- `MCPManager/langgraph_agents/core/mcp_bridge.py` → Keep as-is, great RBAC system
-- Adapt Notion integration patterns but completely rework for queue-based workflow
+- `MCPManager/langgraph_agents/core/mcp_bridge.py` → Keep as-is, great RBAC
+  system
+- Adapt Notion integration patterns but completely rework for queue-based
+  workflow
 - Streamlit UI needs significant changes for engineering dashboard
 
 ## Important Decisions Made

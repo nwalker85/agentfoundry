@@ -1,0 +1,130 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Session - Create Inbound
+  type: system
+  version: 1.0.0
+  description: Create contact session for all inbound channels (phone, chat, SMS, web, mobile, IVR)
+  tags: [cibc, agent-group-4, session, verification, inbound]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Inbound Contact
+          description: Customer initiates contact on any channel
+
+      - id: detect_channel
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Detect Channel
+          description: Identify inbound channel and extract metadata
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Detect the inbound channel and extract session metadata.
+            Channels: phone | chat | sms | web | mobile | ivr
+
+            Extract:
+            - channel type
+            - ANI (if phone/IVR)
+            - IP address (if web/mobile)
+            - device info (if web/mobile)
+
+      - id: create_session
+        type: toolCall
+        position: { x: 300, y: 280 }
+        data:
+          label: Create Contact Session
+          description: Create session record in database
+          tool: func-create-contact-session
+
+      - id: check_pwm
+        type: decision
+        position: { x: 300, y: 410 }
+        data:
+          label: Check PWM Status
+          description: Detect if customer is PWM via ANI lookup or account query
+          conditions:
+            - label: PWM Customer
+              expression: pwm_customer == true
+              next: load_adaptive_context
+            - label: Standard Customer
+              expression: pwm_customer == false
+              next: load_standard_context
+
+      - id: load_adaptive_context
+        type: toolCall
+        position: { x: 150, y: 540 }
+        data:
+          label: Load Adaptive Context (PWM)
+          description: Load larger context window for PWM customers
+          tool: func-get-customer-context
+          parameters:
+            context_window_type: adaptive
+
+      - id: load_standard_context
+        type: toolCall
+        position: { x: 450, y: 540 }
+        data:
+          label: Load Standard Context
+          description: Load standard context (30 days/10 interactions)
+          tool: func-get-customer-context
+          parameters:
+            context_window_type: standard
+
+      - id: create_case
+        type: toolCall
+        position: { x: 300, y: 670 }
+        data:
+          label: Create Case
+          description: Create case for this interaction
+          tool: func-create-case
+
+      - id: end
+        type: end
+        position: { x: 300, y: 800 }
+        data:
+          label: Session Created
+          description: Session ready for verification
+
+    edges:
+      - id: e1
+        source: entry
+        target: detect_channel
+
+      - id: e2
+        source: detect_channel
+        target: create_session
+
+      - id: e3
+        source: create_session
+        target: check_pwm
+
+      - id: e4
+        source: check_pwm
+        target: load_adaptive_context
+        sourceHandle: PWM Customer
+
+      - id: e5
+        source: check_pwm
+        target: load_standard_context
+        sourceHandle: Standard Customer
+
+      - id: e6
+        source: load_adaptive_context
+        target: create_case
+
+      - id: e7
+        source: load_standard_context
+        target: create_case
+
+      - id: e8
+        source: create_case
+        target: end

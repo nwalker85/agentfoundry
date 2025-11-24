@@ -1,0 +1,157 @@
+id: cibc-cibc-card-activate-ivr
+metadata:
+  id: cibc-cibc-card-activate-ivr
+  name: CIBC Card - Activate via IVR
+  display_name: CIBC Card - Activate via IVR
+  description: IVR card activation workflow with automated verification
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-1
+    - card-lifecycle
+    - activation
+    - ivr
+  updated: "2025-11-18T01:28:58.342617Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: IVR Activation Request
+          description: Customer selects card activation option
+      - id: collect_card_info
+        type: process
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Collect Card Information
+          description: Prompt for last 4 digits and expiry date
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: 'IVR script:
+
+            "Please enter the last 4 digits of your card number, followed by the pound
+            sign."
+
+            "Now enter the expiration date, month and year, followed by the pound sign."
+
+            '
+      - id: verify_customer
+        type: toolCall
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Verify Customer (5Q Protocol)
+          description: Execute verification with fraud scoring
+          tool: func-verify-5-question-protocol
+      - id: get_fraud_score
+        type: toolCall
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Get Fraud Score
+          description: Pindrop voice biometric scoring
+          tool: func-get-fraud-risk-score
+      - id: check_verification
+        type: decision
+        position:
+          x: 300
+          y: 540
+        data:
+          label: Verification Result
+          description: Check verification and fraud score
+          conditions:
+            - label: Verified + Low Risk
+              expression: verification_passed && fraud_score < 50
+              next: activate_card
+            - label: Failed or High Risk
+              expression: "!verification_passed || fraud_score >= 70"
+              next: transfer_agent
+      - id: activate_card
+        type: toolCall
+        position:
+          x: 150
+          y: 670
+        data:
+          label: Activate Card
+          description: Change status to active
+          tool: func-activate-card
+      - id: confirm_activation
+        type: process
+        position:
+          x: 150
+          y: 800
+        data:
+          label: Confirmation Message
+          description: IVR confirmation script
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: '"Your card ending in [last4] has been successfully activated.
+
+            You can now use it for purchases and ATM withdrawals.
+
+            Thank you for banking with CIBC."
+
+            '
+      - id: transfer_agent
+        type: process
+        position:
+          x: 450
+          y: 670
+        data:
+          label: Transfer to Agent
+          description: Route to human agent for assistance
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 930
+        data:
+          label: Complete
+    edges:
+      - id: e1
+        source: entry
+        target: collect_card_info
+      - id: e2
+        source: collect_card_info
+        target: verify_customer
+      - id: e3
+        source: verify_customer
+        target: get_fraud_score
+      - id: e4
+        source: get_fraud_score
+        target: check_verification
+      - id: e5
+        source: check_verification
+        target: activate_card
+        sourceHandle: Verified + Low Risk
+      - id: e6
+        source: check_verification
+        target: transfer_agent
+        sourceHandle: Failed or High Risk
+      - id: e7
+        source: activate_card
+        target: confirm_activation
+      - id: e8
+        source: confirm_activation
+        target: end
+      - id: e9
+        source: transfer_agent
+        target: end

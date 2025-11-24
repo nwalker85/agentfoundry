@@ -1,0 +1,233 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Workflow - Submit G&D Rush
+  type: system
+  version: 1.0.0
+  description: Real-time rush submission to G&D for instant/express cards
+  tags: [cibc, agent-group-3, request-orchestration, gd-rush, instant-card]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Rush Request Entry
+          description: Instant or express card request
+
+      - id: validate_rush_eligibility
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Validate Rush Eligibility
+          description: Confirm request qualifies for rush processing
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Validate rush eligibility:
+
+            Requirements:
+            - Request must be approved
+            - rush_flag = true
+            - No blocking status codes
+            - Address is valid and verified
+            - Card ID exists in system
+            - Priority level set (instant | express)
+
+            Instant cards: 2-hour production (available for branch pickup)
+            Express cards: Next-day production with courier delivery
+
+      - id: check_production_capacity
+        type: toolCall
+        position: { x: 300, y: 280 }
+        data:
+          label: Check G&D Capacity
+          description: Verify G&D can accept rush order now
+          tool: func-check-gd-production-capacity
+
+      - id: capacity_decision
+        type: decision
+        position: { x: 300, y: 410 }
+        data:
+          label: Can Process Rush?
+          description: G&D capacity check
+          conditions:
+            - label: Capacity Available
+              expression: capacity_available == true
+              next: prepare_rush_payload
+            - label: Capacity Full
+              expression: capacity_available == false
+              next: queue_for_next_slot
+
+      - id: prepare_rush_payload
+        type: process
+        position: { x: 200, y: 540 }
+        data:
+          label: Prepare Rush Payload
+          description: Format for G&D rush API endpoint
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Prepare rush order payload:
+
+            Include:
+            - Request ID and card details
+            - Priority level (instant | express)
+            - Estimated production time
+            - Delivery instructions (branch pickup or courier)
+            - Rush fee information
+            - Territory routing code
+
+      - id: submit_rush_to_gd
+        type: toolCall
+        position: { x: 200, y: 670 }
+        data:
+          label: Submit Rush to G&D
+          description: POST to G&D rush production API
+          tool: func-submit-gd-rush
+
+      - id: process_rush_response
+        type: process
+        position: { x: 200, y: 800 }
+        data:
+          label: Process G&D Rush Response
+          description: Handle rush submission confirmation
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Process rush response:
+
+            Extract:
+            - Rush order ID
+            - Production slot time
+            - Estimated completion time
+            - Pickup/delivery details
+            - Any production alerts
+
+      - id: update_request_rush
+        type: process
+        position: { x: 200, y: 930 }
+        data:
+          label: Update Request Record
+          description: Mark as rush submitted with order ID
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: send_rush_confirmation
+        type: toolCall
+        position: { x: 200, y: 1060 }
+        data:
+          label: Send Rush Confirmation
+          description: Notify customer of rush processing
+          tool: func-send-notification
+
+      - id: notify_fulfillment
+        type: process
+        position: { x: 200, y: 1190 }
+        data:
+          label: Notify Fulfillment Team
+          description: Alert team for instant pickup or courier dispatch
+          model: gpt-4o-mini
+          temperature: 0.5
+          prompt: |
+            Notify fulfillment team:
+
+            For instant cards (branch pickup):
+            - Branch location
+            - Estimated ready time
+            - Customer notification sent
+
+            For express cards (courier):
+            - Courier service details
+            - Delivery address
+            - Tracking information
+
+      - id: queue_for_next_slot
+        type: process
+        position: { x: 400, y: 540 }
+        data:
+          label: Queue for Next Rush Slot
+          description: G&D capacity full - queue for next available slot
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            G&D rush capacity full. Queue for next available slot.
+
+            Actions:
+            - Determine next available rush slot
+            - Update request with queued status
+            - Notify customer of delay
+            - Provide new estimated time
+
+      - id: notify_delay
+        type: toolCall
+        position: { x: 400, y: 670 }
+        data:
+          label: Notify Customer of Delay
+          description: Inform customer of rush slot delay
+          tool: func-send-notification
+
+      - id: end
+        type: end
+        position: { x: 300, y: 1320 }
+        data:
+          label: Rush Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: validate_rush_eligibility
+
+      - id: e2
+        source: validate_rush_eligibility
+        target: check_production_capacity
+
+      - id: e3
+        source: check_production_capacity
+        target: capacity_decision
+
+      - id: e4
+        source: capacity_decision
+        target: prepare_rush_payload
+        sourceHandle: Capacity Available
+
+      - id: e5
+        source: capacity_decision
+        target: queue_for_next_slot
+        sourceHandle: Capacity Full
+
+      - id: e6
+        source: prepare_rush_payload
+        target: submit_rush_to_gd
+
+      - id: e7
+        source: submit_rush_to_gd
+        target: process_rush_response
+
+      - id: e8
+        source: process_rush_response
+        target: update_request_rush
+
+      - id: e9
+        source: update_request_rush
+        target: send_rush_confirmation
+
+      - id: e10
+        source: send_rush_confirmation
+        target: notify_fulfillment
+
+      - id: e11
+        source: notify_fulfillment
+        target: end
+
+      - id: e12
+        source: queue_for_next_slot
+        target: notify_delay
+
+      - id: e13
+        source: notify_delay
+        target: end

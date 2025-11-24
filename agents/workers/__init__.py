@@ -9,12 +9,12 @@ Worker Agents (domain-specific):
 - PMAgent: Project management (stories, epics, backlog)
 """
 
-from .context_agent import ContextAgent
 from .coherence_agent import CoherenceAgent
+from .context_agent import ContextAgent
 from .pm_agent import PMAgent
 
 __all__ = [
-    "ContextAgent",
     "CoherenceAgent",
+    "ContextAgent",
     "PMAgent",
 ]

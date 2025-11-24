@@ -8,13 +8,13 @@
 
 ### Core Dependencies Upgraded
 
-| Package | Old Version | New Version |
-|---------|------------|-------------|
-| langchain | 0.2.16 → | **1.0.7** |
-| langchain-core | 0.2.41 → | **1.0.5** |
-| langgraph | 0.2.39 → | **1.0.3** |
-| langchain-openai | 0.1.25 → | **1.0.3** |
-| openai | 1.57.0 → | **2.8.0** |
+| Package          | Old Version | New Version |
+| ---------------- | ----------- | ----------- |
+| langchain        | 0.2.16 →    | **1.0.7**   |
+| langchain-core   | 0.2.41 →    | **1.0.5**   |
+| langgraph        | 0.2.39 →    | **1.0.3**   |
+| langchain-openai | 0.1.25 →    | **1.0.3**   |
+| openai           | 1.57.0 →    | **2.8.0**   |
 
 ### Python Environment Upgraded
 
@@ -25,6 +25,7 @@
 ## Agent Refactoring
 
 ### Before: Manual StateGraph Construction
+
 ```python
 # Old approach - manual graph construction
 workflow = StateGraph(AgentState)
@@ -34,6 +35,7 @@ workflow.add_node("clarify", self.request_clarification)
 ```
 
 ### After: Modern create_react_agent Pattern
+
 ```python
 # New approach - high-level abstraction
 from langgraph.prebuilt import create_react_agent
@@ -48,6 +50,7 @@ graph = create_react_agent(
 ## Key Improvements
 
 ### 1. Cleaner Tool Definition
+
 ```python
 @tool
 async def create_notion_story(
@@ -61,11 +64,13 @@ async def create_notion_story(
 ```
 
 ### 2. Built-in ReAct Pattern
+
 - Automatic reasoning and action loop
 - Integrated tool execution
 - Streamlined state management
 
 ### 3. Better Error Handling
+
 - Native async support
 - Cleaner exception propagation
 - Improved debugging
@@ -77,7 +82,7 @@ async def create_notion_story(
 ✅ **Tool Calling** - Enhanced function calling with validation  
 ✅ **Async First** - Native async/await throughout  
 ✅ **State Management** - Improved checkpoint system  
-✅ **Observability** - Better integration with LangSmith  
+✅ **Observability** - Better integration with LangSmith
 
 ## Files Modified
 
@@ -115,6 +120,7 @@ python -c 'from agent.pm_graph import PMAgent; print("✅ Ready")'
 ## Breaking Changes to Watch
 
 ### Import Changes
+
 ```python
 # Old imports (deprecated)
 from langgraph.graph import StateGraph, END
@@ -125,6 +131,7 @@ from langchain_core.tools import tool
 ```
 
 ### Tool Definition
+
 ```python
 # Old: Manual tool registration
 tools = [NotionTool(), GitHubTool()]
@@ -137,6 +144,7 @@ async def create_notion_story(...) -> str:
 ```
 
 ### State Management
+
 ```python
 # Old: Custom TypedDict states
 class AgentState(TypedDict):
@@ -175,4 +183,5 @@ pip install -r requirements.txt.backup
 
 ---
 
-**Migration completed successfully. Agent Foundry now running on LangChain 1.0 with modern agentic capabilities.**
+**Migration completed successfully. Agent Foundry now running on LangChain 1.0
+with modern agentic capabilities.**

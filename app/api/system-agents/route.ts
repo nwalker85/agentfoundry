@@ -13,7 +13,9 @@ function getEnvFromSearchParams(searchParams: URLSearchParams): 'dev' | 'staging
   return 'dev';
 }
 
-async function loadEnvironmentManifest(env: 'dev' | 'staging' | 'prod'): Promise<AgentManifest | null> {
+async function loadEnvironmentManifest(
+  env: 'dev' | 'staging' | 'prod'
+): Promise<AgentManifest | null> {
   const manifestPath = path.join(MANIFEST_DIR, `manifest.${env}.yaml`);
   try {
     const content = await fs.readFile(manifestPath, 'utf-8');
@@ -64,11 +66,11 @@ export async function GET(request: Request) {
       try {
         const filePath = path.join(AGENTS_DIR, entry.yaml_path);
         const fileContent = await fs.readFile(filePath, 'utf-8');
-        const agentConfig = yaml.load(fileContent);
+        const agentConfig = yaml.load(fileContent) as Record<string, any>;
 
         // Attach binding metadata so the UI / backend knows org/domain/instance context
         result[entry.agent_id] = {
-          ...agentConfig,
+          ...(agentConfig || {}),
           __binding: entry,
         };
       } catch (error) {
@@ -79,10 +81,7 @@ export async function GET(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error loading system agents:', error);
-    return NextResponse.json(
-      { error: 'Failed to load system agents' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to load system agents' }, { status: 500 });
   }
 }
 
@@ -93,10 +92,7 @@ export async function PUT(request: Request) {
     const agentId = searchParams.get('id');
 
     if (!agentId) {
-      return NextResponse.json(
-        { error: 'Agent ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Agent ID is required' }, { status: 400 });
     }
 
     // For now, assume dev env for writes; in the future this should be scoped
@@ -174,10 +170,6 @@ export async function POST(request: Request) {
     return NextResponse.json(healthStatus);
   } catch (error) {
     console.error('Error checking agent health:', error);
-    return NextResponse.json(
-      { error: 'Failed to check agent health' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to check agent health' }, { status: 500 });
   }
 }
-

@@ -18,66 +18,66 @@ spec:
     - input_normalization
     - output_formatting
     - ssml_generation
-  
+
   workflow:
     type: langgraph.StateGraph
     entry_point: detect_channel
     recursion_limit: 50
     nodes:
       - id: detect_channel
-        handler: agents.workers.io_agent.IOAgent.detect_channel
+        handler: agents.io_agent.IOAgent.detect_channel
         description: Identify input channel (chat, voice, API)
         next:
           - normalize_input
         timeout_seconds: 5
-      
+
       - id: normalize_input
-        handler: agents.workers.io_agent.IOAgent.normalize_input
+        handler: agents.io_agent.IOAgent.normalize_input
         description: Convert channel-specific input to standard format
         next:
           - route_to_supervisor
         timeout_seconds: 10
-      
+
       - id: route_to_supervisor
-        handler: agents.workers.io_agent.IOAgent.route_to_supervisor
+        handler: agents.io_agent.IOAgent.route_to_supervisor
         description: Send normalized input to supervisor agent
         next:
           - format_output
         timeout_seconds: 5
-      
+
       - id: format_output
-        handler: agents.workers.io_agent.IOAgent.format_output
+        handler: agents.io_agent.IOAgent.format_output
         description: Format response for specific channel (SSML, JSON, text)
         next:
           - END
         timeout_seconds: 10
-  
+
   integrations:
     - type: livekit
       required: true
       operations:
         - audio_transcription
         - ssml_synthesis
-    
+
     - type: redis
       required: true
       operations:
         - cache_read
         - cache_write
-  
+
   resource_limits:
     max_concurrent_tasks: 10
     timeout_seconds: 60
     memory_mb: 256
     max_tokens_per_request: 2000
-  
+
   observability:
     trace_level: info
     metrics_enabled: true
     metrics_interval_seconds: 30
     log_retention_days: 30
     structured_logging: true
-  
+
   health_check:
     enabled: true
     interval_seconds: 30

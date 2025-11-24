@@ -1,0 +1,85 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: Channel Workflow - Basic
+  type: channel
+  channel: chat
+  version: 1.0.0
+  description: Basic channel workflow with IO Agent, Supervisor, and Goal Manager
+  tags: [channel, workflow, template]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 100, y: 50 }
+        data:
+          label: Entry
+          description: User input from channel (chat/voice/API)
+
+      - id: io_agent
+        type: process
+        position: { x: 100, y: 150 }
+        data:
+          label: IO Agent
+          description: Handles input/output for the channel
+          agent: io-agent
+          mode: delegate
+
+      - id: supervisor
+        type: process
+        position: { x: 100, y: 250 }
+        data:
+          label: Supervisor
+          description: Routes to appropriate domain agent
+          agent: supervisor-agent
+          mode: delegate
+
+      - id: goal_manager
+        type: process
+        position: { x: 100, y: 350 }
+        data:
+          label: Goal Manager
+          description: Decomposes goals into sub-goals and tracks progress
+          agent: goal-manager
+          mode: delegate
+
+      - id: observability
+        type: process
+        position: { x: 100, y: 450 }
+        data:
+          label: Observability
+          description: Broadcast activity events to frontend
+          agent: observability-agent
+          mode: delegate
+
+      - id: end
+        type: end
+        position: { x: 100, y: 550 }
+        data:
+          label: End
+          description: Return response to channel
+
+    edges:
+      - id: e1
+        source: entry
+        target: io_agent
+
+      - id: e2
+        source: io_agent
+        target: supervisor
+
+      - id: e3
+        source: supervisor
+        target: goal_manager
+
+      - id: e4
+        source: goal_manager
+        target: observability
+
+      - id: e5
+        source: observability
+        target: end

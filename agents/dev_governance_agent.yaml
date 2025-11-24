@@ -24,7 +24,7 @@ spec:
     - audit_logging
     - policy_enforcement
     - compliance_checking
-  
+
   workflow:
     type: langgraph.StateGraph
     entry_point: filter_sensitive_data
@@ -36,88 +36,88 @@ spec:
         next:
           - enforce_rate_limit
         timeout_seconds: 10
-      
+
       - id: enforce_rate_limit
         handler: agents.workers.governance_agent.GovernanceAgent.enforce_rate_limit
         description: Check and enforce rate limits
         next:
           - validate_permissions
         timeout_seconds: 5
-      
+
       - id: validate_permissions
         handler: agents.workers.governance_agent.GovernanceAgent.validate_permissions
         description: Validate user permissions for action
         next:
           - enforce_policy
         timeout_seconds: 10
-      
+
       - id: enforce_policy
         handler: agents.workers.governance_agent.GovernanceAgent.enforce_policy
         description: Enforce organizational policies
         next:
           - inject_secrets
         timeout_seconds: 5
-      
+
       - id: inject_secrets
         handler: agents.workers.governance_agent.GovernanceAgent.inject_secrets
         description: Securely inject secrets for tools
         next:
           - audit_log_event
         timeout_seconds: 5
-      
+
       - id: audit_log_event
         handler: agents.workers.governance_agent.GovernanceAgent._audit_log_event
         description: Log event to audit trail
         next:
           - END
         timeout_seconds: 5
-  
+
   integrations:
     - type: redis
       required: true
       operations:
         - rate_limit_storage
         - audit_log_cache
-    
+
     - type: postgresql
       required: true
       operations:
         - audit_log_persistence
         - permission_storage
-    
+
     - type: aws_secrets_manager
       required: false
       operations:
         - secrets_storage
-    
+
     - type: vault
       required: false
       operations:
         - secrets_management
-  
+
   resource_limits:
     max_concurrent_tasks: 30
     timeout_seconds: 60
     memory_mb: 512
     max_tokens_per_request: 4000
-  
+
   observability:
     trace_level: info
     metrics_enabled: true
     metrics_interval_seconds: 30
-    log_retention_days: 365  # Extended for compliance
+    log_retention_days: 365 # Extended for compliance
     structured_logging: true
-  
+
   health_check:
     enabled: true
     interval_seconds: 30
     timeout_seconds: 5
     unhealthy_threshold: 3
-  
+
   configuration:
     pii_filtering_enabled: true
-    phi_filtering_enabled: false  # Enable for healthcare
-    pii_redact_mode: mask  # mask, hash, or remove
+    phi_filtering_enabled: false # Enable for healthcare
+    pii_redact_mode: mask # mask, hash, or remove
     phi_redact_mode: mask
     rate_limit_default_limit: 100
     rate_limit_default_window_seconds: 3600
@@ -125,18 +125,17 @@ spec:
     policies:
       max_cost_per_request: 1.0
       max_tokens_per_request: 100000
-      allowed_tools: null  # null = all allowed
+      allowed_tools: null # null = all allowed
       blocked_tools: []
       require_approval_for_tools: []
     compliance_standards:
       - general
-      - hipaa  # Enable for healthcare
-      - gdpr   # Enable for EU
-      - pci    # Enable for payment processing
+      - hipaa # Enable for healthcare
+      - gdpr # Enable for EU
+      - pci # Enable for payment processing
 
 status:
   phase: production
   state: active
   last_health_check: "2025-11-16T00:00:00Z"
   health_status: healthy
-

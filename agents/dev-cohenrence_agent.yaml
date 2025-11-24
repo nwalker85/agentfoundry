@@ -18,7 +18,7 @@ spec:
     - deduplication
     - conflict_resolution
     - output_compilation
-  
+
   workflow:
     type: langgraph.StateGraph
     entry_point: buffer_responses
@@ -30,54 +30,54 @@ spec:
         next:
           - deduplicate
         timeout_seconds: 30
-      
+
       - id: deduplicate
         handler: agents.workers.coherence_agent.CoherenceAgent.deduplicate
         description: Remove duplicate or highly similar responses
         next:
           - resolve_conflicts
         timeout_seconds: 15
-      
+
       - id: resolve_conflicts
         handler: agents.workers.coherence_agent.CoherenceAgent.resolve_conflicts
         description: Resolve contradictory information using LLM
         next:
           - compile_output
         timeout_seconds: 20
-      
+
       - id: compile_output
         handler: agents.workers.coherence_agent.CoherenceAgent.compile_output
         description: Assemble final coherent response
         next:
           - END
         timeout_seconds: 15
-  
+
   integrations:
     - type: openai
       required: true
       operations:
         - chat_completion
         - embeddings
-    
+
     - type: redis
       required: true
       operations:
         - buffer_read
         - buffer_write
-  
+
   resource_limits:
     max_concurrent_tasks: 8
     timeout_seconds: 120
     memory_mb: 768
     max_tokens_per_request: 8000
-  
+
   observability:
     trace_level: info
     metrics_enabled: true
     metrics_interval_seconds: 30
     log_retention_days: 30
     structured_logging: true
-  
+
   health_check:
     enabled: true
     interval_seconds: 45

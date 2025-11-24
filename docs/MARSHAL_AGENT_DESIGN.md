@@ -8,7 +8,9 @@
 
 ## Overview
 
-The **Marshal Agent** is a meta-agent responsible for monitoring, loading, and managing the agent registry. It ensures agents are healthy, properly configured, and ready to serve requests.
+The **Marshal Agent** is a meta-agent responsible for monitoring, loading, and
+managing the agent registry. It ensures agents are healthy, properly configured,
+and ready to serve requests.
 
 ## Architecture
 
@@ -79,6 +81,7 @@ agents/
 ### Phase 1: Core Infrastructure (This PR)
 
 Files to create:
+
 1. `agents/yaml_validator.py` - Pydantic models
 2. `agents/agent_loader.py` - Dynamic loading
 3. `agents/agent_registry.py` - Registry
@@ -87,12 +90,14 @@ Files to create:
 6. `agents/marshal_agent.py` - Main orchestrator
 
 MCP Tools to add (in `backend/main.py`):
+
 1. `GET /api/agents/list` - List all agents
 2. `GET /api/agents/{id}/status` - Agent status
 3. `POST /api/agents/{id}/reload` - Hot reload
 4. `POST /api/agents/validate` - Validate YAML
 
 Tests to create:
+
 1. `tests/agents/test_yaml_validator.py`
 2. `tests/agents/test_agent_loader.py`
 3. `tests/agents/test_marshal_agent.py`

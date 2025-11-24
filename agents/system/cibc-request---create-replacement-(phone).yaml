@@ -1,0 +1,145 @@
+id: cibc-cibc-request-create-replacement-phone
+metadata:
+  id: cibc-cibc-request-create-replacement-phone
+  name: CIBC Request - Create Replacement (Phone)
+  display_name: CIBC Request - Create Replacement (Phone)
+  description: Phone channel replacement request with agent assistance
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-3
+    - request-orchestration
+    - replacement
+    - phone
+  updated: "2025-11-18T01:28:58.606231Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Replacement Request
+          description: Customer reports lost/stolen/damaged card
+      - id: gather_details
+        type: process
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Gather Request Details
+          description: Collect reason and circumstances
+          model: gpt-4o
+          temperature: 0.6
+          prompt: 'Agent script:
+
+            "I understand you need a replacement card. Can you tell me what happened?"
+
+
+            Gather:
+
+            - Reason (lost/stolen/damaged/compromised)
+
+            - When/where it occurred
+
+            - Last known transaction
+
+            - Whether address has changed
+
+            '
+      - id: check_address_change
+        type: decision
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Address Change?
+          description: Flag if customer has moved
+          conditions:
+            - label: Address Changed
+              expression: address_changed == true
+              next: capture_new_address
+            - label: Same Address
+              expression: address_changed == false
+              next: create_request
+      - id: capture_new_address
+        type: process
+        position:
+          x: 150
+          y: 410
+        data:
+          label: Capture New Address
+          description: Record new delivery address
+          model: gpt-4o
+          temperature: 0.5
+      - id: create_request
+        type: toolCall
+        position:
+          x: 300
+          y: 540
+        data:
+          label: Create Replacement Request
+          description: Generate request record
+          tool: func-create-replacement-request
+      - id: assess_risk
+        type: toolCall
+        position:
+          x: 300
+          y: 670
+        data:
+          label: Assess Fraud Risk
+          description: Calculate risk score for routing
+          tool: func-calculate-request-risk-score
+      - id: route_request
+        type: toolCall
+        position:
+          x: 300
+          y: 800
+        data:
+          label: Route by Risk
+          description: Route to appropriate approval tier
+          tool: func-route-by-fraud-score
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 930
+        data:
+          label: Request Created
+    edges:
+      - id: e1
+        source: entry
+        target: gather_details
+      - id: e2
+        source: gather_details
+        target: check_address_change
+      - id: e3
+        source: check_address_change
+        target: capture_new_address
+        sourceHandle: Address Changed
+      - id: e4
+        source: check_address_change
+        target: create_request
+        sourceHandle: Same Address
+      - id: e5
+        source: capture_new_address
+        target: create_request
+      - id: e6
+        source: create_request
+        target: assess_risk
+      - id: e7
+        source: assess_risk
+        target: route_request
+      - id: e8
+        source: route_request
+        target: end

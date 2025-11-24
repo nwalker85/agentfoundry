@@ -1,0 +1,105 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: User Agent - Plan-Execute Pattern
+  type: user
+  version: 1.0.0
+  description: A user agent that plans tasks, executes them, and reflects on results
+  tags: [plan-execute, user-agent, template]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 100, y: 50 }
+        data:
+          label: Entry
+          description: Entry point for user requests
+
+      - id: planner
+        type: process
+        position: { x: 100, y: 150 }
+        data:
+          label: Planner
+          description: Create a detailed plan to accomplish the goal
+          model: gpt-4
+          temperature: 0.7
+          prompt: |
+            Given the user's request, create a detailed step-by-step plan
+            to accomplish the goal. Break it down into concrete, executable tasks.
+
+      - id: executor
+        type: process
+        position: { x: 100, y: 250 }
+        data:
+          label: Executor
+          description: Execute the planned tasks
+          model: gpt-4
+          temperature: 0.5
+          prompt: |
+            Execute the current task from the plan. Use tools as needed
+            to accomplish each step.
+
+      - id: check_completion
+        type: decision
+        position: { x: 100, y: 350 }
+        data:
+          label: Check Completion
+          description: Determine if all tasks are complete
+          conditions:
+            - label: More Tasks
+              expression: has_remaining_tasks
+              next: executor
+            - label: All Complete
+              expression: "!has_remaining_tasks"
+              next: reflector
+
+      - id: reflector
+        type: process
+        position: { x: 100, y: 450 }
+        data:
+          label: Reflector
+          description: Reflect on results and synthesize final answer
+          model: gpt-4
+          temperature: 0.7
+          prompt: |
+            Review the execution results and synthesize a comprehensive
+            final answer for the user. Ensure all aspects of their
+            request have been addressed.
+
+      - id: end
+        type: end
+        position: { x: 100, y: 550 }
+        data:
+          label: End
+          description: Return final response
+
+    edges:
+      - id: e1
+        source: entry
+        target: planner
+
+      - id: e2
+        source: planner
+        target: executor
+
+      - id: e3
+        source: executor
+        target: check_completion
+
+      - id: e4
+        source: check_completion
+        target: executor
+        sourceHandle: More Tasks
+
+      - id: e5
+        source: check_completion
+        target: reflector
+        sourceHandle: All Complete
+
+      - id: e6
+        source: reflector
+        target: end

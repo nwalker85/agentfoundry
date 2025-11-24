@@ -229,9 +229,7 @@ export const mockTools: Tool[] = [
     success_rate: 0.991,
     avg_latency_ms: 892,
     json_schema: {},
-    permissions: [
-      { resource: 'internet', action: 'read', scope: 'public' },
-    ],
+    permissions: [{ resource: 'internet', action: 'read', scope: 'public' }],
     verified: true,
     rating: 4.6,
     downloads: 13456,
@@ -279,9 +277,7 @@ export const mockTools: Tool[] = [
     success_rate: 0.881,
     avg_latency_ms: 3421,
     json_schema: {},
-    permissions: [
-      { resource: 'files', action: 'read', scope: 'organization' },
-    ],
+    permissions: [{ resource: 'files', action: 'read', scope: 'organization' }],
     verified: true,
     rating: 4.3,
     downloads: 4532,
@@ -508,9 +504,7 @@ export const mockTools: Tool[] = [
     success_rate: 0.978,
     avg_latency_ms: 5234,
     json_schema: {},
-    permissions: [
-      { resource: 'audio', action: 'read', scope: 'organization' },
-    ],
+    permissions: [{ resource: 'audio', action: 'read', scope: 'organization' }],
     verified: true,
     rating: 4.8,
     downloads: 8234,
@@ -632,9 +626,7 @@ export const mockTools: Tool[] = [
     success_rate: 0.0,
     avg_latency_ms: 0,
     json_schema: {},
-    permissions: [
-      { resource: 'functions', action: 'execute', scope: 'account' },
-    ],
+    permissions: [{ resource: 'functions', action: 'execute', scope: 'account' }],
     verified: true,
     rating: 4.5,
     downloads: 6234,
@@ -713,38 +705,38 @@ export const mockToolInvocations: ToolInvocation[] = [
 
 // Helper functions
 export function getToolById(id: string): Tool | undefined {
-  return mockTools.find(tool => tool.id === id);
+  return mockTools.find((tool) => tool.id === id);
 }
 
 export function getToolsByStatus(status: ToolStatus): Tool[] {
-  return mockTools.filter(tool => tool.status === status);
+  return mockTools.filter((tool) => tool.status === status);
 }
 
 export function getInstalledTools(): Tool[] {
-  return mockTools.filter(tool => tool.installed);
+  return mockTools.filter((tool) => tool.installed);
 }
 
 export function getToolsByCategory(category: string): Tool[] {
-  return mockTools.filter(tool => tool.category === category);
+  return mockTools.filter((tool) => tool.category === category);
 }
 
 export function searchTools(query: string): Tool[] {
   const lowercaseQuery = query.toLowerCase();
   return mockTools.filter(
-    tool =>
+    (tool) =>
       tool.name.toLowerCase().includes(lowercaseQuery) ||
       tool.display_name.toLowerCase().includes(lowercaseQuery) ||
       tool.description.toLowerCase().includes(lowercaseQuery) ||
-      tool.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
+      tool.tags.some((tag) => tag.toLowerCase().includes(lowercaseQuery))
   );
 }
 
 export function getToolStats() {
   return {
     total_tools: mockTools.length,
-    installed: mockTools.filter(t => t.installed).length,
-    available: mockTools.filter(t => !t.installed).length,
-    updates_available: mockTools.filter(t => t.update_available).length,
+    installed: mockTools.filter((t) => t.installed).length,
+    available: mockTools.filter((t) => !t.installed).length,
+    updates_available: mockTools.filter((t) => t.update_available).length,
     total_invocations_24h: mockTools.reduce((sum, t) => sum + t.total_invocations_24h, 0),
     avg_success_rate: mockTools.reduce((sum, t) => sum + t.success_rate, 0) / mockTools.length,
   };

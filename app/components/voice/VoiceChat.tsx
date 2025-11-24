@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { LiveKitRoom, RoomAudioRenderer, useLocalParticipant, useTrackVolume } from '@livekit/components-react';
+import {
+  LiveKitRoom,
+  RoomAudioRenderer,
+  useLocalParticipant,
+  useTrackVolume,
+} from '@livekit/components-react';
 import '@livekit/components-styles';
 import { Track } from 'livekit-client';
 import { VoiceControls } from './VoiceControls';

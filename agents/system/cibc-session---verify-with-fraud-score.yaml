@@ -1,0 +1,182 @@
+id: cibc-cibc-session-verify-with-fraud-score
+metadata:
+  id: cibc-cibc-session-verify-with-fraud-score
+  name: CIBC Session - Verify with Fraud Score
+  display_name: CIBC Session - Verify with Fraud Score
+  description: Execute 5-question verification combined with Pindrop fraud scoring
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-4
+    - session
+    - verification
+    - fraud-score
+    - pindrop
+  updated: "2025-11-18T01:28:58.728087Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 400
+          y: 50
+        data:
+          label: Start Verification
+          description: Begin customer verification process
+      - id: get_fraud_score
+        type: toolCall
+        position:
+          x: 400
+          y: 150
+        data:
+          label: Get Pindrop Score
+          description: Query Pindrop for fraud risk score
+          tool: func-get-fraud-risk-score
+      - id: execute_5q_verification
+        type: toolCall
+        position:
+          x: 400
+          y: 280
+        data:
+          label: 5-Question Verification
+          description: Execute standard 5Q protocol
+          tool: func-verify-5-question-protocol
+      - id: record_attempt
+        type: toolCall
+        position:
+          x: 400
+          y: 410
+        data:
+          label: Record Verification Attempt
+          description: Create audit trail
+          tool: func-record-verification-attempt
+      - id: evaluate_combined
+        type: toolCall
+        position:
+          x: 400
+          y: 540
+        data:
+          label: Evaluate Combined Result
+          description: Combine 5Q result with fraud score
+          tool: func-evaluate-verification-with-fraud-score
+      - id: route_decision
+        type: decision
+        position:
+          x: 400
+          y: 670
+        data:
+          label: Route Decision
+          description: Determine action based on combined result
+          conditions:
+            - label: Pass + Low Risk (Score < 50)
+              expression: verification_passed && fraud_score < 50
+              next: proceed_success
+            - label: Fail + High Risk (Score > 70)
+              expression: "!verification_passed && fraud_score > 70"
+              next: escalate_security
+            - label: Pass + Medium Risk (50-70)
+              expression: verification_passed && fraud_score >= 50 && fraud_score <= 70
+              next: additional_verification
+            - label: Fail + Low-Medium Risk
+              expression: "!verification_passed && fraud_score < 70"
+              next: retry_verification
+      - id: proceed_success
+        type: process
+        position:
+          x: 200
+          y: 800
+        data:
+          label: Proceed Success
+          description: Customer verified, proceed with request
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: additional_verification
+        type: process
+        position:
+          x: 400
+          y: 800
+        data:
+          label: Additional Verification
+          description: Request additional verification (OTP, biometric)
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: retry_verification
+        type: process
+        position:
+          x: 600
+          y: 800
+        data:
+          label: Retry Verification
+          description: Allow retry with different questions
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: escalate_security
+        type: process
+        position:
+          x: 800
+          y: 800
+        data:
+          label: Escalate to Security Officer
+          description: High fraud risk - escalate to Card Security Officer
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: end
+        type: end
+        position:
+          x: 400
+          y: 930
+        data:
+          label: Verification Complete
+    edges:
+      - id: e1
+        source: entry
+        target: get_fraud_score
+      - id: e2
+        source: get_fraud_score
+        target: execute_5q_verification
+      - id: e3
+        source: execute_5q_verification
+        target: record_attempt
+      - id: e4
+        source: record_attempt
+        target: evaluate_combined
+      - id: e5
+        source: evaluate_combined
+        target: route_decision
+      - id: e6
+        source: route_decision
+        target: proceed_success
+        sourceHandle: Pass + Low Risk (Score < 50)
+      - id: e7
+        source: route_decision
+        target: additional_verification
+        sourceHandle: Pass + Medium Risk (50-70)
+      - id: e8
+        source: route_decision
+        target: retry_verification
+        sourceHandle: Fail + Low-Medium Risk
+      - id: e9
+        source: route_decision
+        target: escalate_security
+        sourceHandle: Fail + High Risk (Score > 70)
+      - id: e10
+        source: proceed_success
+        target: end
+      - id: e11
+        source: additional_verification
+        target: end
+      - id: e12
+        source: retry_verification
+        target: end
+      - id: e13
+        source: escalate_security
+        target: end

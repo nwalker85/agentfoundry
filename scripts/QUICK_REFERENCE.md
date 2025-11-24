@@ -7,6 +7,7 @@
 ## Local & AWS Diagnostics
 
 ### Local Docker Stack
+
 ```bash
 # Start services (wrapper around ./start_foundry.sh)
 ./scripts/start-services.sh
@@ -16,6 +17,7 @@
 ```
 
 ### AWS Dev (ECS / ALB)
+
 ```bash
 # High-level ECS + ALB + /api/health check
 AWS_REGION=us-east-1 ./scripts/monitor_aws_health.sh
@@ -29,6 +31,7 @@ AWS_REGION=us-east-1 ./scripts/check_alb_targets.sh
 ## Git Operations
 
 ### Check Status
+
 ```bash
 # Python version (comprehensive)
 python scripts/git/check_git_status.py
@@ -38,6 +41,7 @@ python scripts/git/check_git_status.py
 ```
 
 ### Commit Changes
+
 ```bash
 # Interactive commit helper
 ./scripts/git/commit_helper.sh
@@ -48,6 +52,7 @@ python scripts/git/check_git_status.py
 ## Documentation
 
 ### Consolidate Docs
+
 ```bash
 # Run documentation consolidation
 python scripts/docs/consolidate_docs_v2.py
@@ -58,6 +63,7 @@ python scripts/docs/consolidate_docs_v2.py
 ## Setup
 
 ### Create Frontend
+
 ```bash
 # Initialize frontend structure
 python scripts/setup/create_frontend.py
@@ -68,6 +74,7 @@ python scripts/setup/create_frontend.py
 ## Common Workflows
 
 ### Before Committing
+
 ```bash
 # 1. Check status
 ./scripts/git/check_git_status.sh
@@ -77,12 +84,14 @@ python scripts/setup/create_frontend.py
 ```
 
 ### After Documentation Changes
+
 ```bash
 # Consolidate and organize
 python scripts/docs/consolidate_docs_v2.py
 ```
 
 ### New Development Environment
+
 ```bash
 # Setup frontend
 python scripts/setup/create_frontend.py
@@ -94,4 +103,3 @@ python scripts/git/check_git_status.py
 ---
 
 See [scripts/README.md](./README.md) for complete documentation.
-

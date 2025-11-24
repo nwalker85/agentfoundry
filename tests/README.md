@@ -67,12 +67,14 @@ pytest tests/uat/ -v
 **Purpose:** Test individual functions and classes in isolation  
 **Status:** Not yet created  
 **Planned Coverage:**
+
 - Agent message parsing
 - Schema validation
 - Idempotency key generation
 - Audit log formatting
 
 **Run:**
+
 ```bash
 pytest tests/unit/ -v
 ```
@@ -83,17 +85,20 @@ pytest tests/unit/ -v
 
 **Purpose:** Test interactions between components and external services  
 **Current Tests:**
+
 - `test_notion.py` - Notion API integration (63 lines)
 - `test_langgraph_agent.py` - LangGraph agent integration (218 lines)
 - `test_mcp_langgraph.py` - MCP + LangGraph integration (13,242 lines)
 
 **What they test:**
+
 - Notion API connectivity and story creation
 - LangGraph agent initialization and message processing
 - MCP server endpoints with agent integration
 - External API authentication and error handling
 
 **Run:**
+
 ```bash
 # Run all integration tests
 pytest tests/integration/ -v
@@ -106,6 +111,7 @@ pytest tests/integration/ -v -m "notion"
 ```
 
 **Prerequisites:**
+
 - MCP server must be running on port 8001
 - Valid API credentials in `.env.local`
 - Network access to external services
@@ -116,10 +122,12 @@ pytest tests/integration/ -v -m "notion"
 
 **Purpose:** Test complete workflows from user input to final output  
 **Current Tests:**
+
 - `test_e2e.py` - Full MCP server workflow (9,453 lines)
 - `test_agent_detailed.py` - Detailed agent workflows (1,997 lines)
 
 **What they test:**
+
 1. Server health and tool availability
 2. Story creation with idempotency
 3. GitHub issue creation with linking
@@ -129,6 +137,7 @@ pytest tests/integration/ -v -m "notion"
 7. PM agent end-to-end workflow
 
 **Run:**
+
 ```bash
 # Run all E2E tests
 pytest tests/e2e/ -v
@@ -141,11 +150,13 @@ pytest tests/e2e/ -v -s
 ```
 
 **Prerequisites:**
+
 - MCP server must be running on port 8001
 - All external services accessible
 - Clean test data state
 
 **Expected Output:**
+
 ```
 ✅ Test 1: MCP server is running
 ✅ Test 2: Notion story creation
@@ -164,15 +175,18 @@ pytest tests/e2e/ -v -s
 
 **Purpose:** Validate system meets business requirements  
 **Current Tests:**
+
 - `uat_runner.py` - Automated UAT execution (611 lines)
 
 **What it tests:**
+
 - Business workflows from user perspective
 - Acceptance criteria validation
 - User experience validation
 - Production readiness verification
 
 **Run:**
+
 ```bash
 # Run UAT suite
 python tests/uat/uat_runner.py
@@ -197,7 +211,7 @@ testpaths = tests
 python_files = test_*.py
 python_classes = Test*
 python_functions = test_*
-addopts = 
+addopts =
     -v
     --tb=short
     --strict-markers
@@ -300,23 +314,23 @@ from agent.simple_pm import SimplePMAgent
 
 class TestMessageParsing:
     """Test message parsing functionality."""
-    
+
     def test_extract_epic_from_message(self):
         """Should extract epic name from user message."""
         agent = SimplePMAgent()
         message = "Create story in Auth epic"
-        
+
         result = agent.parse_message(message)
-        
+
         assert result["epic"] == "Auth"
-    
+
     def test_extract_priority_from_message(self):
         """Should extract priority from user message."""
         agent = SimplePMAgent()
         message = "Create P1 story for login"
-        
+
         result = agent.parse_message(message)
-        
+
         assert result["priority"] == "P1"
 ```
 
@@ -334,7 +348,7 @@ async def test_mcp_server_health():
     """Should return healthy status."""
     async with httpx.AsyncClient() as client:
         response = await client.get("http://localhost:8001/")
-        
+
         assert response.status_code == 200
         assert response.json()["status"] == "healthy"
 ```
@@ -359,14 +373,14 @@ async def test_complete_story_workflow():
         )
         assert story_response.status_code == 200
         story_url = story_response.json()["story_url"]
-        
+
         # Step 2: Create issue
         issue_response = await client.post(
             "http://localhost:8001/api/tools/github/create-issue",
             json={"title": "E2E Test", "story_url": story_url}
         )
         assert issue_response.status_code == 200
-        
+
         # Step 3: Verify audit trail
         audit_response = await client.get(
             "http://localhost:8001/api/tools/audit/query?limit=1"
@@ -379,6 +393,7 @@ async def test_complete_story_workflow():
 ## Test Best Practices
 
 ### General Principles
+
 1. **Isolation:** Each test should be independent
 2. **Clarity:** Test names should describe what is being tested
 3. **Speed:** Keep unit tests fast (<100ms), integration tests reasonable (<5s)
@@ -386,22 +401,26 @@ async def test_complete_story_workflow():
 5. **Coverage:** Aim for >80% code coverage
 
 ### Naming Conventions
+
 - Test files: `test_*.py`
 - Test classes: `Test*`
 - Test functions: `test_*`
 - Use descriptive names: `test_should_return_error_when_missing_required_field`
 
 ### Assertions
+
 - Use descriptive assertion messages
 - Prefer specific assertions over generic ones
 - Test one concept per test
 
 ### Fixtures
+
 - Use fixtures for common setup
 - Keep fixtures focused and composable
 - Document fixture scope and purpose
 
 ### Mocking
+
 - Mock external services in unit/integration tests
 - Use real services in E2E tests
 - Document what is mocked and why
@@ -412,13 +431,13 @@ async def test_complete_story_workflow():
 
 ### Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| Import errors | Ensure PYTHONPATH includes project root |
-| Server not available | Start MCP server before running tests |
-| Authentication errors | Check .env.local credentials |
-| Timeout errors | Increase timeout or check service health |
-| Flaky tests | Add retry logic or fix race conditions |
+| Issue                 | Solution                                 |
+| --------------------- | ---------------------------------------- |
+| Import errors         | Ensure PYTHONPATH includes project root  |
+| Server not available  | Start MCP server before running tests    |
+| Authentication errors | Check .env.local credentials             |
+| Timeout errors        | Increase timeout or check service health |
+| Flaky tests           | Add retry logic or fix race conditions   |
 
 ### Debug Commands
 
@@ -441,12 +460,14 @@ pytest tests/ -v -W all
 ## Test Metrics
 
 ### Current Coverage
+
 - **Integration Tests:** 3 files
 - **E2E Tests:** 2 files
 - **UAT Tests:** 1 file
 - **Unit Tests:** 0 files (planned)
 
 ### Target Metrics
+
 - **Code Coverage:** >80%
 - **Test Pass Rate:** 100%
 - **Test Execution Time:** <60 seconds (all tests)
@@ -457,18 +478,21 @@ pytest tests/ -v -W all
 ## Next Steps
 
 ### Immediate
+
 - [ ] Create unit tests for core functions
 - [ ] Add pytest.ini configuration
 - [ ] Create conftest.py with shared fixtures
 - [ ] Add test markers for categorization
 
 ### Short-term
+
 - [ ] Implement test data factories
 - [ ] Add contract tests for APIs
 - [ ] Create performance benchmarks
 - [ ] Set up test coverage reporting
 
 ### Long-term
+
 - [ ] Add BDD/Gherkin conversational tests
 - [ ] Implement chaos engineering tests
 - [ ] Add load testing with Locust
@@ -484,6 +508,5 @@ pytest tests/ -v -W all
 
 ---
 
-*Test Suite Documentation - Engineering Department*  
-*Last Updated: November 10, 2025*
-
+_Test Suite Documentation - Engineering Department_  
+_Last Updated: November 10, 2025_

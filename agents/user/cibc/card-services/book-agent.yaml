@@ -1,0 +1,66 @@
+id: fe76b058-81fc-429a-b514-9a4f40a0ef23
+metadata:
+  id: fe76b058-81fc-429a-b514-9a4f40a0ef23
+  name: Book Agent
+  display_name: Book Agent
+  description: 'Agent created via Forge: Book Agent'
+  type: user
+  organization_id: cibc
+  domain_id: card-services
+  environment: dev
+  version: 0.0.5
+  status: active
+  created_by: foundry-user
+  updated_by: foundry-user
+  tags: []
+  is_system_agent: false
+  updated: '2025-11-24T14:05:47.618288Z'
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+    - id: process-1763987208129
+      data:
+        label: Book Agent
+        model: gpt-5-mini
+        maxTokens: 1000
+        description: This is an agent that talks a lot about literature.
+        temperature: 0.7
+        llmInstructions: 'you are a helpful agent name benjamin who is responsible
+          for helping answer questions about literature. you are only to answer questions
+          about literature. keep your responses concise, casual, and friendly, no
+          more than 5 sentences long. Do not use html or markdown, just pure text
+          responses. Always end with a question to naturally continue the conversation,
+          like asking if they want to know more about the author or explore the themes
+          of the work. '
+      type: process
+      width: 275
+      height: 102
+      dragging: false
+      position:
+        x: 480.507160694633
+        y: 242.90241806244816
+      selected: true
+    - id: entryPoint-1763987508386
+      data:
+        label: Entry Point
+        description: ''
+      type: entryPoint
+      width: 180
+      height: 68
+      dragging: false
+      position:
+        x: 456.9175582138539
+        y: 108.85761123173182
+      selected: false
+      positionAbsolute:
+        x: 456.9175582138539
+        y: 108.85761123173182
+    edges:
+    - id: reactflow__edge-entryPoint-1763987508386-process-1763987208129
+      source: entryPoint-1763987508386
+      target: process-1763987208129
+      animated: true
+      sourceHandle: null
+      targetHandle: null

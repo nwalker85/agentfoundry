@@ -18,80 +18,80 @@ spec:
     - agent_selection
     - multi_agent_routing
     - result_aggregation
-  
+
   workflow:
     type: langgraph.StateGraph
     entry_point: analyze_request
     recursion_limit: 100
     nodes:
       - id: analyze_request
-        handler: agents.workers.supervisor_agent.SupervisorAgent.analyze_request
+        handler: agents.supervisor_agent.SupervisorAgent.analyze_request
         description: Understand user intent and determine routing strategy
         next:
           - load_context
         timeout_seconds: 15
-      
+
       - id: load_context
-        handler: agents.workers.supervisor_agent.SupervisorAgent.load_context
+        handler: agents.supervisor_agent.SupervisorAgent.load_context
         description: Get enriched context from context_agent
         next:
           - select_workers
         timeout_seconds: 10
-      
+
       - id: select_workers
-        handler: agents.workers.supervisor_agent.SupervisorAgent.select_workers
+        handler: agents.supervisor_agent.SupervisorAgent.select_workers
         description: Determine which customer agent(s) to invoke
         next:
           - route_to_workers
         timeout_seconds: 10
-      
+
       - id: route_to_workers
-        handler: agents.workers.supervisor_agent.SupervisorAgent.route_to_workers
+        handler: agents.supervisor_agent.SupervisorAgent.route_to_workers
         description: Execute selected agents in parallel or sequence
         next:
           - aggregate_results
         timeout_seconds: 120
-      
+
       - id: aggregate_results
-        handler: agents.workers.supervisor_agent.SupervisorAgent.aggregate_results
+        handler: agents.supervisor_agent.SupervisorAgent.aggregate_results
         description: Collect and combine results from all workers
         next:
           - compile_coherent_response
         timeout_seconds: 30
-      
+
       - id: compile_coherent_response
-        handler: agents.workers.supervisor_agent.SupervisorAgent.compile_coherent_response
+        handler: agents.supervisor_agent.SupervisorAgent.compile_coherent_response
         description: Send to coherence_agent for final assembly
         next:
           - END
         timeout_seconds: 20
-  
+
   integrations:
     - type: redis
       required: true
       operations:
         - agent_registry_read
         - session_state_read
-    
+
     - type: openai
       required: true
       operations:
         - chat_completion
         - embeddings
-  
+
   resource_limits:
     max_concurrent_tasks: 5
     timeout_seconds: 300
     memory_mb: 1024
     max_tokens_per_request: 16000
-  
+
   observability:
     trace_level: info
     metrics_enabled: true
     metrics_interval_seconds: 30
     log_retention_days: 30
     structured_logging: true
-  
+
   health_check:
     enabled: true
     interval_seconds: 60

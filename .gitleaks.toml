@@ -1,0 +1,49 @@
+# Gitleaks Configuration for Agent Foundry
+# https://github.com/gitleaks/gitleaks
+
+title = "Agent Foundry Gitleaks Config"
+
+[extend]
+# Use the default gitleaks config as base
+useDefault = true
+
+# Allowlist paths and patterns that are known false positives
+[allowlist]
+description = "Allowlist for Agent Foundry"
+
+# Files that are safe to ignore
+paths = [
+    '''\.env\.example$''',
+    '''package-lock\.json$''',
+    '''requirements\.txt$''',
+    '''\.md$''',
+    '''\.gitleaks\.toml$''',
+]
+
+# Regex patterns for known safe values
+regexes = [
+    # Example/placeholder values
+    '''(?i)your[-_]?api[-_]?key''',
+    '''(?i)example[-_]?secret''',
+    '''(?i)placeholder''',
+    '''sk-[a-zA-Z0-9]{20,}\.\.\.''',  # Truncated keys in docs
+    # LocalStack dummy credentials
+    '''LKIDLOCAL[a-zA-Z0-9]+''',
+    '''localstack''',
+    # Test/mock values
+    '''(?i)test[-_]?key''',
+    '''(?i)mock[-_]?secret''',
+    '''foundry2024''',  # Default dev passwords
+]
+
+# Specific commits to ignore (add if needed after scan)
+commits = []
+
+# Stop words that indicate non-sensitive content
+stopwords = [
+    "example",
+    "placeholder",
+    "your-",
+    "changeme",
+    "redacted",
+]

@@ -357,28 +357,28 @@ export const mockChannelActivity: ChannelActivity[] = [
 
 // Helper functions
 export function getChannelById(id: string): Channel | undefined {
-  return mockChannels.find(channel => channel.id === id);
+  return mockChannels.find((channel) => channel.id === id);
 }
 
 export function getChannelsByType(type: ChannelType): Channel[] {
-  return mockChannels.filter(channel => channel.type === type);
+  return mockChannels.filter((channel) => channel.type === type);
 }
 
 export function getChannelsByStatus(status: string): Channel[] {
-  return mockChannels.filter(channel => channel.status === status);
+  return mockChannels.filter((channel) => channel.status === status);
 }
 
 export function getActiveChannels(): Channel[] {
-  return mockChannels.filter(channel => channel.status === 'connected');
+  return mockChannels.filter((channel) => channel.status === 'connected');
 }
 
 export function getMessagesByChannel(channelId: string): ChannelMessage[] {
-  return mockChannelMessages.filter(msg => msg.channel_id === channelId);
+  return mockChannelMessages.filter((msg) => msg.channel_id === channelId);
 }
 
 export function getChannelActivity(channelId: string, limit: number = 10): ChannelActivity[] {
   return mockChannelActivity
-    .filter(activity => activity.channel_id === channelId)
+    .filter((activity) => activity.channel_id === channelId)
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, limit);
 }
@@ -386,9 +386,9 @@ export function getChannelActivity(channelId: string, limit: number = 10): Chann
 export function getChannelStats() {
   return {
     total_channels: mockChannels.length,
-    connected: mockChannels.filter(c => c.status === 'connected').length,
-    disconnected: mockChannels.filter(c => c.status === 'disconnected').length,
-    errors: mockChannels.filter(c => c.status === 'error').length,
+    connected: mockChannels.filter((c) => c.status === 'connected').length,
+    disconnected: mockChannels.filter((c) => c.status === 'disconnected').length,
+    errors: mockChannels.filter((c) => c.status === 'error').length,
     total_messages_24h: mockChannels.reduce((sum, c) => sum + c.messages_24h, 0),
     avg_response_time_ms:
       mockChannels.reduce((sum, c) => sum + c.avg_response_time_ms, 0) / mockChannels.length,

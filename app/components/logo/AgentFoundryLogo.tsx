@@ -7,14 +7,9 @@ interface AgentFoundryLogoProps {
   className?: string;
 }
 
-export function AgentFoundryLogo({ className = "h-8 w-8" }: AgentFoundryLogoProps) {
+export function AgentFoundryLogo({ className = 'h-8 w-8' }: AgentFoundryLogoProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 48 48"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Hexagon Frame */}
       <path
         d="M24 2L42 14V34L24 46L6 34V14L24 2Z"
@@ -24,18 +19,10 @@ export function AgentFoundryLogo({ className = "h-8 w-8" }: AgentFoundryLogoProp
       />
 
       {/* Inner Forge Symbol */}
-      <path
-        d="M24 12L32 18V30L24 36L16 30V18L24 12Z"
-        fill="url(#gradient2)"
-      />
+      <path d="M24 12L32 18V30L24 36L16 30V18L24 12Z" fill="url(#gradient2)" />
 
       {/* Hammer/Anvil Icon (representing forge) */}
-      <path
-        d="M20 24H28M24 20V28"
-        stroke="white"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
+      <path d="M20 24H28M24 20V28" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
 
       {/* Spark effect */}
       <circle cx="28" cy="20" r="1.5" fill="#60A5FA" opacity="0.8" />

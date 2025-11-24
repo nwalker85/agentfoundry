@@ -1,8 +1,11 @@
 ## Agent Foundry – AWS Deployment (ECS / Fargate)
 
-**Purpose:** This is the **current, supported** deployment path for Agent Foundry to AWS using **ECR + ECS Fargate + ALB + Route53**, driven by Terraform in `infra/` and Docker build scripts.
+**Purpose:** This is the **current, supported** deployment path for Agent
+Foundry to AWS using **ECR + ECS Fargate + ALB + Route53**, driven by Terraform
+in `infra/` and Docker build scripts.
 
-For the older single‑EC2 + docker‑compose approach, see `deploy/DEPLOYMENT_EC2_LEGACY.md` and the legacy root `DEPLOYMENT.md`.
+For the older single‑EC2 + docker‑compose approach, see
+`deploy/DEPLOYMENT_EC2_LEGACY.md` and the legacy root `DEPLOYMENT.md`.
 
 ---
 
@@ -11,7 +14,8 @@ For the older single‑EC2 + docker‑compose approach, see `deploy/DEPLOYMENT_E
 ### 1.1 Core AWS Components
 
 - **VPC & Networking**
-  - VPC, public subnets, security groups declared in `infra/vpc.tf` and `infra/security.tf`
+  - VPC, public subnets, security groups declared in `infra/vpc.tf` and
+    `infra/security.tf`
 - **ECS / Fargate**
   - Cluster: `agentfoundry-cluster`
   - Services:
@@ -56,7 +60,8 @@ This is wired in `infra/ecs.tf` via task definition environment variables.
 
 ### 2.1 Prerequisites
 
-- AWS account (dev) and **AWS CLI** configured (`aws sts get-caller-identity` must work)
+- AWS account (dev) and **AWS CLI** configured (`aws sts get-caller-identity`
+  must work)
 - **Terraform** ≥ 1.6
 - **Docker** and **Docker Buildx**
 - Permissions to create:
@@ -76,7 +81,8 @@ Edit `terraform.tfvars` and set (at minimum):
 
 - `project_name       = "agentfoundry"`
 - `foundry_domain     = "foundry.ravenhelm.ai"`
-- `foundry_cert_arn   = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/..."`  # ACM cert for foundry.ravenhelm.ai
+- `foundry_cert_arn   = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/..."` #
+  ACM cert for foundry.ravenhelm.ai
 - Any other variables required by `variables.tf`
 
 Then apply:
@@ -135,10 +141,13 @@ What `deploy_dev.sh` does:
 1. Uses the `af-builder` buildx builder
 2. Logs into ECR
 3. Builds **linux/amd64** images for:
-   - UI:       `${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/agentfoundry-ui:latest`
-   - Backend:  `${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/agentfoundry-backend:latest`
-   - Compiler: `${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/agentfoundry-compiler:latest`
-   - Forge:    `${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/agentfoundry-forge:latest`
+   - UI: `${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/agentfoundry-ui:latest`
+   - Backend:
+     `${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/agentfoundry-backend:latest`
+   - Compiler:
+     `${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/agentfoundry-compiler:latest`
+   - Forge:
+     `${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/agentfoundry-forge:latest`
 4. Pushes all images to ECR
 5. Triggers new deployments for:
    - `agentfoundry-ui-svc`
@@ -149,7 +158,8 @@ You can control:
 - `AWS_ACCOUNT_ID`, `AWS_REGION`, `ECS_CLUSTER`
 - Image tags: `UI_TAG`, `BACKEND_TAG`, `COMPILER_TAG`, `FORGE_TAG`
 
-by editing `deploy_dev.sh` as needed (or overriding via env vars if you extend the script).
+by editing `deploy_dev.sh` as needed (or overriding via env vars if you extend
+the script).
 
 ---
 
@@ -251,11 +261,16 @@ Agent Foundry relies on environment variables for:
 In the ECS model you normally store these in:
 
 - ECS task definitions (environment variables)
-- AWS Systems Manager Parameter Store / Secrets Manager (referenced from task definitions)
+- AWS Systems Manager Parameter Store / Secrets Manager (referenced from task
+  definitions)
 
-The `scripts/env_to_ssm.py` helper can still be used to push `.env` values to SSM paths (e.g. `/foundry/dev/...`), but the **canonical configuration** for ECS now lives in Terraform + task definitions rather than a single `.env` file on an EC2 host.
+The `scripts/env_to_ssm.py` helper can still be used to push `.env` values to
+SSM paths (e.g. `/foundry/dev/...`), but the **canonical configuration** for ECS
+now lives in Terraform + task definitions rather than a single `.env` file on an
+EC2 host.
 
-If you are still using the original EC2 deployment flow, see `deploy/DEPLOYMENT_EC2_LEGACY.md` and `deploy/deploy.sh`.
+If you are still using the original EC2 deployment flow, see
+`deploy/DEPLOYMENT_EC2_LEGACY.md` and `deploy/deploy.sh`.
 
 ---
 
@@ -281,13 +296,14 @@ Optional clean‑up:
   - Terraform in `infra/` (VPC, ALB, ECS, ECR, Route53)
   - Docker buildx via `configure_build_env.sh`
   - Image build + ECS deploy via `deploy_dev.sh`
-  - Health monitoring via `scripts/monitor_aws_health.sh` and `scripts/check_alb_targets.sh`
+  - Health monitoring via `scripts/monitor_aws_health.sh` and
+    `scripts/check_alb_targets.sh`
 - **Legacy (kept for reference):**
   - Single EC2 instance + docker‑compose
   - Terraform in `terraform/`
   - Rsync code + docker‑compose via `deploy/deploy.sh`
-  - Documented in `deploy/DEPLOYMENT_EC2_LEGACY.md` and `deploy/AWS_DEPLOYMENT_GUIDE.md`
+  - Documented in `deploy/DEPLOYMENT_EC2_LEGACY.md` and
+    `deploy/AWS_DEPLOYMENT_GUIDE.md`
 
-Unless you have a specific reason to target the single‑EC2 pattern, **use the ECS/ECR path described in this document.**
-
-
+Unless you have a specific reason to target the single‑EC2 pattern, **use the
+ECS/ECR path described in this document.**

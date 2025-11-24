@@ -9,6 +9,7 @@
 ## Phase 1: Professional UI Components (Day 1-2)
 
 ### 1.1 Install Missing Dependencies
+
 ```bash
 npm install react-markdown remark-gfm remark-breaks
 npm install prism-react-renderer  # Syntax highlighting
@@ -19,6 +20,7 @@ npm install sonner                 # Toast notifications
 ```
 
 ### 1.2 Enhanced Message Component
+
 - **Markdown Rendering**: Full GitHub-flavored markdown
 - **Code Blocks**: Syntax highlighting with copy button
 - **Link Previews**: Rich link cards for URLs
@@ -26,6 +28,7 @@ npm install sonner                 # Toast notifications
 - **Animations**: Smooth entry/exit transitions
 
 ### 1.3 Professional Tool Result Cards
+
 - **StoryCreatedCard**: Notion-branded with preview
 - **IssueCreatedCard**: GitHub-styled with metadata
 - **ErrorCard**: Clear error states with retry
@@ -33,6 +36,7 @@ npm install sonner                 # Toast notifications
 - **LoadingCard**: Skeleton states
 
 ### 1.4 Enhanced Chat Interface
+
 - **Message Grouping**: Consecutive messages from same sender
 - **Timestamps**: Smart grouping (Today, Yesterday, dates)
 - **Typing Indicators**: Three-dot animation
@@ -44,6 +48,7 @@ npm install sonner                 # Toast notifications
 ## Phase 2: WebSocket Implementation (Day 3-4)
 
 ### 2.1 Backend WebSocket Server
+
 - **FastAPI WebSocket endpoint**: `/ws/chat`
 - **Connection management**: Session tracking
 - **Heartbeat/ping-pong**: Keep-alive mechanism
@@ -51,6 +56,7 @@ npm install sonner                 # Toast notifications
 - **Message queuing**: Handle offline messages
 
 ### 2.2 Frontend WebSocket Client
+
 - **Transport Layer**: Abstract WebSocket client
 - **Auto-reconnection**: Smart retry logic
 - **State synchronization**: Zustand integration
@@ -58,6 +64,7 @@ npm install sonner                 # Toast notifications
 - **Fallback**: HTTP polling if WebSocket fails
 
 ### 2.3 Streaming Response Support
+
 - **Token streaming**: Display as typing
 - **Tool execution events**: Real-time status
 - **Progress indicators**: Step-by-step updates
@@ -68,6 +75,7 @@ npm install sonner                 # Toast notifications
 ## Phase 3: Backlog View (Day 5)
 
 ### 3.1 Backlog Page Structure
+
 - **Route**: `/backlog`
 - **Grid/List View**: Toggle between layouts
 - **Filtering**: Priority, status, epic
@@ -75,6 +83,7 @@ npm install sonner                 # Toast notifications
 - **Search**: Full-text search
 
 ### 3.2 Story Cards
+
 - **Rich Preview**: Title, description, metadata
 - **Quick Actions**: Edit, archive, link
 - **Status Badge**: Visual status indicators
@@ -85,30 +94,35 @@ npm install sonner                 # Toast notifications
 ## Implementation Order
 
 ## Day 1: Core UI Components
+
 1. Install dependencies
 2. Create enhanced Message component
 3. Build tool result cards
 4. Add animations
 
-## Day 2: Polish & Refinement  
+## Day 2: Polish & Refinement
+
 1. Implement markdown rendering
 2. Add syntax highlighting
 3. Create empty states
 4. Polish interactions
 
 ## Day 3: WebSocket Backend
+
 1. Create WebSocket endpoint
 2. Implement connection management
 3. Add message streaming
 4. Test with mock data
 
 ## Day 4: WebSocket Frontend
+
 1. Build transport layer
 2. Integrate with Zustand
 3. Add reconnection logic
 4. Test end-to-end
 
 ## Day 5: Backlog View
+
 1. Create backlog route
 2. Build story cards
 3. Add filtering/sorting
@@ -165,6 +179,7 @@ app/
 ## Component Specifications
 
 ### Enhanced Message Component
+
 ```typescript
 interface EnhancedMessageProps {
   message: ChatMessage;
@@ -185,6 +200,7 @@ Features:
 ```
 
 ### Story Card Component
+
 ```typescript
 interface StoryCardProps {
   story: {
@@ -211,17 +227,18 @@ Features:
 ```
 
 ### WebSocket Transport
+
 ```typescript
 class WebSocketTransport {
   private ws: WebSocket | null;
   private reconnectAttempts: number;
   private messageQueue: Message[];
-  
+
   connect(): Promise<void>;
   disconnect(): void;
   send(message: Message): void;
   on(event: string, handler: Function): void;
-  
+
   // Auto-reconnection with exponential backoff
   private reconnect(): void;
   private flushQueue(): void;
@@ -233,25 +250,26 @@ class WebSocketTransport {
 ## Design System
 
 ### Color Palette
+
 ```css
 :root {
   /* Primary - Blue */
   --primary-50: #eff6ff;
   --primary-500: #3b82f6;
   --primary-600: #2563eb;
-  
+
   /* Success - Green */
   --success-50: #f0fdf4;
   --success-500: #22c55e;
-  
+
   /* Warning - Yellow */
   --warning-50: #fefce8;
   --warning-500: #eab308;
-  
+
   /* Error - Red */
   --error-50: #fef2f2;
   --error-500: #ef4444;
-  
+
   /* Neutral - Gray */
   --gray-50: #f9fafb;
   --gray-900: #111827;
@@ -259,12 +277,14 @@ class WebSocketTransport {
 ```
 
 ### Typography
+
 - **Headers**: Inter or system font
-- **Body**: Inter or system font  
+- **Body**: Inter or system font
 - **Code**: 'Fira Code' or 'JetBrains Mono'
 - **Sizes**: Fluid typography with clamp()
 
 ### Animations
+
 - **Entry**: fadeInUp with spring
 - **Exit**: fadeOut with ease
 - **Loading**: pulse or skeleton
@@ -286,18 +306,21 @@ class WebSocketTransport {
 ## Testing Strategy
 
 ### Unit Tests
+
 - Component rendering
 - Markdown parsing
 - WebSocket reconnection logic
 - State management
 
 ### Integration Tests
+
 - Message flow end-to-end
 - Tool execution display
 - WebSocket connection lifecycle
 - Error handling
 
 ### E2E Tests
+
 - Complete chat interaction
 - Backlog filtering
 - WebSocket reconnection
@@ -308,6 +331,7 @@ class WebSocketTransport {
 ## Success Metrics
 
 ### UI Quality
+
 - [ ] Markdown renders correctly
 - [ ] Code highlighting works
 - [ ] Animations are smooth (60fps)
@@ -315,6 +339,7 @@ class WebSocketTransport {
 - [ ] Responsive design
 
 ### WebSocket Performance
+
 - [ ] Connection established <1s
 - [ ] Reconnection works reliably
 - [ ] Messages stream smoothly
@@ -322,6 +347,7 @@ class WebSocketTransport {
 - [ ] Handles 100+ concurrent connections
 
 ### User Experience
+
 - [ ] Professional appearance
 - [ ] Intuitive interactions
 - [ ] Clear error states
@@ -333,11 +359,13 @@ class WebSocketTransport {
 ## Risk Mitigation
 
 ### UI Risks
+
 - **Browser compatibility**: Test on Chrome, Firefox, Safari, Edge
 - **Performance**: Profile and optimize renders
 - **Accessibility**: Use semantic HTML, ARIA labels
 
 ### WebSocket Risks
+
 - **Connection drops**: Implement reconnection
 - **Message ordering**: Use timestamps/sequence
 - **Scaling**: Consider Redis pub/sub

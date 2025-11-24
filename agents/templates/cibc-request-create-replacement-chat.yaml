@@ -1,0 +1,139 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Request - Create Replacement (Chat)
+  type: system
+  version: 1.0.0
+  description: Chat channel replacement request with AI assistant
+  tags: [cibc, agent-group-3, request-orchestration, replacement, chat]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Chat Replacement Request
+          description: Customer initiates chat for replacement
+
+      - id: ai_conversation
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: AI Conversation
+          description: Chat bot gathers details
+          model: gpt-4o
+          temperature: 0.7
+          prompt: |
+            Chat AI script:
+
+            You are a CIBC card specialist chatbot. Help the customer request a replacement card.
+
+            Ask:
+            1. What happened to your card? (lost/stolen/damaged)
+            2. When did this occur?
+            3. Have you noticed any unauthorized transactions?
+            4. Has your address changed recently?
+            5. Would you like rush delivery? (additional fee may apply)
+
+            Be empathetic and efficient.
+
+      - id: extract_structured_data
+        type: process
+        position: { x: 300, y: 280 }
+        data:
+          label: Extract Structured Data
+          description: Parse conversation into structured request
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Extract from conversation:
+            - request_type
+            - address_change_flag
+            - rush_flag
+            - unauthorized_transactions_flag
+
+      - id: create_request
+        type: toolCall
+        position: { x: 300, y: 410 }
+        data:
+          label: Create Replacement Request
+          description: Generate request record
+          tool: func-create-replacement-request
+
+      - id: assess_risk
+        type: toolCall
+        position: { x: 300, y: 540 }
+        data:
+          label: Assess Fraud Risk
+          description: Calculate risk score
+          tool: func-calculate-request-risk-score
+
+      - id: route_request
+        type: toolCall
+        position: { x: 300, y: 670 }
+        data:
+          label: Route by Risk
+          description: Auto-approve or queue for review
+          tool: func-route-by-fraud-score
+
+      - id: generate_response
+        type: process
+        position: { x: 300, y: 800 }
+        data:
+          label: Generate Response
+          description: Chat response to customer
+          model: gpt-4o
+          temperature: 0.6
+          prompt: |
+            Generate customer response based on routing:
+
+            If auto-approved:
+            "Great news! Your replacement card request has been approved.
+            We'll process this today and you should receive your new card within 5-7 business days."
+
+            If queued for review:
+            "Your replacement request has been submitted for review.
+            We'll contact you within 24 hours with an update."
+
+            If additional verification needed:
+            "For your security, we need to verify a few more details.
+            We'll give you a call at [phone] within the next hour."
+
+      - id: end
+        type: end
+        position: { x: 300, y: 930 }
+        data:
+          label: Chat Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: ai_conversation
+
+      - id: e2
+        source: ai_conversation
+        target: extract_structured_data
+
+      - id: e3
+        source: extract_structured_data
+        target: create_request
+
+      - id: e4
+        source: create_request
+        target: assess_risk
+
+      - id: e5
+        source: assess_risk
+        target: route_request
+
+      - id: e6
+        source: route_request
+        target: generate_response
+
+      - id: e7
+        source: generate_response
+        target: end

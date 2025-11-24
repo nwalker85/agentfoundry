@@ -1,9 +1,54 @@
+/**
+ * WebSocket Transport Client
+ * ==========================
+ *
+ * Robust WebSocket client with automatic reconnection, heartbeat,
+ * and message queuing for Agent Foundry real-time communication.
+ *
+ * Features:
+ * - Automatic reconnection with exponential backoff
+ * - Heartbeat/ping-pong to detect stale connections
+ * - Message queuing when disconnected
+ * - Event-based API using EventEmitter
+ * - Connection state management
+ *
+ * @module lib/websocket/client
+ *
+ * @example
+ * ```typescript
+ * import { getWebSocketTransport, closeWebSocketTransport } from '@/lib/websocket/client';
+ *
+ * // Initialize and connect
+ * const ws = getWebSocketTransport({
+ *   url: 'ws://localhost:8000/ws/chat',
+ *   reconnect: true,
+ *   heartbeatInterval: 30000,
+ * });
+ *
+ * await ws.connect();
+ *
+ * // Listen for events
+ * ws.on('message', (msg) => console.log('Received:', msg));
+ * ws.on('connected', () => console.log('Connected!'));
+ * ws.on('disconnected', ({ code, reason }) => console.log('Disconnected:', code));
+ *
+ * // Send messages
+ * ws.send({ type: 'message', data: { content: 'Hello!' } });
+ *
+ * // Cleanup
+ * closeWebSocketTransport();
+ * ```
+ */
+
 import { EventEmitter } from 'events';
 
+/**
+ * WebSocket message structure
+ */
 export interface WebSocketMessage {
-  type: 'message' | 'tool_execution' | 'status' | 'error' | 'ping' | 'pong';
+  type: 'message' | 'tool_execution' | 'status' | 'error' | 'ping' | 'pong' | 'select_agent';
   data: any;
-  timestamp: string;
+  timestamp?: string;
   sessionId?: string;
 }
 
@@ -33,16 +78,16 @@ export class WebSocketTransport extends EventEmitter {
 
   constructor(config: WebSocketConfig) {
     super();
-    
+
     this.config = {
       url: config.url,
       reconnect: config.reconnect ?? true,
       reconnectInterval: config.reconnectInterval ?? 1000,
       maxReconnectAttempts: config.maxReconnectAttempts ?? 10,
       heartbeatInterval: config.heartbeatInterval ?? 30000,
-      messageQueueSize: config.messageQueueSize ?? 100
+      messageQueueSize: config.messageQueueSize ?? 100,
     };
-    
+
     this.shouldReconnect = this.config.reconnect;
   }
 
@@ -64,16 +109,16 @@ export class WebSocketTransport extends EventEmitter {
 
     return new Promise<void>((resolve, reject) => {
       let isResolved = false;
-      
+
       // Set connection timeout (15 seconds)
       this.connectionTimeoutTimer = setTimeout(() => {
         if (isResolved) return;
         isResolved = true;
-        
+
         console.error('[WebSocket] Connection timeout after 15s');
         this.cleanupConnection();
         this.isConnecting = false;
-        
+
         const error = new Error('Connection timeout');
         this.emit('error', error);
         reject(error);
@@ -81,36 +126,36 @@ export class WebSocketTransport extends EventEmitter {
 
       try {
         this.ws = new WebSocket(this.config.url);
-        
+
         // Connection opened
         this.ws.onopen = () => {
           if (isResolved) return;
           isResolved = true;
-          
+
           if (this.connectionTimeoutTimer) {
             clearTimeout(this.connectionTimeoutTimer);
             this.connectionTimeoutTimer = null;
           }
-          
+
           this.handleOpen();
           resolve();
         };
 
         // Message received
         this.ws.onmessage = this.handleMessage.bind(this);
-        
+
         // Error occurred
         this.ws.onerror = (event) => {
           console.error('[WebSocket] Connection error:', event);
-          
+
           if (!isResolved) {
             isResolved = true;
-            
+
             if (this.connectionTimeoutTimer) {
               clearTimeout(this.connectionTimeoutTimer);
               this.connectionTimeoutTimer = null;
             }
-            
+
             this.isConnecting = false;
             const error = new Error('WebSocket connection error');
             this.handleError(event);
@@ -119,33 +164,32 @@ export class WebSocketTransport extends EventEmitter {
             this.handleError(event);
           }
         };
-        
+
         // Connection closed
         this.ws.onclose = (event) => {
           if (!isResolved) {
             isResolved = true;
-            
+
             if (this.connectionTimeoutTimer) {
               clearTimeout(this.connectionTimeoutTimer);
               this.connectionTimeoutTimer = null;
             }
-            
+
             this.isConnecting = false;
             reject(new Error(`Connection closed during connect: ${event.code} - ${event.reason}`));
           }
-          
+
           this.handleClose(event);
         };
-
       } catch (error) {
         if (!isResolved) {
           isResolved = true;
-          
+
           if (this.connectionTimeoutTimer) {
             clearTimeout(this.connectionTimeoutTimer);
             this.connectionTimeoutTimer = null;
           }
-          
+
           this.isConnecting = false;
           reject(error);
         }
@@ -162,14 +206,14 @@ export class WebSocketTransport extends EventEmitter {
     this.config.reconnect = false;
     this.cleanupConnection();
     this.clearAllTimers();
-    
+
     if (this.ws) {
       if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
         this.ws.close(1000, 'Client disconnect');
       }
       this.ws = null;
     }
-    
+
     this.emit('disconnected', { code: 1000, reason: 'Client disconnect' });
   }
 
@@ -179,7 +223,7 @@ export class WebSocketTransport extends EventEmitter {
   send(message: Omit<WebSocketMessage, 'timestamp'>): void {
     const fullMessage: WebSocketMessage = {
       ...message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     if (this.ws?.readyState === WebSocket.OPEN) {
@@ -193,7 +237,7 @@ export class WebSocketTransport extends EventEmitter {
     } else {
       console.warn('[WebSocket] Not connected, queueing message');
       this.queueMessage(fullMessage);
-      
+
       // Attempt to reconnect if not already doing so
       if (this.shouldReconnect && !this.isReconnecting && !this.isConnecting) {
         this.reconnect();
@@ -233,7 +277,7 @@ export class WebSocketTransport extends EventEmitter {
     this.isConnecting = false;
     this.isReconnecting = false;
     this.reconnectAttempts = 0;
-    
+
     this.emit('connected');
     this.startHeartbeat();
     this.flushMessageQueue();
@@ -242,16 +286,16 @@ export class WebSocketTransport extends EventEmitter {
   private handleMessage(event: MessageEvent): void {
     try {
       const message: WebSocketMessage = JSON.parse(event.data);
-      
+
       // Handle ping/pong for heartbeat
       if (message.type === 'ping') {
         this.send({ type: 'pong', data: null });
         return;
       }
-      
+
       if (message.type === 'pong') {
         this.lastPongTime = Date.now();
-        
+
         // Clear heartbeat timeout since we got a response
         if (this.heartbeatTimeoutTimer) {
           clearTimeout(this.heartbeatTimeoutTimer);
@@ -259,7 +303,7 @@ export class WebSocketTransport extends EventEmitter {
         }
         return;
       }
-      
+
       this.emit('message', message);
       this.emit(message.type, message.data);
     } catch (error) {
@@ -274,16 +318,18 @@ export class WebSocketTransport extends EventEmitter {
   }
 
   private handleClose(event: CloseEvent): void {
-    console.log(`[WebSocket] Closed: ${event.code} - ${event.reason || 'No reason'} (clean: ${event.wasClean})`);
-    
+    console.log(
+      `[WebSocket] Closed: ${event.code} - ${event.reason || 'No reason'} (clean: ${event.wasClean})`
+    );
+
     this.isConnecting = false;
     this.clearAllTimers();
-    
+
     this.emit('disconnected', {
       code: event.code,
-      reason: event.reason
+      reason: event.reason,
     });
-    
+
     // Attempt reconnection if enabled and not a clean close
     if (this.shouldReconnect && !event.wasClean && event.code !== 1000) {
       this.reconnect();
@@ -293,10 +339,18 @@ export class WebSocketTransport extends EventEmitter {
   private reconnect(): void {
     // Don't reconnect if already reconnecting or not allowed
     if (this.isReconnecting || !this.shouldReconnect || this.isConnecting) {
-      console.log('[WebSocket] Skipping reconnect (isReconnecting:', this.isReconnecting, 'shouldReconnect:', this.shouldReconnect, 'isConnecting:', this.isConnecting, ')');
+      console.log(
+        '[WebSocket] Skipping reconnect (isReconnecting:',
+        this.isReconnecting,
+        'shouldReconnect:',
+        this.shouldReconnect,
+        'isConnecting:',
+        this.isConnecting,
+        ')'
+      );
       return;
     }
-    
+
     // Check if max attempts reached
     if (this.reconnectAttempts >= this.config.maxReconnectAttempts) {
       console.error('[WebSocket] Max reconnection attempts reached');
@@ -304,30 +358,32 @@ export class WebSocketTransport extends EventEmitter {
       this.emit('reconnect_failed');
       return;
     }
-    
+
     this.isReconnecting = true;
     this.reconnectAttempts++;
-    
+
     // Exponential backoff with jitter (capped at 30s)
     const baseDelay = this.config.reconnectInterval * Math.pow(1.5, this.reconnectAttempts - 1);
     const jitter = Math.random() * 1000;
     const delay = Math.min(baseDelay + jitter, 30000);
-    
-    console.log(`[WebSocket] Reconnecting in ${Math.round(delay)}ms (attempt ${this.reconnectAttempts}/${this.config.maxReconnectAttempts})`);
-    
+
+    console.log(
+      `[WebSocket] Reconnecting in ${Math.round(delay)}ms (attempt ${this.reconnectAttempts}/${this.config.maxReconnectAttempts})`
+    );
+
     this.emit('reconnecting', {
       attempt: this.reconnectAttempts,
-      delay: Math.round(delay)
+      delay: Math.round(delay),
     });
-    
+
     // Clear any existing reconnect timer
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
     }
-    
+
     this.reconnectTimer = setTimeout(async () => {
       this.reconnectTimer = null;
-      
+
       try {
         console.log('[WebSocket] Attempting reconnection...');
         await this.connect();
@@ -335,7 +391,7 @@ export class WebSocketTransport extends EventEmitter {
       } catch (error) {
         console.error('[WebSocket] Reconnection attempt failed:', error);
         this.isReconnecting = false;
-        
+
         // Try again if we haven't hit max attempts
         if (this.reconnectAttempts < this.config.maxReconnectAttempts) {
           this.reconnect();
@@ -348,16 +404,16 @@ export class WebSocketTransport extends EventEmitter {
 
   private startHeartbeat(): void {
     this.stopHeartbeat();
-    
+
     this.heartbeatTimer = setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
         this.lastPingTime = Date.now();
         this.send({ type: 'ping', data: null });
-        
+
         // Set timeout to detect missing pong (5 seconds)
         this.heartbeatTimeoutTimer = setTimeout(() => {
           const timeSinceLastPong = Date.now() - this.lastPongTime;
-          
+
           // Only close if we haven't received a pong recently
           if (timeSinceLastPong > this.config.heartbeatInterval) {
             console.warn('[WebSocket] Heartbeat timeout - no pong received, closing connection');
@@ -373,7 +429,7 @@ export class WebSocketTransport extends EventEmitter {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
     }
-    
+
     if (this.heartbeatTimeoutTimer) {
       clearTimeout(this.heartbeatTimeoutTimer);
       this.heartbeatTimeoutTimer = null;
@@ -382,12 +438,12 @@ export class WebSocketTransport extends EventEmitter {
 
   private clearAllTimers(): void {
     this.stopHeartbeat();
-    
+
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-    
+
     if (this.connectionTimeoutTimer) {
       clearTimeout(this.connectionTimeoutTimer);
       this.connectionTimeoutTimer = null;
@@ -401,7 +457,7 @@ export class WebSocketTransport extends EventEmitter {
       this.ws.onmessage = null;
       this.ws.onerror = null;
       this.ws.onclose = null;
-      
+
       if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
         try {
           this.ws.close();
@@ -414,7 +470,7 @@ export class WebSocketTransport extends EventEmitter {
 
   private queueMessage(message: WebSocketMessage): void {
     this.messageQueue.push(message);
-    
+
     // Limit queue size
     if (this.messageQueue.length > this.config.messageQueueSize) {
       const removed = this.messageQueue.shift();
@@ -424,7 +480,7 @@ export class WebSocketTransport extends EventEmitter {
 
   private flushMessageQueue(): void {
     console.log(`[WebSocket] Flushing ${this.messageQueue.length} queued messages`);
-    
+
     while (this.messageQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
       const message = this.messageQueue.shift();
       if (message) {
@@ -448,11 +504,11 @@ export function getWebSocketTransport(config?: WebSocketConfig): WebSocketTransp
   if (!wsTransport && config) {
     wsTransport = new WebSocketTransport(config);
   }
-  
+
   if (!wsTransport) {
     throw new Error('WebSocket transport not initialized');
   }
-  
+
   return wsTransport;
 }
 

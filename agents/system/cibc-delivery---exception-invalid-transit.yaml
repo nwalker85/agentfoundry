@@ -1,0 +1,490 @@
+id: cibc-cibc-delivery-exception-invalid-transit
+metadata:
+  id: cibc-cibc-delivery-exception-invalid-transit
+  name: CIBC Delivery - Exception Invalid Transit
+  display_name: CIBC Delivery - Exception Invalid Transit
+  description: Handle delivery exceptions for invalid or missing transit codes
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-5
+    - delivery-fulfillment
+    - exception-handling
+    - transit-code
+    - recovery
+  updated: "2025-11-18T01:28:58.439071Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Invalid Transit Exception
+          description: Delivery failed due to transit code issue
+      - id: analyze_exception_type
+        type: process
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Analyze Exception Type
+          description: Classify the transit code issue
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Classify transit code exception:\n\nException types:\n\n1. Invalid\
+            \ Transit Code:\n   - Code not found in routing table\n   - Branch closed\
+            \ or merged\n   - Outdated code from old system\n\n2. Missing Transit Code:\n\
+            \   - No transit code on customer record\n   - New customer account\n  \
+            \ - Account imported without routing data\n\n3. Mismatched Transit Code:\n\
+            \   - Transit code doesn't match delivery territory\n   - Code for wrong\
+            \ country/region\n   - Customer moved between territories\n\n4. Inactive\
+            \ Transit Code:\n   - Branch temporarily closed\n   - Code suspended pending\
+            \ updates\n   - System maintenance\n"
+      - id: get_customer_details
+        type: toolCall
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Get Customer Details
+          description: Retrieve customer profile and location
+          tool: func-get-customer-profile
+      - id: determine_territory
+        type: process
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Determine Customer Territory
+          description: Identify correct territory from address
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: 'Determine customer territory from address:
+
+
+            Territories:
+
+            - Barbados: Address contains "Barbados" or postal code BB#####
+
+            - Bahamas: Address contains "Bahamas" or "Nassau"
+
+            - Jamaica: Address contains "Jamaica" or parish names
+
+            - Other Caribbean: Other island nations
+
+            - Canada: Canadian provinces
+
+            - International: Other countries
+
+            '
+      - id: territory_resolution_decision
+        type: decision
+        position:
+          x: 300
+          y: 540
+        data:
+          label: Territory Resolution
+          description: Route based on identified territory
+          conditions:
+            - label: Barbados Territory
+              expression: territory == 'barbados'
+              next: resolve_barbados_routing
+            - label: Bahamas Territory
+              expression: territory == 'bahamas'
+              next: resolve_bahamas_routing
+            - label: Jamaica Territory
+              expression: territory == 'jamaica'
+              next: resolve_jamaica_transit
+            - label: Other Territory
+              expression: territory == 'other'
+              next: resolve_other_territory
+            - label: Territory Unknown
+              expression: territory == 'unknown'
+              next: request_customer_clarification
+      - id: resolve_barbados_routing
+        type: process
+        position:
+          x: 50
+          y: 670
+        data:
+          label: Resolve Barbados Routing
+          description: Barbados doesn't use transit codes - route direct mail
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Barbados routing resolution:
+
+
+            Barbados territory does not require transit codes.
+
+
+            Actions:
+
+            - Clear invalid transit code from record
+
+            - Route via Barbados direct mail workflow
+
+            - Update customer profile: territory = Barbados
+
+            - Log exception and resolution
+
+            "
+      - id: resolve_bahamas_routing
+        type: process
+        position:
+          x: 200
+          y: 670
+        data:
+          label: Resolve Bahamas Routing
+          description: Route to appropriate Bahamas island
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Bahamas routing resolution:
+
+
+            Determine island from address:
+
+            - Extract island name from address
+
+            - Route to Nassau, Freeport, or outer island workflow
+
+            - Bahamas territory doesn't strictly require transit codes
+
+            - Update customer profile with island designation
+
+            "
+      - id: resolve_jamaica_transit
+        type: process
+        position:
+          x: 350
+          y: 670
+        data:
+          label: Resolve Jamaica Transit Code
+          description: Jamaica requires valid transit - find correct code
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Jamaica transit code resolution:
+
+
+            Jamaica territory requires valid transit code.
+
+
+            Resolution steps:
+
+            1. Extract parish from customer address
+
+            2. Use parish-to-branch mapping table
+
+            3. Assign default transit code for parish
+
+            4. Validate new transit code
+
+            5. Update customer record
+
+            "
+      - id: lookup_parish_default_transit
+        type: toolCall
+        position:
+          x: 350
+          y: 800
+        data:
+          label: Lookup Parish Default Transit
+          description: Get default transit code for parish
+          tool: func-get-default-transit-by-parish
+      - id: validate_new_transit
+        type: toolCall
+        position:
+          x: 350
+          y: 930
+        data:
+          label: Validate New Transit Code
+          description: Confirm new transit code is valid
+          tool: func-validate-transit-code
+      - id: new_transit_validation_decision
+        type: decision
+        position:
+          x: 350
+          y: 1060
+        data:
+          label: New Transit Valid?
+          description: Check if resolved transit code is valid
+          conditions:
+            - label: Valid - Update Record
+              expression: new_transit_valid == true
+              next: update_customer_transit
+            - label: Still Invalid - Escalate
+              expression: new_transit_valid == false
+              next: escalate_to_operations
+      - id: update_customer_transit
+        type: process
+        position:
+          x: 250
+          y: 1190
+        data:
+          label: Update Customer Transit Code
+          description: Save corrected transit code to profile
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: 'Update customer record:
+
+
+            Actions:
+
+            - Save new transit code to customer profile
+
+            - Add note: "Transit code corrected from [old] to [new]"
+
+            - Update territory designation
+
+            - Flag for verification on next customer contact
+
+            '
+      - id: retry_delivery_routing
+        type: process
+        position:
+          x: 250
+          y: 1320
+        data:
+          label: Retry Delivery Routing
+          description: Re-initiate delivery with corrected transit
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Retry delivery routing:
+
+
+            Re-submit card for delivery:
+
+            - Use corrected transit code
+
+            - Route to appropriate territory workflow
+
+            - Mark exception as resolved
+
+            - Log resolution details
+
+            "
+      - id: resolve_other_territory
+        type: process
+        position:
+          x: 500
+          y: 670
+        data:
+          label: Resolve Other Territory
+          description: Handle non-standard territories
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Other territory resolution:
+
+
+            For territories that don't use transit codes:
+
+            - Clear invalid transit code
+
+            - Route based on territory-specific workflow
+
+            - Update customer profile with correct territory
+
+            - Standard international delivery if outside Caribbean
+
+            "
+      - id: request_customer_clarification
+        type: process
+        position:
+          x: 650
+          y: 670
+        data:
+          label: Request Customer Clarification
+          description: Unable to determine territory - contact customer
+          model: gpt-4o
+          temperature: 0.5
+          prompt: "Request customer clarification:
+
+
+            Contact customer via:
+
+            - Phone (preferred)
+
+            - SMS with callback request
+
+            - Email
+
+
+            Questions to ask:
+
+            - Confirm current mailing address
+
+            - Confirm home branch (if applicable)
+
+            - Verify country and island/parish
+
+            - Preferred delivery method
+
+            "
+      - id: process_customer_response
+        type: process
+        position:
+          x: 650
+          y: 800
+        data:
+          label: Process Customer Response
+          description: Update routing based on customer input
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: escalate_to_operations
+        type: process
+        position:
+          x: 450
+          y: 1190
+        data:
+          label: Escalate to Operations Team
+          description: Unable to auto-resolve - manual intervention required
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Escalate to operations team:
+
+
+            Create escalation case:
+
+            - Customer ID and card ID
+
+            - Original transit code (if any)
+
+            - Exception type
+
+            - Resolution attempts made
+
+            - Customer address details
+
+            - Recommended action
+
+
+            Hold delivery pending manual resolution.
+
+            "
+      - id: create_operations_ticket
+        type: toolCall
+        position:
+          x: 450
+          y: 1320
+        data:
+          label: Create Operations Ticket
+          description: Log manual intervention request
+          tool: func-log-infra-event
+      - id: notify_customer_delay
+        type: toolCall
+        position:
+          x: 450
+          y: 1450
+        data:
+          label: Notify Customer of Delay
+          description: Inform customer of delivery exception
+          tool: func-send-notification
+      - id: log_exception_resolution
+        type: toolCall
+        position:
+          x: 300
+          y: 1450
+        data:
+          label: Log Exception Resolution
+          description: Record exception and resolution details
+          tool: func-log-infra-event
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 1580
+        data:
+          label: Exception Handled
+    edges:
+      - id: e1
+        source: entry
+        target: analyze_exception_type
+      - id: e2
+        source: analyze_exception_type
+        target: get_customer_details
+      - id: e3
+        source: get_customer_details
+        target: determine_territory
+      - id: e4
+        source: determine_territory
+        target: territory_resolution_decision
+      - id: e5
+        source: territory_resolution_decision
+        target: resolve_barbados_routing
+        sourceHandle: Barbados Territory
+      - id: e6
+        source: territory_resolution_decision
+        target: resolve_bahamas_routing
+        sourceHandle: Bahamas Territory
+      - id: e7
+        source: territory_resolution_decision
+        target: resolve_jamaica_transit
+        sourceHandle: Jamaica Territory
+      - id: e8
+        source: territory_resolution_decision
+        target: resolve_other_territory
+        sourceHandle: Other Territory
+      - id: e9
+        source: territory_resolution_decision
+        target: request_customer_clarification
+        sourceHandle: Territory Unknown
+      - id: e10
+        source: resolve_jamaica_transit
+        target: lookup_parish_default_transit
+      - id: e11
+        source: lookup_parish_default_transit
+        target: validate_new_transit
+      - id: e12
+        source: validate_new_transit
+        target: new_transit_validation_decision
+      - id: e13
+        source: new_transit_validation_decision
+        target: update_customer_transit
+        sourceHandle: Valid - Update Record
+      - id: e14
+        source: new_transit_validation_decision
+        target: escalate_to_operations
+        sourceHandle: Still Invalid - Escalate
+      - id: e15
+        source: update_customer_transit
+        target: retry_delivery_routing
+      - id: e16
+        source: retry_delivery_routing
+        target: log_exception_resolution
+      - id: e17
+        source: resolve_barbados_routing
+        target: update_customer_transit
+      - id: e18
+        source: resolve_bahamas_routing
+        target: update_customer_transit
+      - id: e19
+        source: resolve_other_territory
+        target: update_customer_transit
+      - id: e20
+        source: request_customer_clarification
+        target: process_customer_response
+      - id: e21
+        source: process_customer_response
+        target: update_customer_transit
+      - id: e22
+        source: escalate_to_operations
+        target: create_operations_ticket
+      - id: e23
+        source: create_operations_ticket
+        target: notify_customer_delay
+      - id: e24
+        source: notify_customer_delay
+        target: log_exception_resolution
+      - id: e25
+        source: log_exception_resolution
+        target: end

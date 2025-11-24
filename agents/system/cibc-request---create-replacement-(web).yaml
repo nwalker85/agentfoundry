@@ -1,0 +1,134 @@
+id: cibc-cibc-request-create-replacement-web
+metadata:
+  id: cibc-cibc-request-create-replacement-web
+  name: CIBC Request - Create Replacement (Web)
+  display_name: CIBC Request - Create Replacement (Web)
+  description: Web/mobile self-service replacement request
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-3
+    - request-orchestration
+    - replacement
+    - web
+    - mobile
+  updated: "2025-11-18T01:28:58.615441Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Web Replacement Form
+          description: Customer submits web form
+      - id: validate_form
+        type: process
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Validate Form Data
+          description: Check all required fields present
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: device_fingerprint
+        type: process
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Capture Device Fingerprint
+          description: Security metadata for fraud detection
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: create_request
+        type: toolCall
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Create Replacement Request
+          description: Submit request
+          tool: func-create-replacement-request
+      - id: assess_risk
+        type: toolCall
+        position:
+          x: 300
+          y: 540
+        data:
+          label: Assess Fraud Risk
+          description: Pindrop digital fraud scoring
+          tool: func-calculate-request-risk-score
+      - id: route_request
+        type: toolCall
+        position:
+          x: 300
+          y: 670
+        data:
+          label: Route by Risk
+          description: Determine approval path
+          tool: func-route-by-fraud-score
+      - id: display_confirmation
+        type: process
+        position:
+          x: 300
+          y: 800
+        data:
+          label: Display Confirmation
+          description: Show request status to customer
+          model: gpt-4o-mini
+          temperature: 0.5
+          prompt: "Generate confirmation page content:
+
+
+            Include:
+
+            - Request reference number
+
+            - Estimated processing time
+
+            - Next steps
+
+            - Contact information
+
+            "
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 930
+        data:
+          label: Form Submitted
+    edges:
+      - id: e1
+        source: entry
+        target: validate_form
+      - id: e2
+        source: validate_form
+        target: device_fingerprint
+      - id: e3
+        source: device_fingerprint
+        target: create_request
+      - id: e4
+        source: create_request
+        target: assess_risk
+      - id: e5
+        source: assess_risk
+        target: route_request
+      - id: e6
+        source: route_request
+        target: display_confirmation
+      - id: e7
+        source: display_confirmation
+        target: end

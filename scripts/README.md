@@ -1,7 +1,8 @@
 # Engineering Department - Helper Scripts
 
 **Last Updated:** November 10, 2025  
-**Purpose:** Utility scripts for development, git operations, documentation, and setup
+**Purpose:** Utility scripts for development, git operations, documentation, and
+setup
 
 ---
 
@@ -36,6 +37,7 @@ scripts/
 **Purpose:** Quick health check for the **local Docker stack**.
 
 **What it checks:**
+
 - Docker daemon running
 - Container status via `docker compose ps`
 - Ports: 7880 (LiveKit), 7881, 6379 (Redis), 8000 (backend), 8002 (compiler)
@@ -56,6 +58,7 @@ scripts/
 **Purpose:** Summarize health of the **AWS dev environment**.
 
 **What it checks:**
+
 - ECS services:
   - `agentfoundry-ui-svc`
   - `agentfoundry-api-svc`
@@ -84,7 +87,8 @@ API_SERVICE=my-api-svc \
 **Purpose:** Inspect **ALB target group health** for UI and API.
 
 **Defaults:**
-- UI TG:  `agentfoundry-ui-tg`
+
+- UI TG: `agentfoundry-ui-tg`
 - API TG: `agentfoundry-api-tg`
 
 **Usage:**
@@ -109,7 +113,8 @@ from anywhere and get the same behavior as `./start_foundry.sh`.
 ### `diagnose.sh` (Deprecated)
 
 **Purpose:** Older local diagnostics script.  
-**Status:** Deprecated – use `monitor_local_health.sh` instead. Running it will print a warning and exit.
+**Status:** Deprecated – use `monitor_local_health.sh` instead. Running it will
+print a warning and exit.
 
 ---
 
@@ -122,6 +127,7 @@ from anywhere and get the same behavior as `./start_foundry.sh`.
 **Lines:** ~260
 
 **What it does:**
+
 - Checks current branch
 - Lists untracked files
 - Lists modified files (unstaged)
@@ -131,6 +137,7 @@ from anywhere and get the same behavior as `./start_foundry.sh`.
 - Provides actionable git commands
 
 **Usage:**
+
 ```bash
 cd scripts/git
 python check_git_status.py
@@ -140,6 +147,7 @@ python scripts/git/check_git_status.py
 ```
 
 **Example output:**
+
 ```
 =========================================
 Git Repository Status Check
@@ -165,12 +173,14 @@ Status Summary:
 **Lines:** ~195
 
 **What it does:**
+
 - Quick git status overview
 - Lists uncommitted changes
 - Shows unpushed commits
 - Provides next actions
 
 **Usage:**
+
 ```bash
 cd scripts/git
 ./check_git_status.sh
@@ -180,6 +190,7 @@ cd scripts/git
 ```
 
 **Features:**
+
 - Color-coded output
 - Categorized file listings
 - Quick status summary
@@ -193,12 +204,14 @@ cd scripts/git
 **Lines:** ~191
 
 **What it does:**
+
 - Shows current file status counts
 - Interactive staging
 - Guided commit message creation
 - Optional push to remote
 
 **Usage:**
+
 ```bash
 cd scripts/git
 ./commit_helper.sh
@@ -208,6 +221,7 @@ cd scripts/git
 ```
 
 **Workflow:**
+
 1. Shows current status (untracked, modified, staged)
 2. Offers to stage all changes or select specific files
 3. Prompts for commit message
@@ -215,6 +229,7 @@ cd scripts/git
 5. Offers to push to remote
 
 **Example interaction:**
+
 ```
 🚀 Engineering Department - Git Commit Helper
 =============================================
@@ -250,10 +265,12 @@ Enter commit message: Add user authentication feature
 **Lines:** TBD
 
 **What it does:**
+
 - Initial attempt at documentation consolidation
 - Basic file merging
 
-**Note:** This script was superseded by `consolidate_docs_v2.py` which provides better organization and comprehensive merging.
+**Note:** This script was superseded by `consolidate_docs_v2.py` which provides
+better organization and comprehensive merging.
 
 ---
 
@@ -264,12 +281,14 @@ Enter commit message: Add user authentication feature
 **Lines:** TBD
 
 **What it does:**
+
 - Consolidates multiple documentation files into organized structure
 - Merges related documentation (status, testing, architecture)
 - Creates unified testing guide
 - Organizes artifacts
 
 **Usage:**
+
 ```bash
 cd scripts/docs
 python consolidate_docs_v2.py
@@ -279,6 +298,7 @@ python scripts/docs/consolidate_docs_v2.py
 ```
 
 **Results:**
+
 - Creates `docs/PROJECT_STATUS.md` (from Current State + Plan + Inventory)
 - Creates `docs/TESTING_GUIDE.md` (from UAT + Tests + Framework)
 - Creates `docs/ARCHITECTURE.md` (from Lessons + Telemetry)
@@ -296,12 +316,14 @@ python scripts/docs/consolidate_docs_v2.py
 **Lines:** TBD
 
 **What it does:**
+
 - Sets up Next.js frontend structure
 - Creates necessary configuration files
 - Initializes TypeScript config
 - Sets up Tailwind CSS
 
 **Usage:**
+
 ```bash
 cd scripts/setup
 python create_frontend.py
@@ -311,6 +333,7 @@ python scripts/setup/create_frontend.py
 ```
 
 **Creates:**
+
 - Next.js App Router structure
 - TypeScript configuration
 - Tailwind CSS setup
@@ -324,12 +347,14 @@ python scripts/setup/create_frontend.py
 ### When to Use Operational Scripts
 
 **Local stack:**
+
 - Use `monitor_local_health.sh` when:
   - Containers won’t start
   - Health endpoints fail
   - You want a quick snapshot of local services and ports
 
 **AWS dev:**
+
 - Use `monitor_aws_health.sh` when:
   - A deploy finishes but the site/API isn’t behaving
   - You want to confirm ECS service counts and ALB/API reachability
@@ -340,12 +365,14 @@ python scripts/setup/create_frontend.py
 ### When to Use Git Scripts
 
 **check_git_status.py / .sh:**
+
 - Before committing changes
 - Before pushing to remote
 - To verify clean working directory
 - When debugging git issues
 
 **commit_helper.sh:**
+
 - When you have multiple files to commit
 - When you want guided commit workflow
 - For consistent commit messages
@@ -354,6 +381,7 @@ python scripts/setup/create_frontend.py
 ### When to Use Documentation Scripts
 
 **consolidate_docs_v2.py:**
+
 - After major documentation updates
 - When reorganizing documentation structure
 - To eliminate duplicate information
@@ -362,6 +390,7 @@ python scripts/setup/create_frontend.py
 ### When to Use Setup Scripts
 
 **create_frontend.py:**
+
 - Initial project setup
 - Recreating frontend structure
 - Setting up new development environment
@@ -374,15 +403,17 @@ python scripts/setup/create_frontend.py
 ### Script Execution
 
 1. **Always run from correct directory:**
+
    ```bash
    # From script directory
    cd scripts/git && ./check_git_status.sh
-   
+
    # Or with full path from project root
    ./scripts/git/check_git_status.sh
    ```
 
 2. **Make scripts executable:**
+
    ```bash
    chmod +x scripts/git/*.sh
    ```
@@ -412,11 +443,13 @@ python scripts/setup/create_frontend.py
 ## Script Dependencies
 
 ### Python Scripts
+
 - Python 3.9+
 - Standard library only (no external dependencies)
 - Cross-platform compatible
 
 ### Shell Scripts
+
 - Bash (macOS/Linux)
 - Git CLI
 - Standard Unix utilities (grep, wc, etc.)
@@ -427,22 +460,24 @@ python scripts/setup/create_frontend.py
 
 ### Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| "Permission denied" | Run `chmod +x script.sh` |
-| "Command not found" | Ensure you're in correct directory or use full path |
-| Hardcoded paths fail | Update paths in script to match your setup |
-| Git commands fail | Ensure you're in a git repository |
-| Python script errors | Check Python version (requires 3.9+) |
+| Issue                | Solution                                            |
+| -------------------- | --------------------------------------------------- |
+| "Permission denied"  | Run `chmod +x script.sh`                            |
+| "Command not found"  | Ensure you're in correct directory or use full path |
+| Hardcoded paths fail | Update paths in script to match your setup          |
+| Git commands fail    | Ensure you're in a git repository                   |
+| Python script errors | Check Python version (requires 3.9+)                |
 
 ### Debug Mode
 
 **For shell scripts:**
+
 ```bash
 bash -x scripts/git/check_git_status.sh
 ```
 
 **For Python scripts:**
+
 ```bash
 python -v scripts/git/check_git_status.py
 ```
@@ -454,12 +489,14 @@ python -v scripts/git/check_git_status.py
 ### Adding New Scripts
 
 1. **Choose appropriate directory:**
+
    - `git/` - Git operations
    - `docs/` - Documentation utilities
    - `setup/` - Setup and initialization
    - Create new category if needed
 
 2. **Script template (Python):**
+
 ```python
 #!/usr/bin/env python3
 """
@@ -480,6 +517,7 @@ if __name__ == "__main__":
 ```
 
 3. **Script template (Shell):**
+
 ```bash
 #!/bin/bash
 # Script Name - Brief Description
@@ -503,21 +541,25 @@ echo "Script completed successfully!"
 ### Planned Scripts
 
 **Git Category:**
+
 - [ ] `branch_cleaner.sh` - Clean up merged branches
 - [ ] `sync_fork.sh` - Sync with upstream fork
 - [ ] `pr_helper.sh` - Create pull requests
 
 **Docs Category:**
+
 - [ ] `generate_api_docs.py` - Generate API documentation
 - [ ] `validate_links.py` - Check for broken documentation links
 - [ ] `update_toc.py` - Update table of contents
 
 **Setup Category:**
+
 - [ ] `setup_dev_env.sh` - Complete development environment setup
 - [ ] `install_deps.sh` - Install all dependencies
 - [ ] `init_databases.py` - Initialize Notion databases
 
 **Testing Category:**
+
 - [ ] `run_benchmarks.sh` - Run performance benchmarks
 - [ ] `generate_test_report.py` - Generate test coverage report
 - [ ] `cleanup_test_data.py` - Clean up test data
@@ -532,6 +574,5 @@ echo "Script completed successfully!"
 
 ---
 
-*Helper Scripts Documentation - Engineering Department*  
-*Last Updated: November 10, 2025*
-
+_Helper Scripts Documentation - Engineering Department_  
+_Last Updated: November 10, 2025_

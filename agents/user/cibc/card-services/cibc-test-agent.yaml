@@ -1,0 +1,48 @@
+metadata:
+  id: cibc-test-agent
+  name: CIBC Test Agent
+  type: user
+  description: Test agent for CIBC demo
+  tags:
+    - test
+    - cibc
+    - demo
+  organization_id: cibc
+  domain_id: card-services
+  updated: "2025-11-18T01:49:34.600361Z"
+spec:
+  graph:
+    nodes:
+      - id: entry-1
+        type: entryPoint
+        data:
+          label: Start
+        position:
+          x: 100
+          y: 100
+      - id: process-1
+        type: process
+        data:
+          label: CIBC Greeter
+          description: Greet CIBC customers
+          model: gpt-4o-mini
+          temperature: 0.7
+        position:
+          x: 300
+          y: 100
+      - id: end-1
+        type: end
+        data:
+          label: End
+        position:
+          x: 500
+          y: 100
+    edges:
+      - id: e1
+        source: entry-1
+        target: process-1
+        animated: true
+      - id: e2
+        source: process-1
+        target: end-1
+        animated: true

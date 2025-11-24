@@ -1,0 +1,51 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: System Agent - Minimal
+  type: system
+  version: 1.0.0
+  description: Minimal system agent template for core platform functionality
+  tags: [system, platform, template]
+  is_system_agent: true
+  system_tier: 0
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 100, y: 100 }
+        data:
+          label: Entry
+          description: System agent entry point
+
+      - id: process
+        type: process
+        position: { x: 100, y: 200 }
+        data:
+          label: Process
+          description: Core processing logic
+          model: gpt-4
+          temperature: 0.3
+          maxTokens: 2000
+          prompt: |
+            You are a system agent responsible for core platform functionality.
+            Process the request and return results.
+
+      - id: end
+        type: end
+        position: { x: 100, y: 300 }
+        data:
+          label: End
+          description: Return results
+
+    edges:
+      - id: e1
+        source: entry
+        target: process
+
+      - id: e2
+        source: process
+        target: end

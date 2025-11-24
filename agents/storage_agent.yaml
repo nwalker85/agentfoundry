@@ -1,0 +1,163 @@
+apiVersion: foundry.ai/v1
+kind: Agent
+metadata:
+  name: storage-agent
+  displayName: Storage Agent
+  description: Handles all persistence operations for agent designs (autosave, versioning, import/export)
+  version: 1.0.0
+  tags:
+    - storage
+    - persistence
+    - versioning
+    - forge
+
+spec:
+  # Agent Configuration
+  capabilities:
+    - agent_draft_autosave
+    - version_control
+    - import_export
+    - git_like_commits
+    - python_langgraph_conversion
+
+  # LangGraph Implementation
+  implementation:
+    type: langgraph
+    file: agents/storage_agent.py
+    entrypoint: storage_agent
+
+  # Storage Backend
+  storage:
+    drafts:
+      type: redis
+      ttl: 86400  # 24 hours
+      keyPattern: "agent_draft:{agent_id}"
+    versions:
+      type: sqlite
+      table: agent_versions
+      autocommit: true
+
+  # Triggers
+  triggers:
+    autosave:
+      enabled: true
+      interval: 3  # seconds
+      action: save_draft
+
+  # Tools Available
+  tools:
+    - name: save_agent_draft
+      description: Autosave agent design draft to Redis
+      parameters:
+        - agent_id: string (required)
+        - user_id: string (required)
+        - graph_data: object (required)
+
+    - name: commit_agent_version
+      description: Commit agent version to SQLite with message
+      parameters:
+        - agent_id: string (required)
+        - graph_data: object (required)
+        - message: string (required)
+        - user_id: string (optional)
+
+    - name: get_agent_history
+      description: Retrieve version history for agent
+      parameters:
+        - agent_id: string (required)
+        - limit: integer (optional, default: 50)
+
+    - name: restore_agent_version
+      description: Rollback to specific version
+      parameters:
+        - agent_id: string (required)
+        - version: integer (required)
+
+    - name: get_agent_draft
+      description: Load latest draft from Redis
+      parameters:
+        - agent_id: string (required)
+
+    - name: import_python_code
+      description: Parse Python LangGraph → ReactFlow graph
+      parameters:
+        - python_code: string (required)
+
+    - name: export_to_python
+      description: Convert ReactFlow graph → Python LangGraph
+      parameters:
+        - graph_data: object (required)
+        - agent_name: string (optional, default: "agent")
+
+    - name: list_user_drafts
+      description: List all active drafts for a user
+      parameters:
+        - user_id: string (required)
+
+  # API Integration
+  api:
+    endpoints:
+      - path: /api/storage/autosave
+        method: POST
+        action: save_draft
+        auth: required
+
+      - path: /api/storage/commit
+        method: POST
+        action: commit_version
+        auth: required
+
+      - path: /api/storage/history/{agent_id}
+        method: GET
+        action: get_history
+        auth: required
+
+      - path: /api/storage/restore
+        method: POST
+        action: restore_version
+        auth: required
+
+      - path: /api/storage/draft/{agent_id}
+        method: GET
+        action: get_draft
+        auth: required
+
+      - path: /api/storage/import
+        method: POST
+        action: import_python
+        auth: required
+
+      - path: /api/storage/export
+        method: POST
+        action: export_python
+        auth: required
+
+      - path: /api/storage/drafts
+        method: GET
+        action: list_drafts
+        auth: required
+
+  # Environment
+  environment:
+    - name: REDIS_URL
+      value: redis://redis:6379
+    - name: DATABASE_URL
+      value: sqlite:///data/foundry.db
+    - name: AUTOSAVE_ENABLED
+      value: "true"
+    - name: AUTOSAVE_INTERVAL
+      value: "3"
+
+  # Resource Limits
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: 500m
+    requests:
+      memory: 256Mi
+      cpu: 250m
+
+status:
+  state: active
+  phase: production
+  lastUpdated: 2025-11-17T00:00:00Z

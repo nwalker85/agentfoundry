@@ -1,0 +1,41 @@
+{
+  "name": "@agentfoundry/mcp-server",
+  "version": "1.0.0",
+  "description": "Official MCP server for Agent Foundry - LangGraph agents, tools, resources, and prompts",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "agent-foundry-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "start:stdio": "node dist/index.js",
+    "start:sse": "node dist/index.js --transport sse",
+    "inspect": "mcp inspect node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.22.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "langraph",
+    "agents",
+    "foundry"
+  ],
+  "author": "Agent Foundry",
+  "license": "MIT"
+}

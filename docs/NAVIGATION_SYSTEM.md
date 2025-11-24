@@ -3,7 +3,9 @@
 ## Overview
 
 The Agent Foundry platform uses a three-tier navigation system consisting of:
-1. **Top Navigation Bar** - Consistent across all pages, contains branding and global controls
+
+1. **Top Navigation Bar** - Consistent across all pages, contains branding and
+   global controls
 2. **Page-Specific Toolbar** - Optional toolbar for page-specific actions
 3. **Left Sidebar** - Collapsible sidebar for platform-wide navigation
 
@@ -14,11 +16,13 @@ The Agent Foundry platform uses a three-tier navigation system consisting of:
 **Location:** `app/components/layout/TopNav.tsx`
 
 **Layout:**
+
 ```
 [Logo] Agent Foundry          [Current Page]          [Instance] | [Domain] | [Organization] | [User]
 ```
 
 **Features:**
+
 - **Left Side:** Agent Foundry logo and branding (links to home)
 - **Center:** Current page name (automatically detected from route)
 - **Right Side:**
@@ -28,6 +32,7 @@ The Agent Foundry platform uses a three-tier navigation system consisting of:
   - **User Profile:** Avatar with dropdown menu
 
 **User Profile Dropdown:**
+
 - Displays user name and email
 - Links to:
   - Profile page (`/profile`)
@@ -35,6 +40,7 @@ The Agent Foundry platform uses a three-tier navigation system consisting of:
   - Logout action
 
 **State Management:**
+
 - Instance, domain, and organization settings are stored in `localStorage`
 - User profile data is loaded from `localStorage` (key: `userProfile`)
 
@@ -42,9 +48,11 @@ The Agent Foundry platform uses a three-tier navigation system consisting of:
 
 **Location:** `app/components/layout/Toolbar.tsx`
 
-**Purpose:** Provides page-specific actions in a consistent, balanced layout directly under the TopNav.
+**Purpose:** Provides page-specific actions in a consistent, balanced layout
+directly under the TopNav.
 
 **Usage Example:**
+
 ```tsx
 import { Toolbar, type ToolbarAction } from "@/components/layout/Toolbar"
 import { Save, Deploy, Plus } from "lucide-react"
@@ -79,22 +87,23 @@ const toolbarActions: ToolbarAction[] = [
 ```
 
 **Props:**
+
 ```tsx
 interface ToolbarAction {
-  icon: LucideIcon        // Icon component from lucide-react
-  label: string           // Button label
-  onClick?: () => void    // Click handler
-  href?: string           // Optional link URL
-  variant?: "default" | "ghost" | "outline" | "destructive"
-  disabled?: boolean      // Disable button
-  tooltip?: string        // Tooltip text
+  icon: LucideIcon; // Icon component from lucide-react
+  label: string; // Button label
+  onClick?: () => void; // Click handler
+  href?: string; // Optional link URL
+  variant?: 'default' | 'ghost' | 'outline' | 'destructive';
+  disabled?: boolean; // Disable button
+  tooltip?: string; // Tooltip text
 }
 
 interface ToolbarProps {
-  actions?: ToolbarAction[]
-  title?: string          // Optional page title
-  description?: string    // Optional page description
-  className?: string
+  actions?: ToolbarAction[];
+  title?: string; // Optional page title
+  description?: string; // Optional page description
+  className?: string;
 }
 ```
 
@@ -103,6 +112,7 @@ interface ToolbarProps {
 **Location:** `app/components/layout/LeftNav.tsx`
 
 **Features:**
+
 - **Quant Logo** at the top
 - **Collapsible:** Toggle button to collapse/expand
 - **Platform Navigation:** Links to all major platform pages
@@ -110,6 +120,7 @@ interface ToolbarProps {
 - **Version Info:** Shows "Agent Foundry v0.9.0-dev" at the bottom
 
 **Navigation Items:**
+
 - Dashboard (`/`)
 - Agents (`/agents`)
 - Forge (`/forge`)
@@ -124,6 +135,7 @@ interface ToolbarProps {
 - Admin (`/admin`)
 
 **State:**
+
 - Collapsed state is persisted in `localStorage` (key: `leftNavCollapsed`)
 
 ### 4. User Profile Page
@@ -131,7 +143,9 @@ interface ToolbarProps {
 **Location:** `app/profile/page.tsx`
 
 **Features:**
+
 - **Profile Tab:**
+
   - Avatar upload (JPG, PNG, GIF - max 2MB)
   - Full name editor
   - Email address editor
@@ -143,22 +157,24 @@ interface ToolbarProps {
   - Extensible for additional preferences
 
 **State Management:**
+
 - Profile data stored in `localStorage` (key: `userProfile`)
 - Preferences stored in `localStorage` (key: `userPreferences`)
 - Save button in toolbar to persist changes
 
 **Data Structure:**
+
 ```tsx
 interface UserProfile {
-  name: string
-  email: string
-  initials: string
-  avatar?: string  // Base64 encoded image
+  name: string;
+  email: string;
+  initials: string;
+  avatar?: string; // Base64 encoded image
 }
 
 interface UserPreferences {
-  theme: 'dark' | 'light' | 'system'
-  language: string
+  theme: 'dark' | 'light' | 'system';
+  language: string;
 }
 ```
 
@@ -172,34 +188,34 @@ interface UserPreferences {
   <div className="flex-1 flex flex-col overflow-hidden">
     <TopNav />
     <main className="flex-1 overflow-auto">
-      {children}  // Page content goes here
+      {children} // Page content goes here
     </main>
   </div>
 </div>
 ```
 
 **Page Structure:**
+
 ```tsx
 export default function YourPage() {
   const toolbarActions: ToolbarAction[] = [
     // ... your actions
-  ]
+  ];
 
   return (
     <div className="flex flex-col h-full">
       <Toolbar actions={toolbarActions} />
 
-      <div className="flex-1 overflow-auto">
-        {/* Your page content */}
-      </div>
+      <div className="flex-1 overflow-auto">{/* Your page content */}</div>
     </div>
-  )
+  );
 }
 ```
 
 ## Styling and Theme
 
 All components use the Ravenhelm theme with consistent:
+
 - Background colors: `bg-bg-0`, `bg-bg-1`, `bg-bg-2`
 - Foreground colors: `fg-0`, `fg-1`, `fg-2`
 - Border colors: `border-white/10`, `border-white/20`
@@ -212,19 +228,22 @@ All components use the Ravenhelm theme with consistent:
 If your page currently uses the old `UnifiedHeader` or `PageHeader`:
 
 1. **Remove the old header import:**
+
    ```tsx
    // Remove:
-   import { UnifiedHeader } from '@/components/header/UnifiedHeader'
+   import { UnifiedHeader } from '@/components/header/UnifiedHeader';
    // or
-   import { PageHeader } from '@/components/shared'
+   import { PageHeader } from '@/components/shared';
    ```
 
 2. **Import the new Toolbar:**
+
    ```tsx
-   import { Toolbar, type ToolbarAction } from '@/components/layout/Toolbar'
+   import { Toolbar, type ToolbarAction } from '@/components/layout/Toolbar';
    ```
 
 3. **Define your toolbar actions:**
+
    ```tsx
    const toolbarActions: ToolbarAction[] = [
      {
@@ -234,10 +253,11 @@ If your page currently uses the old `UnifiedHeader` or `PageHeader`:
        variant: 'default',
        tooltip: 'Action description',
      },
-   ]
+   ];
    ```
 
 4. **Replace the old header with the Toolbar:**
+
    ```tsx
    // Old:
    <PageHeader title="..." actions={...} />
@@ -249,13 +269,17 @@ If your page currently uses the old `UnifiedHeader` or `PageHeader`:
 ## Examples
 
 ### Example 1: Agents Page
+
 See `app/agents/page.tsx` for a complete example with:
+
 - Refresh action
 - Export action
 - Create agent action
 
 ### Example 2: Forge Page
+
 See `app/forge/page.tsx` for a complete example with:
+
 - **File Operations:**
   - New - Create a new agent (with unsaved changes confirmation)
   - Open - Opens agent selection dialog
@@ -271,7 +295,9 @@ See `app/forge/page.tsx` for a complete example with:
   - Sortable by recent updates
 
 ### Example 3: Profile Page
+
 See `app/profile/page.tsx` for a complete example with:
+
 - Save changes action
 - Tabs for different sections
 - Form handling
@@ -279,12 +305,15 @@ See `app/profile/page.tsx` for a complete example with:
 ## Best Practices
 
 1. **Toolbar Actions:**
+
    - Keep toolbar actions to 3-5 items max for visual balance
    - Use descriptive tooltips
    - Disable actions when not applicable (e.g., save when no changes)
-   - Use appropriate variants (`default` for primary actions, `ghost` for secondary)
+   - Use appropriate variants (`default` for primary actions, `ghost` for
+     secondary)
 
 2. **User Profile:**
+
    - Always load user profile from localStorage on mount
    - Provide visual feedback when saving
    - Validate image uploads (type and size)
@@ -301,18 +330,21 @@ See `app/profile/page.tsx` for a complete example with:
 The Forge page demonstrates advanced file operation patterns:
 
 **Undo/Redo System:**
+
 - Maintains history of up to 50 states
 - Tracks nodes and edges changes
 - Prevents history pollution during undo/redo operations
 - Keyboard shortcuts can be added (Cmd+Z, Cmd+Shift+Z)
 
 **Unsaved Changes Tracking:**
+
 - Automatically detects changes to nodes/edges
 - Confirms before creating new agent with unsaved changes
 - Auto-saves before deployment
 - Save button disabled when no changes
 
 **Agent Open Dialog:**
+
 - Full-text search across agent name, display name, and description
 - Visual indicators for current agent
 - Status badges and environment tags

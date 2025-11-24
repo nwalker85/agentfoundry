@@ -8,9 +8,11 @@
 
 ### 1. State Machine (LangGraph StateGraph)
 
-The agent is a **finite state machine** with typed state and deterministic transitions.
+The agent is a **finite state machine** with typed state and deterministic
+transitions.
 
 **State Definition:**
+
 ```python
 class AgentState(TypedDict):
     messages: Sequence[BaseMessage]          # Conversation history
@@ -66,6 +68,7 @@ This is **strongly typed** - each field has a specific type and purpose.
 ### 3. LLM Integration (GPT-4)
 
 The agent uses GPT-4 for **structured extraction only**:
+
 - Extracting epic, title, priority, description from natural language
 - NOT for decision-making (graph controls workflow)
 
@@ -104,7 +107,7 @@ def route_after_understand(self, state: AgentState) -> str:
     if state.get("error_message"):
         return "error"
     if state.get("clarifications_needed"):
-        return "clarify"  
+        return "clarify"
     return "validate"
 ```
 
@@ -125,8 +128,9 @@ response = await self.client.post(
 ```
 
 **Why MCP layer?**
+
 - Separation of concerns
-- Idempotency protection  
+- Idempotency protection
 - Audit logging
 - Rate limiting
 - Error handling
@@ -136,21 +140,26 @@ response = await self.client.post(
 ## Architecture Patterns
 
 ### 1. State-Driven
+
 All data flows through `AgentState`. No globals, no side effects.
 
 ### 2. Deterministic Routing
+
 Business logic in Python, not prompts. Faster and more reliable.
 
 ### 3. Separation of Concerns
+
 - **Agent**: Workflow orchestration
 - **LLM**: Natural language understanding only
 - **MCP Server**: Tool execution
 - **Tools**: External API integration
 
 ### 4. Error Recovery
+
 Every node can set `error_message`, routing logic detects and handles.
 
 ### 5. Loop Prevention
+
 `clarification_count` limits prevent infinite clarification loops (max 2).
 
 ---
@@ -158,12 +167,14 @@ Every node can set `error_message`, routing logic detects and handles.
 ## What Makes This Different?
 
 ### Simple LLM Approach:
+
 ```python
 response = llm.invoke("Create a story for user auth")
 # Hope it works, parse manually, no validation
 ```
 
 ### LangGraph Agent:
+
 ```python
 state = {"messages": [HumanMessage(content="...")]}
 final_state = await graph.ainvoke(state)
@@ -181,6 +192,7 @@ final_state = await graph.ainvoke(state)
 ## Current Capabilities
 
 ### What It Can Do ✅
+
 - Extract structured task details from natural language
 - Ask clarifying questions (max 2 rounds)
 - Create Notion stories with AC/DoD
@@ -188,6 +200,7 @@ final_state = await graph.ainvoke(state)
 - Maintain conversation context
 
 ### What It Cannot Do ❌
+
 - Answer general questions
 - Search the web
 - Execute code
@@ -201,18 +214,20 @@ final_state = await graph.ainvoke(state)
 ## How to Extend
 
 ### Add More Nodes:
+
 ```python
 workflow.add_node("research", self.research_topic)
 workflow.add_edge("plan", "research")
 ```
 
 ### Add More Tools (via MCP):
+
 ```python
 # In MCP server:
 @app.post("/api/tools/search")
 async def search_web(query: str):
     return {"results": [...]}
-    
+
 # In agent:
 async def research_topic(self, state: AgentState):
     response = await self.client.post(
@@ -224,6 +239,7 @@ async def research_topic(self, state: AgentState):
 ```
 
 ### Add LLM Tool Selection:
+
 ```python
 from langgraph.prebuilt import ToolExecutor
 from langchain.tools import Tool
@@ -242,27 +258,30 @@ tool_executor = ToolExecutor(tools)
 
 ## Comparison to Other Patterns
 
-| Pattern | Decision Making | Speed | Flexibility |
-|---------|----------------|-------|-------------|
-| **This Agent** | Predefined workflow | Fast | Medium |
-| ReAct Agent | LLM decides each step | Slow | High |
-| Function Calling | Single LLM call | Fast | Low |
-| LangChain Chains | Linear pipeline | Fast | Low |
+| Pattern          | Decision Making       | Speed | Flexibility |
+| ---------------- | --------------------- | ----- | ----------- |
+| **This Agent**   | Predefined workflow   | Fast  | Medium      |
+| ReAct Agent      | LLM decides each step | Slow  | High        |
+| Function Calling | Single LLM call       | Fast  | Low         |
+| LangChain Chains | Linear pipeline       | Fast  | Low         |
 
 ---
 
 ## Configuration
 
 ### Recursion Limit:
+
 ```python
 final_state = await self.graph.ainvoke(
     initial_state,
     config={"recursion_limit": 100}
 )
 ```
+
 Default is 25. Increase for complex workflows.
 
 ### Streaming:
+
 ```python
 async for state in graph.astream(initial_state):
     # Send real-time updates to UI
@@ -274,15 +293,19 @@ async for state in graph.astream(initial_state):
 ## Memory & Context
 
 ### Short-term Memory
+
 `state["messages"]` contains full conversation history.
 
 ### Long-term Memory
+
 **Not implemented**. Would require:
+
 - Vector database (Pinecone, Weaviate)
 - Embedding model
 - Retrieval node in graph
 
 ### Working Memory
+
 The entire `AgentState` object. Only persists during single request.
 
 ---
@@ -290,12 +313,14 @@ The entire `AgentState` object. Only persists during single request.
 ## Cost & Performance
 
 ### Per Request:
+
 - **LLM calls**: 1-3
 - **Tokens**: 500-2000
 - **Time**: 2-5 seconds
 - **Cost**: $0.01-0.05 (GPT-4)
 
 ### Optimization:
+
 - Use GPT-3.5 for extraction (10x cheaper)
 - Cache similar requests
 - Batch multiple stories
@@ -305,18 +330,21 @@ The entire `AgentState` object. Only persists during single request.
 ## Observability
 
 ### Built-in Debugging:
+
 ```python
 print("[Node: understand] Starting...")
 print(f"State: {state}")
 ```
 
 ### State Inspection:
+
 ```python
 import json
 print(json.dumps(state, indent=2))
 ```
 
 ### Audit Trail:
+
 MCP server logs all tool calls, agent logs all transitions.
 
 ---
@@ -328,12 +356,14 @@ MCP server logs all tool calls, agent logs all transitions.
 **Design Philosophy**: "Do one thing well"
 
 **Optimized for**:
+
 - Structured task extraction
 - Validated story creation
 - Reliable execution
 - Clear error handling
 
 **NOT optimized for**:
+
 - General conversation
 - Open-ended research
 - Complex reasoning

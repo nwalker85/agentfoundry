@@ -5,7 +5,7 @@
 ### Agent Foundry (Control Plane)
 
 **What it is**:  
-The Foundry is a *suite of tools* that enables a complete AgentOps workflow:
+The Foundry is a _suite of tools_ that enables a complete AgentOps workflow:
 
 - Forge (graph / workflow builder)
 - Agent configuration (system + custom)
@@ -20,10 +20,11 @@ The Foundry is a *suite of tools* that enables a complete AgentOps workflow:
 - Builds and ships **runtime bundles** for each instance
 - Observes instances via MCP (optional)
 
-**What it does *not* do**:
+**What it does _not_ do**:
 
 - It does **not** host production traffic directly
-- It does **not** talk to external APIs/DBs except through the **backend MCP server**
+- It does **not** talk to external APIs/DBs except through the **backend MCP
+  server**
 
 ### Runtime Instance (Data Plane)
 
@@ -38,18 +39,20 @@ Each **Instance** is a **standalone runtime deployment** identified by:
 **Responsibilities**:
 
 - Runs its own **LangGraph + MCP runtime**
-- Hosts its own **system agents** (io/supervisor/context/coherence/exception/observability/governance)
+- Hosts its own **system agents**
+  (io/supervisor/context/coherence/exception/observability/governance)
 - Hosts its own **custom worker agents** (pm, ticket, qa, customer-defined)
 - Owns its own **data plane** (Redis, Postgres, S3, etc.)
 
 **Key property**:  
-An Instance can run independently of the Foundry once deployed. The Foundry is the *control plane*; Instances are the *data plane*.
+An Instance can run independently of the Foundry once deployed. The Foundry is
+the _control plane_; Instances are the _data plane_.
 
 ---
 
 ## 2. Manifests – Binding Agents to Orgs / Domains / Instances
 
-We use **manifests** to describe *where* agents live.
+We use **manifests** to describe _where_ agents live.
 
 ### 2.1 Environment Manifests (Foundry Side)
 
@@ -59,7 +62,8 @@ Path:
 - `agents/manifests/manifest.staging.yaml`
 - `agents/manifests/manifest.prod.yaml`
 
-These files live in the Foundry repo and describe **all agents bound into a given environment**.
+These files live in the Foundry repo and describe **all agents bound into a
+given environment**.
 
 Example (`agents/manifests/manifest.dev.yaml`):
 
@@ -68,8 +72,8 @@ apiVersion: agent-foundry/v1
 kind: AgentManifest
 metadata:
   description: Dev environment manifest for all system agents
-  generated_at: "2025-11-16T00:00:00Z"
-  version: "0.1.0"
+  generated_at: '2025-11-16T00:00:00Z'
+  version: '0.1.0'
 
 spec:
   entries:
@@ -83,7 +87,7 @@ spec:
       instance_id: dev
       is_system_agent: true
       system_tier: 0
-      version: "0.8.0"
+      version: '0.8.0'
       author: system
       last_editor: system
       tags: [platform, io, adapter]
@@ -102,7 +106,8 @@ Path:
 
 - `agents/manifests/manifest.instance-template.yaml`
 
-Describes **what a runtime Instance should look like**. It is parameterised (placeholders) and filled in at build/deploy time.
+Describes **what a runtime Instance should look like**. It is parameterised
+(placeholders) and filled in at build/deploy time.
 
 Example:
 
@@ -111,7 +116,7 @@ apiVersion: agent-foundry/v1
 kind: AgentInstanceTemplate
 metadata:
   description: Template for runtime instances
-  version: "0.1.0"
+  version: '0.1.0'
 
 spec:
   # Required system agents for every instance
@@ -130,9 +135,12 @@ spec:
 
 At deploy time the Foundry:
 
-1. Selects a subset of agents from the **environment manifest** for a given `org/domain`.
-2. Merges them with the **instance template** to produce a concrete **Instance manifest** (e.g. `manifest.org-123.domain-retail.instance-us-east-1.yaml`).
-3. Packs that manifest + YAML specs + LangGraph graphs into a **runtime bundle** for deployment.
+1. Selects a subset of agents from the **environment manifest** for a given
+   `org/domain`.
+2. Merges them with the **instance template** to produce a concrete **Instance
+   manifest** (e.g. `manifest.org-123.domain-retail.instance-us-east-1.yaml`).
+3. Packs that manifest + YAML specs + LangGraph graphs into a **runtime bundle**
+   for deployment.
 
 ---
 
@@ -140,7 +148,8 @@ At deploy time the Foundry:
 
 **Rule**:  
 Only the **backend MCP server** talks to external APIs/datastores.  
-All intra-platform communication is via **MCP tools**, and all orchestration is via **LangGraph**.
+All intra-platform communication is via **MCP tools**, and all orchestration is
+via **LangGraph**.
 
 ### 3.1 Control Plane Flow (Foundry)
 
@@ -153,7 +162,8 @@ All intra-platform communication is via **MCP tools**, and all orchestration is 
    - `foundry.list_agents`, `foundry.get_agent_config`
    - `foundry.deploy_instance`, `foundry.get_instance_status`
 
-The Foundry **never** talks directly to LLMs/Redis/Postgres; it always calls MCP tools.
+The Foundry **never** talks directly to LLMs/Redis/Postgres; it always calls MCP
+tools.
 
 ### 3.2 Data Plane Flow (Instance Runtime)
 
@@ -167,7 +177,8 @@ The Foundry **never** talks directly to LLMs/Redis/Postgres; it always calls MCP
 3. Each node calls MCP tools for:
    - LLMs, tools, Redis, Postgres, LiveKit, etc.
 
-Each Instance has its **own MCP server + LangGraph graphs + config** and can be deployed and scaled independently.
+Each Instance has its **own MCP server + LangGraph graphs + config** and can be
+deployed and scaled independently.
 
 ---
 
@@ -187,9 +198,11 @@ Example hostnames:
 
 ### 4.2 How to Do This in AWS
 
-You *can* scale this pattern with Docker in AWS, but you generally don’t run raw Docker; you use an orchestrator. The two most straightforward choices:
+You _can_ scale this pattern with Docker in AWS, but you generally don’t run raw
+Docker; you use an orchestrator. The two most straightforward choices:
 
-- **AWS ECS (Elastic Container Service)** – simpler, integrates well with ALB/Route53
+- **AWS ECS (Elastic Container Service)** – simpler, integrates well with
+  ALB/Route53
 - **AWS ECS on Fargate** – same as ECS but serverless (no EC2 management)
 
 #### Recommended: ECS + Fargate
@@ -205,6 +218,7 @@ You *can* scale this pattern with Docker in AWS, but you generally don’t run r
 2. **Define an ECS Task Definition** for the runtime image.
 
 3. For each `(org, domain, instance)`:
+
    - Create an **ECS Service** (or a task) using that task definition.
    - Inject environment-specific configuration:
      - `ORG_ID`, `DOMAIN_ID`, `INSTANCE_ID`
@@ -216,7 +230,8 @@ You *can* scale this pattern with Docker in AWS, but you generally don’t run r
    - An **Application Load Balancer (ALB)** with path/host-based routing, or
    - **AWS Cloud Map** for internal service discovery.
 
-5. Use **Route53** to create DNS records for each instance hostname, pointing at the ALB or Cloud Map name.
+5. Use **Route53** to create DNS records for each instance hostname, pointing at
+   the ALB or Cloud Map name.
 
 This gives you:
 
@@ -230,6 +245,7 @@ This gives you:
 Yes, with the right orchestrator:
 
 - **ECS/Fargate**:
+
   - Scales to hundreds/thousands of tasks
   - Each Instance = one ECS Service (or at least one task)
   - Auto-scaling per Instance or per environment
@@ -282,7 +298,8 @@ For Agent Foundry’s use case, **ECS + Fargate** is typically the sweet spot:
    - Foundry uses MCP to:
      - Query Instance health & metrics (via observability_agent)
      - Trigger rolling updates / redeploys
-   - Instances run traffic independently and can be auto-scaled or shut down without impacting the Foundry.
+   - Instances run traffic independently and can be auto-scaled or shut down
+     without impacting the Foundry.
 
 ---
 
@@ -291,7 +308,8 @@ For Agent Foundry’s use case, **ECS + Fargate** is typically the sweet spot:
 1. **Finalize manifest shapes**:
    - Lock in `AgentManifest` and `AgentInstanceTemplate` schemas.
 2. **Implement build pipeline**:
-   - Code that turns environment + template manifests into per-instance manifests.
+   - Code that turns environment + template manifests into per-instance
+     manifests.
 3. **Add MCP tools** for:
    - `foundry.deploy_instance`
    - `foundry.list_instances`
@@ -301,6 +319,6 @@ For Agent Foundry’s use case, **ECS + Fargate** is typically the sweet spot:
    - Services
    - ALB + Route53 wiring
 
-Once those pieces are in place, Agent Foundry will cleanly separate **AgentOps (control plane)** from **runtime Instances (data plane)**, with LangGraph + MCP at the core and ECS/Fargate providing scalable containerized deployments in AWS.
-
-
+Once those pieces are in place, Agent Foundry will cleanly separate **AgentOps
+(control plane)** from **runtime Instances (data plane)**, with LangGraph + MCP
+at the core and ECS/Fargate providing scalable containerized deployments in AWS.

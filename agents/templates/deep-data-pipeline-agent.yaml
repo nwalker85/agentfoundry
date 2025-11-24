@@ -1,0 +1,140 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: Deep Data Pipeline Agent
+  type: user
+  version: 1.0.0
+  description: A deep agent workflow for complex data processing pipelines with sub-agent delegation
+  tags: [deep-agent, data-pipeline, subagent, context-manager, template]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 400, y: 50 }
+        data:
+          label: Pipeline Entry
+          description: Entry point for data pipeline requests
+
+      - id: planner
+        type: deepPlanner
+        position: { x: 400, y: 150 }
+        data:
+          label: Pipeline Planner
+          description: Plan data processing stages
+          strategy: hierarchical
+          max_subtasks: 12
+
+      - id: ingestion_agent
+        type: subAgent
+        position: { x: 200, y: 280 }
+        data:
+          label: Data Ingestion
+          description: Specialized agent for data ingestion
+          specialization: Ingestion
+          tools: [file_reader, api_fetcher, database_connector]
+          max_depth: 3
+
+      - id: transform_agent
+        type: subAgent
+        position: { x: 400, y: 280 }
+        data:
+          label: Data Transform
+          description: Specialized agent for data transformation
+          specialization: Transform
+          tools: [mapper, filter, aggregator]
+          max_depth: 3
+
+      - id: validation_agent
+        type: subAgent
+        position: { x: 600, y: 280 }
+        data:
+          label: Data Validation
+          description: Specialized agent for data validation
+          specialization: Validation
+          tools: [schema_validator, quality_checker]
+          max_depth: 3
+
+      - id: context_manager
+        type: contextManager
+        position: { x: 400, y: 410 }
+        data:
+          label: Context Manager
+          description: Manage large data processing outputs
+          size_threshold: 200000
+          offload_strategy: aggressive
+          auto_summarize: true
+
+      - id: executor
+        type: deepExecutor
+        position: { x: 400, y: 540 }
+        data:
+          label: Pipeline Executor
+          description: Orchestrate pipeline execution
+          model: claude-sonnet-4-5-20250929
+          enable_todos: true
+          enable_filesystem: true
+          enable_subagents: true
+          enable_summarization: true
+          max_iterations: 8
+
+      - id: critic
+        type: deepCritic
+        position: { x: 400, y: 670 }
+        data:
+          label: Pipeline Validator
+          description: Validate pipeline output quality
+          validation_criteria: [completeness, accuracy, efficiency]
+          quality_threshold: 0.9
+          auto_replan: true
+
+      - id: end
+        type: end
+        position: { x: 400, y: 800 }
+        data:
+          label: End
+          description: Return pipeline results
+
+    edges:
+      - id: e1
+        source: entry
+        target: planner
+
+      - id: e2
+        source: planner
+        target: ingestion_agent
+
+      - id: e3
+        source: planner
+        target: transform_agent
+
+      - id: e4
+        source: planner
+        target: validation_agent
+
+      - id: e5
+        source: ingestion_agent
+        target: context_manager
+
+      - id: e6
+        source: transform_agent
+        target: context_manager
+
+      - id: e7
+        source: validation_agent
+        target: context_manager
+
+      - id: e8
+        source: context_manager
+        target: executor
+
+      - id: e9
+        source: executor
+        target: critic
+
+      - id: e10
+        source: critic
+        target: end

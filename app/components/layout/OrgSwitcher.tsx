@@ -1,49 +1,44 @@
-"use client"
+'use client';
 
-import { Search, Building, Check } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { Search, Building, Check } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface OrgSwitcherProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 const organizations = [
   {
-    name: "APEX CoE",
-    slug: "apex-coe",
-    tier: "ENTERPRISE",
+    name: 'APEX CoE',
+    slug: 'apex-coe',
+    tier: 'ENTERPRISE',
     isActive: false,
   },
   {
-    name: "Program APEX",
-    slug: "program-apex",
-    tier: "STANDARD",
+    name: 'Program APEX',
+    slug: 'program-apex',
+    tier: 'STANDARD',
     isActive: false,
   },
   {
-    name: "Default Organization",
-    slug: "default-organization",
-    tier: "FREE",
+    name: 'Default Organization',
+    slug: 'default-organization',
+    tier: 'FREE',
     isActive: true,
   },
-]
+];
 
 export function OrgSwitcher({ open, onOpenChange }: OrgSwitcherProps) {
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState('');
 
   const filteredOrgs = organizations.filter((org) =>
     org.name.toLowerCase().includes(search.toLowerCase())
-  )
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -70,15 +65,15 @@ export function OrgSwitcher({ open, onOpenChange }: OrgSwitcherProps) {
               <button
                 key={org.slug}
                 className={cn(
-                  "w-full p-4 rounded-lg border transition-colors text-left",
+                  'w-full p-4 rounded-lg border transition-colors text-left',
                   org.isActive
-                    ? "border-blue-600 bg-blue-600/10"
-                    : "border-border hover:border-blue-600/50 hover:bg-bg-2"
+                    ? 'border-blue-600 bg-blue-600/10'
+                    : 'border-border hover:border-blue-600/50 hover:bg-bg-2'
                 )}
                 onClick={() => {
                   // TODO: Implement org switching
-                  console.log("Switch to:", org.slug)
-                  onOpenChange(false)
+                  console.log('Switch to:', org.slug);
+                  onOpenChange(false);
                 }}
               >
                 <div className="flex items-start gap-3">
@@ -88,18 +83,14 @@ export function OrgSwitcher({ open, onOpenChange }: OrgSwitcherProps) {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-fg-0 truncate">
-                        {org.name}
-                      </h3>
-                      {org.isActive && (
-                        <Check className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                      )}
+                      <h3 className="font-semibold text-fg-0 truncate">{org.name}</h3>
+                      {org.isActive && <Check className="w-4 h-4 text-blue-500 flex-shrink-0" />}
                     </div>
                     <p className="text-sm text-fg-2 truncate">{org.slug}</p>
                   </div>
 
                   <Badge
-                    variant={org.tier === "ENTERPRISE" ? "default" : "secondary"}
+                    variant={org.tier === 'ENTERPRISE' ? 'default' : 'secondary'}
                     className="flex-shrink-0"
                   >
                     {org.tier}
@@ -118,5 +109,5 @@ export function OrgSwitcher({ open, onOpenChange }: OrgSwitcherProps) {
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

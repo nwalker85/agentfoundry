@@ -9,11 +9,13 @@
 **Fixes Applied**:
 
 #### Epics Database:
+
 - Priority: `select` → `rich_text`
-- Target Quarter: `select` → `rich_text`  
+- Target Quarter: `select` → `rich_text`
 - Created By: `rich_text` → `select`
 
 #### Stories Database:
+
 - Status: `select` → `rich_text`
 - Technical Type: `select` → `rich_text`
 - AI Generated: `checkbox` → `select`
@@ -30,6 +32,7 @@
 **Fix**: Updated to correct repository name: `nwalker85/engineeringdepartment`
 
 **File Updated**: `.env.local`
+
 ```bash
 GITHUB_REPO=nwalker85/engineeringdepartment  # Was: nwalker/engineeringdepartment
 ```
@@ -40,7 +43,8 @@ GITHUB_REPO=nwalker85/engineeringdepartment  # Was: nwalker/engineeringdepartmen
 
 ### 3. ✅ LangGraph Recursion Limit (FIXED)
 
-**Problem**: PM Agent hitting recursion limit due to loop between `understand` → `clarify` → `understand`
+**Problem**: PM Agent hitting recursion limit due to loop between `understand` →
+`clarify` → `understand`
 
 **Fix**: Changed graph edge so `clarify` → `validate` (not back to `understand`)
 
@@ -83,8 +87,9 @@ curl -X POST http://localhost:8001/api/agent/process \
 ## System Status: ✅ FULLY OPERATIONAL
 
 All components are now working:
+
 - ✅ Notion epic creation
-- ✅ Notion story creation  
+- ✅ Notion story creation
 - ✅ GitHub issue creation
 - ✅ PM Agent workflow
 - ✅ End-to-end integration

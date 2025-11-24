@@ -40,5 +40,3 @@ export interface AgentManifest {
     entries: AgentManifestEntry[];
   };
 }
-
-

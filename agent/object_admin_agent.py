@@ -1,5 +1,5 @@
 """
-Object Admin Agent - LangGraph-based control-plane admin for core objects.
+Object Admin Agent - LangGraph-based control-plane admin for core objects (PostgreSQL Version).
 
 Objects:
 - organizations
@@ -12,13 +12,11 @@ This agent provides typed list/get operations (and is easy to extend to create/u
 
 from __future__ import annotations
 
-from typing import TypedDict, Literal, Any, List, Optional
+from typing import Any, Literal, TypedDict
 
-import psycopg
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 
-from backend.db import DB_URL
-
+from backend.db_postgres import DictCursor, get_connection_no_rls
 
 ObjectType = Literal["organization", "domain", "instance", "user"]
 OperationType = Literal["list", "get"]
@@ -28,14 +26,14 @@ class ObjectAdminState(TypedDict, total=False):
     # Inputs
     object_type: ObjectType
     operation: OperationType
-    id: Optional[str]
-    organization_id: Optional[str]
-    domain_id: Optional[str]
-    environment: Optional[str]
+    id: str | None
+    organization_id: str | None
+    domain_id: str | None
+    environment: str | None
 
     # Outputs
     result: Any
-    error: Optional[str]
+    error: str | None
 
 
 class ObjectAdminAgent:
@@ -71,137 +69,146 @@ class ObjectAdminAgent:
 
     # Helpers -----------------------------------------------------------------
 
-    def _list_objects(self, state: ObjectAdminState) -> List[dict]:
+    def _list_objects(self, state: ObjectAdminState) -> list[dict]:
         """List objects by type and optional filters."""
         obj = state["object_type"]
-        with psycopg.connect(DB_URL, row_factory=psycopg.rows.dict_row) as conn:
-            with conn.cursor() as cur:
-                if obj == "organization":
-                    cur.execute(
-                        """
-                        SELECT id, name, tier, created_at, updated_at
-                        FROM organizations
-                        ORDER BY created_at DESC
-                        LIMIT 200
-                        """
-                    )
-                elif obj == "domain":
-                    if state.get("organization_id"):
-                        cur.execute(
-                            """
-                            SELECT id, organization_id, name, display_name, version, created_at, updated_at
-                            FROM domains
-                            WHERE organization_id = %s
-                            ORDER BY created_at DESC
-                            LIMIT 200
-                            """,
-                            (state["organization_id"],),
-                        )
-                    else:
-                        cur.execute(
-                            """
-                            SELECT id, organization_id, name, display_name, version, created_at, updated_at
-                            FROM domains
-                            ORDER BY created_at DESC
-                            LIMIT 200
-                            """
-                        )
-                elif obj == "instance":
-                    params = []
-                    where = []
-                    if state.get("organization_id"):
-                        where.append("organization_id = %s")
-                        params.append(state["organization_id"])
-                    if state.get("domain_id"):
-                        where.append("domain_id = %s")
-                        params.append(state["domain_id"])
-                    if state.get("environment"):
-                        where.append("environment = %s")
-                        params.append(state["environment"])
 
-                    where_clause = "WHERE " + " AND ".join(where) if where else ""
-                    cur.execute(
-                        f"""
-                        SELECT id, organization_id, domain_id, environment, instance_id, created_at, updated_at
-                        FROM instances
-                        {where_clause}
-                        ORDER BY created_at DESC
-                        LIMIT 200
-                        """,
-                        tuple(params) if params else None,
-                    )
-                elif obj == "user":
-                    if state.get("organization_id"):
-                        cur.execute(
-                            """
-                            SELECT id, organization_id, email, name, role, created_at, updated_at
-                            FROM users
-                            WHERE organization_id = %s
-                            ORDER BY created_at DESC
-                            LIMIT 200
-                            """,
-                            (state["organization_id"],),
-                        )
-                    else:
-                        cur.execute(
-                            """
-                            SELECT id, organization_id, email, name, role, created_at, updated_at
-                            FROM users
-                            ORDER BY created_at DESC
-                            LIMIT 200
-                            """
-                        )
-                else:
-                    raise ValueError(f"Unsupported object_type: {obj}")
+        with get_connection_no_rls() as conn:
+            cur = conn.cursor(cursor_factory=DictCursor)
 
-                rows = cur.fetchall()
-                return rows
-
-    def _get_object(self, state: ObjectAdminState) -> Optional[dict]:
-        """Get a single object by id."""
-        obj = state["object_type"]
-        with psycopg.connect(DB_URL, row_factory=psycopg.rows.dict_row) as conn:
-            with conn.cursor() as cur:
-                if obj == "organization":
-                    cur.execute(
-                        """
-                        SELECT id, name, tier, created_at, updated_at
-                        FROM organizations
-                        WHERE id = %s
-                        """,
-                        (state["id"],),
-                    )
-                elif obj == "domain":
+            if obj == "organization":
+                cur.execute(
+                    """
+                    SELECT id, name, tier, created_at, updated_at
+                    FROM organizations
+                    ORDER BY created_at DESC
+                    LIMIT 200
+                    """
+                )
+            elif obj == "domain":
+                if state.get("organization_id"):
                     cur.execute(
                         """
                         SELECT id, organization_id, name, display_name, version, created_at, updated_at
                         FROM domains
-                        WHERE id = %s
+                        WHERE organization_id = %s
+                        ORDER BY created_at DESC
+                        LIMIT 200
                         """,
-                        (state["id"],),
+                        (state["organization_id"],),
                     )
-                elif obj == "instance":
+                else:
                     cur.execute(
                         """
-                        SELECT id, organization_id, domain_id, environment, instance_id, created_at, updated_at
-                        FROM instances
-                        WHERE id = %s
-                        """,
-                        (state["id"],),
+                        SELECT id, organization_id, name, display_name, version, created_at, updated_at
+                        FROM domains
+                        ORDER BY created_at DESC
+                        LIMIT 200
+                        """
                     )
-                elif obj == "user":
+            elif obj == "instance":
+                params = []
+                where = []
+                if state.get("organization_id"):
+                    where.append("organization_id = %s")
+                    params.append(state["organization_id"])
+                if state.get("domain_id"):
+                    where.append("domain_id = %s")
+                    params.append(state["domain_id"])
+                if state.get("environment"):
+                    where.append("environment = %s")
+                    params.append(state["environment"])
+
+                where_clause = "WHERE " + " AND ".join(where) if where else ""
+                query = f"""
+                    SELECT id, organization_id, domain_id, environment, instance_id, created_at, updated_at
+                    FROM instances
+                    {where_clause}
+                    ORDER BY created_at DESC
+                    LIMIT 200
+                """
+
+                if params:
+                    cur.execute(query, tuple(params))
+                else:
+                    cur.execute(query)
+
+            elif obj == "user":
+                if state.get("organization_id"):
                     cur.execute(
                         """
                         SELECT id, organization_id, email, name, role, created_at, updated_at
                         FROM users
-                        WHERE id = %s
+                        WHERE organization_id = %s
+                        ORDER BY created_at DESC
+                        LIMIT 200
                         """,
-                        (state["id"],),
+                        (state["organization_id"],),
                     )
                 else:
-                    raise ValueError(f"Unsupported object_type: {obj}")
+                    cur.execute(
+                        """
+                        SELECT id, organization_id, email, name, role, created_at, updated_at
+                        FROM users
+                        ORDER BY created_at DESC
+                        LIMIT 200
+                        """
+                    )
+            else:
+                raise ValueError(f"Unsupported object_type: {obj}")
 
-                row = cur.fetchone()
-                return row
+            rows = [dict(row) for row in cur.fetchall()]
+            conn.commit()
 
+        return rows
 
+    def _get_object(self, state: ObjectAdminState) -> dict | None:
+        """Get a single object by id."""
+        obj = state["object_type"]
+
+        with get_connection_no_rls() as conn:
+            cur = conn.cursor(cursor_factory=DictCursor)
+
+            if obj == "organization":
+                cur.execute(
+                    """
+                    SELECT id, name, tier, created_at, updated_at
+                    FROM organizations
+                    WHERE id = %s
+                    """,
+                    (state["id"],),
+                )
+            elif obj == "domain":
+                cur.execute(
+                    """
+                    SELECT id, organization_id, name, display_name, version, created_at, updated_at
+                    FROM domains
+                    WHERE id = %s
+                    """,
+                    (state["id"],),
+                )
+            elif obj == "instance":
+                cur.execute(
+                    """
+                    SELECT id, organization_id, domain_id, environment, instance_id, created_at, updated_at
+                    FROM instances
+                    WHERE id = %s
+                    """,
+                    (state["id"],),
+                )
+            elif obj == "user":
+                cur.execute(
+                    """
+                    SELECT id, organization_id, email, name, role, created_at, updated_at
+                    FROM users
+                    WHERE id = %s
+                    """,
+                    (state["id"],),
+                )
+            else:
+                raise ValueError(f"Unsupported object_type: {obj}")
+
+            row = cur.fetchone()
+            conn.commit()
+
+        return dict(row) if row else None

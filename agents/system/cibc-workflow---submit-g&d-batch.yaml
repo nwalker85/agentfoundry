@@ -1,0 +1,185 @@
+id: cibc-cibc-workflow-submit-gd-batch
+metadata:
+  id: cibc-cibc-workflow-submit-gd-batch
+  name: CIBC Workflow - Submit G&D Batch
+  display_name: CIBC Workflow - Submit G&D Batch
+  description: Scheduled batch submission to G&D at 5:30 PM Atlantic/Barbados
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-3
+    - request-orchestration
+    - gd-batch
+    - scheduled
+  updated: "2025-11-18T01:28:58.738540Z"
+spec:
+  state_schema_id: null
+  triggers:
+    - type: schedule
+      schedule: 30 17 * * *
+      timezone: Atlantic/Barbados
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Batch Trigger (5:30 PM)
+          description: Scheduled batch job starts
+      - id: check_cutoff_time
+        type: toolCall
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Verify Cutoff Time
+          description: Confirm current time is batch window
+          tool: func-check-gd-batch-cutoff
+      - id: collect_approved_requests
+        type: process
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Collect Approved Requests
+          description: Query all approved requests pending G&D submission
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Query criteria:
+
+            - Status = 'approved'
+
+            - rush_flag = false (exclude rush orders)
+
+            - gd_submission_time IS NULL
+
+            - approved_timestamp < batch_cutoff_time
+
+            "
+      - id: validate_requests
+        type: process
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Validate Batch Requests
+          description: Final validation before submission
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Validate each request:
+
+            - Card ID exists
+
+            - Delivery address complete
+
+            - No blocking status codes
+
+            - Territory routing set
+
+            "
+      - id: prepare_batch_payload
+        type: process
+        position:
+          x: 300
+          y: 540
+        data:
+          label: Prepare G&D Payload
+          description: Format batch for G&D API
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: submit_to_gd
+        type: toolCall
+        position:
+          x: 300
+          y: 670
+        data:
+          label: Submit Batch to G&D
+          description: POST to G&D production API
+          tool: func-auto-submit-gd-batch
+      - id: process_response
+        type: process
+        position:
+          x: 300
+          y: 800
+        data:
+          label: Process G&D Response
+          description: Handle batch submission result
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: update_request_records
+        type: process
+        position:
+          x: 300
+          y: 930
+        data:
+          label: Update Request Records
+          description: Mark requests as submitted with batch ID
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: send_batch_report
+        type: process
+        position:
+          x: 300
+          y: 1060
+        data:
+          label: Send Batch Report
+          description: Notify operations team of batch results
+          model: gpt-4o-mini
+          temperature: 0.5
+          prompt: "Generate batch report:
+
+
+            - Total requests submitted
+
+            - Batch ID from G&D
+
+            - Any rejected requests
+
+            - Estimated production date
+
+            - Exceptions requiring attention
+
+            "
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 1190
+        data:
+          label: Batch Complete
+    edges:
+      - id: e1
+        source: entry
+        target: check_cutoff_time
+      - id: e2
+        source: check_cutoff_time
+        target: collect_approved_requests
+      - id: e3
+        source: collect_approved_requests
+        target: validate_requests
+      - id: e4
+        source: validate_requests
+        target: prepare_batch_payload
+      - id: e5
+        source: prepare_batch_payload
+        target: submit_to_gd
+      - id: e6
+        source: submit_to_gd
+        target: process_response
+      - id: e7
+        source: process_response
+        target: update_request_records
+      - id: e8
+        source: update_request_records
+        target: send_batch_report
+      - id: e9
+        source: send_batch_report
+        target: end

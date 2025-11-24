@@ -9,7 +9,9 @@
 
 ## Executive Summary
 
-This document proposes a sophisticated multi-agent architecture for Agent Foundry that extends beyond simple task execution to include:
+This document proposes a sophisticated multi-agent architecture for Agent
+Foundry that extends beyond simple task execution to include:
+
 - Channel-aware I/O handling (voice SSML, chat adaptive cards)
 - Centralized orchestration and state management
 - Compliance and security governance
@@ -131,20 +133,24 @@ This document proposes a sophisticated multi-agent architecture for Agent Foundr
 [Full agent descriptions with code examples - see complete doc]
 
 ### Core Agents (Phase 1-2)
+
 1. **io_agent** - Channel-aware I/O formatting
-2. **supervisor_agent** - Orchestration and state management  
+2. **supervisor_agent** - Orchestration and state management
 3. **context_agent** - User history and CRM functionality
 4. **governance_agent** - Compliance and PII filtering
 
 ### Quality Agents (Phase 3)
+
 5. **coherence_agent** - Response buffering and compilation
 6. **personality_agent** - System persona control
 
 ### Support Agents (Phase 4-5)
+
 7. **observability_agent** - Monitoring and telemetry
 8. **exception_escalation_agent** - Error handling and HITL
 
 ### Worker Agents (Ongoing)
+
 9. **pm_agent** - Story creation (existing)
 10. **ticket_agent** - Issue tracking (future)
 11. **qa_agent** - Quality assurance (future)
@@ -155,55 +161,66 @@ This document proposes a sophisticated multi-agent architecture for Agent Foundr
 ## Key Design Decisions
 
 ### 1. OCEAN Personality Model (Not MBTI)
+
 **Rationale:**
+
 - Continuous 0-1 scale allows fine-tuning
 - Better research validity than MBTI discrete types
 - Context-adaptive (can adjust mid-conversation)
 - Composable traits
 
 ### 2. Coherence Agent Buffer Strategy
+
 **Approach:** Dynamic timeout per agent type
+
 - pm_agent: 30s (Notion API calls)
 - governance_agent: 5s (pattern matching)
 - context_agent: 10s (database query)
 
 ### 3. State Management
+
 **Tech Stack:**
+
 - Redis: Session state (conversations, active agents)
 - PostgreSQL: User context (history, preferences)
 - Rationale: Redis for ephemeral, PG for durable
 
 ### 4. Channel Adaptation
-**Voice:** SSML tags (prosody, breaks, emphasis)
-**Chat:** Adaptive Cards (rich UI elements)
-**API:** Structured JSON
+
+**Voice:** SSML tags (prosody, breaks, emphasis) **Chat:** Adaptive Cards (rich
+UI elements) **API:** Structured JSON
 
 ---
 
 ## Implementation Roadmap
 
 ### Phase 1: Core Infrastructure (Week 1)
+
 - [x] LiveKit Docker migration
 - [ ] Supervisor agent (LangGraph StateGraph)
 - [ ] I/O agent (basic chat + voice)
 - [ ] Redis state management
 
 ### Phase 2: Context & Governance (Week 2)
+
 - [ ] User context agent + PostgreSQL
 - [ ] Governance agent (PII filtering)
 - [ ] Context enrichment pipeline
 
 ### Phase 3: Quality (Week 3)
+
 - [ ] Coherence agent
 - [ ] Personality agent (OCEAN)
 - [ ] SSML + Adaptive Card formatting
 
 ### Phase 4: Support (Week 4)
+
 - [ ] Exception/escalation agent
 - [ ] HITL workflow
 - [ ] Error recovery
 
 ### Phase 5: Observability (Week 5)
+
 - [ ] Real-time dashboard (WebSocket)
 - [ ] Grafana LGTM stack
 - [ ] Alerting
@@ -223,12 +240,14 @@ This document proposes a sophisticated multi-agent architecture for Agent Foundr
 ## Next Steps
 
 **Immediate:**
+
 1. Review architecture with team
 2. Prioritize agent implementation order
 3. Spike LangGraph multi-agent patterns
 4. Design Redis state schema
 
 **This Week (Nov 15-22):**
+
 - Implement supervisor_agent framework
 - Build basic io_agent
 - Set up Redis

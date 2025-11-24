@@ -11,3 +11,4 @@ export { StatusBadge } from './StatusBadge';
 export { MetricCard, CompactMetricCard } from './MetricCard';
 export { FilterPanel, ActiveFilters } from './FilterPanel';
 export type { FilterOption, FilterGroup } from './FilterPanel';
+export { UnderConstruction } from './UnderConstruction';

@@ -1,0 +1,125 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Session - Route to PWM Specialist
+  type: system
+  version: 1.0.0
+  description: Detect PWM customer and warm transfer to specialist for complex requests
+  tags: [cibc, agent-group-4, session, pwm, routing]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Request Received
+          description: Customer request detected
+
+      - id: analyze_request_complexity
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Analyze Request Complexity
+          description: Determine if request is standard or complex
+          model: gpt-4o
+          temperature: 0.5
+          prompt: |
+            Analyze the customer request complexity.
+
+            Standard requests:
+            - Card activation
+            - Simple replacement (lost/stolen)
+            - Status inquiry
+
+            Complex requests:
+            - Multiple card issues
+            - Account restructuring
+            - Investment-linked cards
+            - International travel arrangements
+
+      - id: check_request_type
+        type: decision
+        position: { x: 300, y: 280 }
+        data:
+          label: Request Type
+          description: Route based on complexity
+          conditions:
+            - label: Standard Request
+              expression: complexity == 'standard'
+              next: handle_with_ai
+            - label: Complex Request
+              expression: complexity == 'complex'
+              next: prepare_transfer
+
+      - id: handle_with_ai
+        type: process
+        position: { x: 150, y: 410 }
+        data:
+          label: AI Agent Handles
+          description: PWM-aware AI handles standard request
+          model: gpt-4o
+          temperature: 0.7
+
+      - id: prepare_transfer
+        type: process
+        position: { x: 450, y: 410 }
+        data:
+          label: Prepare Transfer Context
+          description: Compile customer context for specialist
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Prepare warm transfer context including:
+            - Customer profile summary
+            - Current request details
+            - Recent interaction history
+            - Account relationships
+
+      - id: route_to_specialist
+        type: toolCall
+        position: { x: 450, y: 540 }
+        data:
+          label: Route to PWM Specialist
+          description: Warm transfer to human specialist
+          tool: func-route-to-pwm-specialist
+
+      - id: end
+        type: end
+        position: { x: 300, y: 670 }
+        data:
+          label: Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: analyze_request_complexity
+
+      - id: e2
+        source: analyze_request_complexity
+        target: check_request_type
+
+      - id: e3
+        source: check_request_type
+        target: handle_with_ai
+        sourceHandle: Standard Request
+
+      - id: e4
+        source: check_request_type
+        target: prepare_transfer
+        sourceHandle: Complex Request
+
+      - id: e5
+        source: prepare_transfer
+        target: route_to_specialist
+
+      - id: e6
+        source: handle_with_ai
+        target: end
+
+      - id: e7
+        source: route_to_specialist
+        target: end

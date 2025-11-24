@@ -1,0 +1,153 @@
+model
+  schema 1.1
+
+# ============================================================================
+# Agent Foundry Authorization Model
+# ============================================================================
+# This model defines the relationship-based access control for Agent Foundry.
+# It supports multi-tenant organizations with hierarchical permissions.
+# ============================================================================
+
+type user
+
+# ============================================================================
+# ORGANIZATION - Top-level tenant boundary
+# ============================================================================
+type organization
+  relations
+    define owner: [user]
+    define admin: [user, team#member]
+    define member: [user, team#member]
+    define viewer: [user]
+    
+    # Computed permissions
+    define can_create_domain: owner or admin
+    define can_create_team: owner or admin
+    define can_manage_users: owner or admin
+    define can_manage_secrets: owner or admin
+    define can_read: viewer or member or admin or owner
+    define can_update: admin or owner
+    define can_delete: owner
+
+# ============================================================================
+# TEAM - Group of users within an organization
+# ============================================================================
+type team
+  relations
+    define parent_org: [organization]
+    define owner: [user]
+    define member: [user]
+    
+    # Computed permissions
+    define can_read: member or owner or parent_org->admin
+    define can_update: owner or parent_org->admin
+    define can_add_member: owner or parent_org->admin
+
+# ============================================================================
+# DOMAIN - Business unit / service area within organization
+# ============================================================================
+type domain
+  relations
+    define parent_org: [organization]
+    define owner: [user]
+    define editor: [user, team#member]
+    define viewer: [user, team#member]
+    
+    # Computed permissions
+    define can_create_agent: owner or editor or parent_org->admin
+    define can_create_secret: owner or editor or parent_org->admin
+    define can_read: viewer or editor or owner or parent_org->member
+    define can_update: editor or owner or parent_org->admin
+    define can_delete: owner or parent_org->owner
+
+# ============================================================================
+# AGENT - Executable LangGraph agent
+# ============================================================================
+type agent
+  relations
+    define parent_domain: [domain]
+    define owner: [user]
+    define executor: [user, team#member]
+    define editor: [user, team#member]
+    define viewer: [user, team#member]
+    
+    # Computed permissions with domain inheritance
+    define can_execute: executor or editor or owner or parent_domain->editor
+    define can_read: viewer or executor or editor or owner or parent_domain->viewer
+    define can_update: editor or owner or parent_domain->editor
+    define can_delete: owner or parent_domain->owner
+    define can_share: owner or parent_domain->admin
+    define can_deploy: owner or editor or parent_domain->owner
+
+# ============================================================================
+# SECRET - API keys and credentials (LocalStack/AWS Secrets Manager)
+# ============================================================================
+type secret
+  relations
+    define parent_org: [organization]
+    define parent_domain: [domain]
+    define owner: [user]
+    define viewer: [user]
+    
+    # Computed permissions
+    # Note: can_read_value is NEVER granted via OpenFGA (blind write pattern)
+    define can_read_status: viewer or owner or parent_org->member or parent_domain->viewer
+    define can_create: owner or parent_org->admin or parent_domain->owner
+    define can_update: owner or parent_org->admin or parent_domain->owner
+    define can_delete: owner or parent_org->admin
+
+# ============================================================================
+# SESSION - Runtime agent execution session
+# ============================================================================
+type session
+  relations
+    define parent_org: [organization]
+    define agent_used: [agent]
+    define owner: [user]
+    define viewer: [user]
+    
+    # Computed permissions
+    define can_read: owner or viewer or parent_org->admin or agent_used->viewer
+    define can_terminate: owner or parent_org->admin
+
+# ============================================================================
+# GRAPH - Visual agent designer graph (Forge)
+# ============================================================================
+type graph
+  relations
+    define parent_domain: [domain]
+    define owner: [user]
+    define editor: [user, team#member]
+    define viewer: [user, team#member]
+    
+    # Computed permissions
+    define can_read: viewer or editor or owner or parent_domain->viewer
+    define can_update: editor or owner or parent_domain->editor
+    define can_deploy: owner or parent_domain->owner
+    define can_delete: owner or parent_domain->owner
+
+# ============================================================================
+# INTEGRATION - External service integration configs
+# ============================================================================
+type integration
+  relations
+    define parent_org: [organization]
+    define parent_domain: [domain]
+    define owner: [user]
+    define viewer: [user]
+    
+    # Computed permissions
+    define can_read: viewer or owner or parent_org->member or parent_domain->viewer
+    define can_configure: owner or parent_org->admin or parent_domain->owner
+    define can_delete: owner or parent_org->admin
+
+# ============================================================================
+# PLATFORM - System-wide admin permissions
+# ============================================================================
+type platform
+  relations
+    define admin: [user]
+    
+    # Platform admins can do anything
+    define can_manage_all: admin
+

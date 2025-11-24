@@ -17,5 +17,3 @@ spec:
 
   # Custom workers will be injected at build time
   custom_agents: []
-
-

@@ -114,30 +114,35 @@
 ## Architectural Principles
 
 ### 1. Schema-First Design
+
 - All API endpoints defined with Pydantic models
 - Type safety enforced at compile and runtime
 - Automatic validation prevents invalid data
 - OpenAPI schemas auto-generated from models
 
 ### 2. Idempotency by Default
+
 - Content-based hashing for deduplication
 - Idempotency keys stored and checked
 - Safe to retry any operation
 - Prevents duplicate resources
 
 ### 3. Audit Everything
+
 - All actions logged to JSONL append-only files
 - Request tracking with correlation IDs
 - Input/output hashing for integrity
 - Queryable audit trail
 
 ### 4. Separation of Concerns
+
 - **Tools Layer**: External integrations (Notion, GitHub)
 - **Agent Layer**: Business logic and orchestration
 - **API Layer**: HTTP endpoints and validation
 - **UI Layer**: User interface and presentation
 
 ### 5. Fail-Safe Architecture
+
 - Graceful error handling
 - No silent failures
 - Comprehensive logging
@@ -148,6 +153,7 @@
 ## Technology Stack
 
 ### Backend
+
 - **Runtime**: Python 3.9.6
 - **Web Framework**: FastAPI 0.115.5
 - **Server**: Uvicorn 0.32.1 (ASGI)
@@ -156,21 +162,25 @@
 - **Async I/O**: aiofiles 24.1.0
 
 ### Agent Framework
+
 - **LangChain**: 0.2.16
 - **LangGraph**: 0.2.39 ✅ (operational)
 - **OpenAI SDK**: 1.57.0
 
 ### Frontend
+
 - **Framework**: Next.js 14.2.33 (App Router)
 - **Runtime**: Node.js (via npm)
 - **Styling**: Tailwind CSS
 
 ### External Services
+
 - **Task Management**: Notion API
 - **Source Control**: GitHub API
 - **AI/ML**: OpenAI GPT-4
 
 ### Development Tools
+
 - **Testing**: pytest 8.3.4, pytest-asyncio 0.24.0
 - **Code Quality**: black 24.10.0, ruff 0.8.2, mypy 1.13.0
 - **Environment**: python-dotenv 1.0.1
@@ -181,17 +191,20 @@
 
 ### Decision 1: LangGraph PM Agent
 
-**Context:** Initially faced LangGraph compatibility issues with dependency versions
+**Context:** Initially faced LangGraph compatibility issues with dependency
+versions
 
 **Decision:** Persisted with LangGraph PMAgent, resolved dependency conflicts
 
 **Rationale:**
+
 - AI-powered understanding is core value proposition
 - Multi-turn clarification superior to regex parsing
 - Validation and planning pipeline worth complexity
 - Fixed pydantic/langsmith `ForwardRef._evaluate()` errors
 
 **Impact:**
+
 - ✅ LangGraph PMAgent operational (v0.4.0)
 - ✅ GPT-4 powered task understanding
 - ✅ Multi-step clarification workflow
@@ -206,6 +219,7 @@
 **Decision:** Use Next.js with App Router instead of Streamlit
 
 **Rationale:**
+
 - Streamlit not suitable for production
 - Next.js provides enterprise-grade features
 - TypeScript for type safety
@@ -213,6 +227,7 @@
 - No rework needed for production
 
 **Impact:**
+
 - ✅ Production-ready foundation
 - ✅ Modern development experience
 - ⚠️ More complex than Streamlit
@@ -225,12 +240,14 @@
 **Decision:** SHA256 hash of (title + epic) as idempotency key
 
 **Rationale:**
+
 - Deterministic and consistent
 - No database required for PoC
 - Works across server restarts (when stored)
 - Simple implementation
 
 **Implementation:**
+
 ```python
 import hashlib
 
@@ -240,6 +257,7 @@ def generate_idempotency_key(title: str, epic: str) -> str:
 ```
 
 **Impact:**
+
 - ✅ Prevents duplicates
 - ✅ Fast (<100ms check)
 - ⚠️ In-memory cache lost on restart
@@ -252,6 +270,7 @@ def generate_idempotency_key(title: str, epic: str) -> str:
 **Decision:** Append-only JSONL files with async writes
 
 **Rationale:**
+
 - Simple and reliable
 - No database required
 - Human-readable for debugging
@@ -259,12 +278,14 @@ def generate_idempotency_key(title: str, epic: str) -> str:
 - Easy to migrate to OTel later
 
 **Implementation:**
+
 - File pattern: `/audit/actions_YYYYMMDD.jsonl`
 - Daily rotation
 - Async writes (non-blocking)
 - Queryable via API
 
 **Impact:**
+
 - ✅ Working audit trail
 - ✅ No database overhead
 - ⚠️ Local storage only
@@ -277,12 +298,14 @@ def generate_idempotency_key(title: str, epic: str) -> str:
 **Decision:** Define all MCP endpoints with Pydantic models first
 
 **Rationale:**
+
 - Auto-generated OpenAPI schemas
 - Prevents tool drift
 - Type safety guarantees
 - Self-documenting APIs
 
 **Impact:**
+
 - ✅ Clear tool contracts
 - ✅ Automatic validation
 - ✅ Reduced bugs
@@ -295,21 +318,25 @@ def generate_idempotency_key(title: str, epic: str) -> str:
 ### Current State (Phase 3)
 
 #### Instrumentation
+
 - FastAPI middleware for request tracking
 - Request ID generation and propagation
 - Response time measurement
 - JSONL audit logs
 
 #### Logging
+
 - Console logs for development
 - JSONL structured logs for audit
 - Correlation IDs for tracing
 - No centralized aggregation
 
 #### Metrics
+
 - None (manual observation only)
 
 #### Tracing
+
 - None (single-service architecture)
 
 ### Planned Architecture (Phase 4+)
@@ -346,6 +373,7 @@ def generate_idempotency_key(title: str, epic: str) -> str:
 #### Instrumentation Strategy
 
 **Layer 1: Automatic Instrumentation**
+
 - FastAPI (HTTP request/response spans)
 - httpx (outbound API calls)
 - asyncpg (database queries - future)
@@ -353,12 +381,14 @@ def generate_idempotency_key(title: str, epic: str) -> str:
 - Logging (automatic trace correlation)
 
 **Layer 2: Manual Domain Instrumentation**
+
 - LangGraph agent nodes (understand, plan, act)
 - MCP tool invocations
 - Idempotency checks
 - Audit log writes
 
 **Layer 3: Custom Metrics**
+
 ```python
 # MCP tool invocation counter
 tool_invocation_counter.add(1, {
@@ -376,6 +406,7 @@ workflow_duration.record(execution_time_ms, {
 ```
 
 **Layer 4: Structured Logging**
+
 ```python
 logger.info(
     "story_creation_started",
@@ -388,11 +419,11 @@ logger.info(
 
 #### Service Level Objectives (SLOs)
 
-| SLO | Target | Measurement |
-|-----|--------|-------------|
-| API Latency (p95) | <500ms | HTTP request duration histogram |
-| Tool Success Rate | >99.5% | MCP tool invocation counter |
-| Workflow Latency (p90) | <30s | End-to-end span duration |
+| SLO                    | Target | Measurement                     |
+| ---------------------- | ------ | ------------------------------- |
+| API Latency (p95)      | <500ms | HTTP request duration histogram |
+| Tool Success Rate      | >99.5% | MCP tool invocation counter     |
+| Workflow Latency (p90) | <30s   | End-to-end span duration        |
 
 #### Tenant Context Propagation
 
@@ -406,7 +437,7 @@ class TenantContextMiddleware:
     async def __call__(self, scope, receive, send):
         tenant_id = extract_from_headers(scope["headers"])
         tenant_id_context.set(tenant_id)
-        
+
         # Inject into OTel span
         span = trace.get_current_span()
         span.set_attribute("tenant.id", tenant_id)
@@ -414,10 +445,10 @@ class TenantContextMiddleware:
 
 #### Audit Log Migration
 
-**Current:** Local JSONL files
-**Target:** OTel logs with collector fan-out
+**Current:** Local JSONL files **Target:** OTel logs with collector fan-out
 
 **Benefits:**
+
 - Queryable in Grafana Loki
 - Compliant file backup (90-day retention)
 - Trace correlation for full context
@@ -547,14 +578,17 @@ class TenantContextMiddleware:
 ### Current Implementations
 
 1. **Token Redaction**
+
    - Middleware masks `*_TOKEN`, `*_KEY` in logs
    - Prevents accidental exposure
 
 2. **Environment Isolation**
+
    - All secrets in `.env.local` (git-ignored)
    - `.env.example` for documentation only
 
 3. **Idempotency Keys**
+
    - Embedded in GitHub issues (non-sensitive)
    - Enables duplicate detection
 
@@ -566,11 +600,13 @@ class TenantContextMiddleware:
 ### Planned Enhancements (Phase 4+)
 
 1. **OTel PII Redaction**
+
    - Collector-level regex filters
    - Email, SSN, credit card patterns
    - API token patterns
 
 2. **Tenant Isolation**
+
    - Per-tenant data segregation
    - Span attributes for filtering
    - Tenant-aware sampling
@@ -586,32 +622,34 @@ class TenantContextMiddleware:
 
 ### Current Measurements (Phase 3)
 
-| Operation | Latency | Notes |
-|-----------|---------|-------|
-| Story Creation | 2-3s | Notion API latency |
-| Issue Creation | 1-2s | GitHub API latency |
-| Idempotency Check | <100ms | In-memory cache |
-| Audit Write | <10ms | Async file write |
-| Story List Query | 1-2s | Filter complexity dependent |
+| Operation         | Latency | Notes                       |
+| ----------------- | ------- | --------------------------- |
+| Story Creation    | 2-3s    | Notion API latency          |
+| Issue Creation    | 1-2s    | GitHub API latency          |
+| Idempotency Check | <100ms  | In-memory cache             |
+| Audit Write       | <10ms   | Async file write            |
+| Story List Query  | 1-2s    | Filter complexity dependent |
 
 ### Resource Usage
 
-| Resource | Usage | Notes |
-|----------|-------|-------|
-| Memory | ~150MB | Python + dependencies |
-| CPU | <5% idle | 20-30% during requests |
-| Disk | <1MB/day | Audit logs |
-| Network | ~10KB | Per tool call |
+| Resource | Usage    | Notes                  |
+| -------- | -------- | ---------------------- |
+| Memory   | ~150MB   | Python + dependencies  |
+| CPU      | <5% idle | 20-30% during requests |
+| Disk     | <1MB/day | Audit logs             |
+| Network  | ~10KB    | Per tool call          |
 
 ### Scalability Considerations
 
 **Current Bottlenecks:**
+
 - Single-instance server
 - In-memory cache (not shared)
 - No connection pooling
 - Synchronous external API calls (within async context)
 
 **Planned Improvements:**
+
 - Redis for shared cache
 - Connection pooling (httpx)
 - Horizontal scaling with load balancer
@@ -622,6 +660,7 @@ class TenantContextMiddleware:
 ## Future Architecture Evolution
 
 ### Phase 4: Production Hardening
+
 - WebSocket/SSE for real-time updates
 - Redis for session state
 - OpenTelemetry full instrumentation
@@ -629,6 +668,7 @@ class TenantContextMiddleware:
 - CI/CD pipeline
 
 ### Phase 5: Multi-Agent Orchestration
+
 - LangGraph supervisor architecture
 - Specialized engineer agents
 - QA automation agent
@@ -638,18 +678,22 @@ class TenantContextMiddleware:
 ### Outstanding Architectural Questions
 
 1. **Deployment Model**
+
    - K8s, ECS, or VM-based?
    - Affects collector strategy (sidecar vs daemonset)
 
 2. **Audit Log Storage**
+
    - Keep JSONL + OTel, or fully migrate?
    - Compliance requirements?
 
 3. **Multi-Tenancy**
+
    - Database per tenant or schema per tenant?
    - Isolation level requirements?
 
 4. **Gateway Collector**
+
    - When to introduce centralized aggregation?
    - After horizontal scaling (multiple instances)
 
@@ -662,12 +706,14 @@ class TenantContextMiddleware:
 ## References
 
 ### External Standards
+
 - **Enterprise Multi-Platform Architecture Scaffold v1.0**
 - **OpenTelemetry Semantic Conventions**
 - **FastAPI Best Practices**
 - **LangGraph Architecture Patterns**
 
 ### Internal Documentation
+
 - [Project Status](./PROJECT_STATUS.md)
 - [Testing Guide](./TESTING_GUIDE.md)
 - [Artifact Master Index](./artifacts/Artifact_Master_Index.md)
@@ -677,4 +723,3 @@ class TenantContextMiddleware:
 **Document Status:** Living document, updated with each phase  
 **Next Review:** Phase 4 kickoff  
 **Maintainer:** Engineering Department Team
-

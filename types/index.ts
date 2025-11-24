@@ -25,6 +25,9 @@ export * from './domain';
 // Dataset types
 export * from './dataset';
 
+// Forge / Designer types
+export * from './forge';
+
 // Common utility types
 export type Status = 'idle' | 'loading' | 'success' | 'error';
 

@@ -14,6 +14,10 @@ export const mockAgents: Agent[] = [
     version: '2.1.0',
     status: 'active',
     environment: 'prod',
+    organization_id: 'quant',
+    organization_name: 'Quant',
+    domain_id: 'demo',
+    domain_name: 'Demo',
     created_at: '2025-01-10T08:30:00Z',
     updated_at: '2025-01-15T14:22:00Z',
     created_by: 'nwalker85',
@@ -42,6 +46,10 @@ export const mockAgents: Agent[] = [
     version: '1.8.3',
     status: 'active',
     environment: 'prod',
+    organization_id: 'quant',
+    organization_name: 'Quant',
+    domain_id: 'demo',
+    domain_name: 'Demo',
     created_at: '2025-01-05T10:15:00Z',
     updated_at: '2025-01-14T16:45:00Z',
     created_by: 'sarah.chen',
@@ -70,6 +78,10 @@ export const mockAgents: Agent[] = [
     version: '3.0.1',
     status: 'active',
     environment: 'staging',
+    organization_id: 'quant',
+    organization_name: 'Quant',
+    domain_id: 'demo',
+    domain_name: 'Demo',
     created_at: '2024-12-20T14:00:00Z',
     updated_at: '2025-01-16T09:12:00Z',
     created_by: 'mike.rodriguez',
@@ -98,6 +110,10 @@ export const mockAgents: Agent[] = [
     version: '1.4.2',
     status: 'active',
     environment: 'prod',
+    organization_id: 'quant',
+    organization_name: 'Quant',
+    domain_id: 'demo',
+    domain_name: 'Demo',
     created_at: '2025-01-08T11:20:00Z',
     updated_at: '2025-01-13T15:30:00Z',
     created_by: 'jessica.lee',
@@ -126,6 +142,10 @@ export const mockAgents: Agent[] = [
     version: '2.3.1',
     status: 'active',
     environment: 'prod',
+    organization_id: 'quant',
+    organization_name: 'Quant',
+    domain_id: 'demo',
+    domain_name: 'Demo',
     created_at: '2024-12-15T09:45:00Z',
     updated_at: '2025-01-12T10:55:00Z',
     created_by: 'tom.mitchell',
@@ -154,6 +174,10 @@ export const mockAgents: Agent[] = [
     version: '1.9.0',
     status: 'active',
     environment: 'prod',
+    organization_id: 'quant',
+    organization_name: 'Quant',
+    domain_id: 'demo',
+    domain_name: 'Demo',
     created_at: '2025-01-03T13:15:00Z',
     updated_at: '2025-01-15T11:40:00Z',
     created_by: 'emma.davis',
@@ -182,6 +206,10 @@ export const mockAgents: Agent[] = [
     version: '2.0.4',
     status: 'error',
     environment: 'prod',
+    organization_id: 'quant',
+    organization_name: 'Quant',
+    domain_id: 'demo',
+    domain_name: 'Demo',
     created_at: '2024-12-28T10:00:00Z',
     updated_at: '2025-01-16T08:15:00Z',
     created_by: 'alex.kim',
@@ -210,6 +238,10 @@ export const mockAgents: Agent[] = [
     version: '1.5.7',
     status: 'active',
     environment: 'staging',
+    organization_id: 'quant',
+    organization_name: 'Quant',
+    domain_id: 'demo',
+    domain_name: 'Demo',
     created_at: '2025-01-07T15:30:00Z',
     updated_at: '2025-01-14T12:20:00Z',
     created_by: 'chris.patel',
@@ -238,6 +270,10 @@ export const mockAgents: Agent[] = [
     version: '2.2.0',
     status: 'draft',
     environment: 'dev',
+    organization_id: 'quant',
+    organization_name: 'Quant',
+    domain_id: 'demo',
+    domain_name: 'Demo',
     created_at: '2025-01-11T09:00:00Z',
     updated_at: '2025-01-16T10:45:00Z',
     created_by: 'lisa.martinez',
@@ -266,6 +302,10 @@ export const mockAgents: Agent[] = [
     version: '1.6.8',
     status: 'inactive',
     environment: 'prod',
+    organization_id: 'quant',
+    organization_name: 'Quant',
+    domain_id: 'demo',
+    domain_name: 'Demo',
     created_at: '2024-12-22T14:45:00Z',
     updated_at: '2025-01-10T09:30:00Z',
     created_by: 'david.nguyen',
@@ -284,7 +324,7 @@ export const mockAgents: Agent[] = [
       p99_latency_ms: 3200,
     },
     cost_p95: 0.0015,
-    total_cost_24h: 0.00,
+    total_cost_24h: 0.0,
   },
 ];
 
@@ -329,24 +369,24 @@ export const mockAgentTemplates: AgentTemplate[] = [
 
 // Helper functions for mock data manipulation
 export function getAgentById(id: string): Agent | undefined {
-  return mockAgents.find(agent => agent.id === id);
+  return mockAgents.find((agent) => agent.id === id);
 }
 
 export function getAgentsByStatus(status: AgentStatus): Agent[] {
-  return mockAgents.filter(agent => agent.status === status);
+  return mockAgents.filter((agent) => agent.status === status);
 }
 
 export function getAgentsByEnvironment(environment: string): Agent[] {
-  return mockAgents.filter(agent => agent.environment === environment);
+  return mockAgents.filter((agent) => agent.environment === environment);
 }
 
 export function searchAgents(query: string): Agent[] {
   const lowercaseQuery = query.toLowerCase();
   return mockAgents.filter(
-    agent =>
+    (agent) =>
       agent.name.toLowerCase().includes(lowercaseQuery) ||
       agent.display_name.toLowerCase().includes(lowercaseQuery) ||
       agent.description.toLowerCase().includes(lowercaseQuery) ||
-      agent.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
+      agent.tags.some((tag) => tag.toLowerCase().includes(lowercaseQuery))
   );
 }

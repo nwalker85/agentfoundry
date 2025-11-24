@@ -1,45 +1,55 @@
-"use client"
+'use client';
 
-import { Hammer, FlaskConical, Brain, ExternalLink } from "lucide-react"
+import { Hammer, FlaskConical, Brain, ExternalLink, GitBranch } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 interface AppMenuProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-const apps = [
+const APP_BASE = '/app';
+
+interface AppItem {
+  name: string;
+  description: string;
+  icon: typeof Hammer;
+  href: string;
+  available: boolean;
+  badge?: string;
+}
+
+const apps: AppItem[] = [
   {
-    name: "Forge AI",
-    description: "Visual agent configuration tool",
-    icon: Hammer,
-    href: "/forge",
-    available: true,
-  },
-  {
-    name: "Playground",
-    description: "Test agents in dev before deployment",
+    name: 'From DIS',
+    description: 'Import and compile from Domain Intelligence Schema',
     icon: FlaskConical,
-    href: "/chat",
+    href: `${APP_BASE}/compiler`,
     available: true,
   },
   {
-    name: "Domain Intelligence",
-    description: "AI-powered domain analysis",
-    icon: Brain,
-    href: "/dis",
-    available: false,
-    badge: "Coming Soon",
+    name: 'Agent Graphs',
+    description: 'Design and manage user agents, channel workflows, and system agents',
+    icon: GitBranch,
+    href: `${APP_BASE}/graphs`,
+    available: true,
   },
-]
+  {
+    name: 'Test',
+    description: 'Test agents before deployment',
+    icon: Brain,
+    href: `${APP_BASE}/chat`,
+    available: true,
+  },
+];
 
 export function AppMenu({ open, onOpenChange }: AppMenuProps) {
   return (
@@ -47,14 +57,12 @@ export function AppMenu({ open, onOpenChange }: AppMenuProps) {
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Agent Foundry Apps</DialogTitle>
-          <DialogDescription>
-            Choose an application to get started
-          </DialogDescription>
+          <DialogDescription>Choose an application to get started</DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-3 py-4">
           {apps.map((app) => {
-            const Icon = app.icon
+            const Icon = app.icon;
             const content = (
               <div className="flex items-start gap-4 p-4 rounded-lg border border-border hover:border-blue-600/50 hover:bg-bg-2 transition-colors">
                 <div className="w-12 h-12 rounded-lg bg-blue-600/10 flex items-center justify-center flex-shrink-0">
@@ -69,38 +77,29 @@ export function AppMenu({ open, onOpenChange }: AppMenuProps) {
                         {app.badge}
                       </Badge>
                     )}
-                    {app.available && (
-                      <ExternalLink className="w-4 h-4 text-fg-2 ml-auto" />
-                    )}
+                    {app.available && <ExternalLink className="w-4 h-4 text-fg-2 ml-auto" />}
                   </div>
                   <p className="text-sm text-fg-2">{app.description}</p>
                 </div>
               </div>
-            )
+            );
 
             if (app.available) {
               return (
-                <Link
-                  key={app.name}
-                  href={app.href}
-                  onClick={() => onOpenChange(false)}
-                >
+                <Link key={app.name} href={app.href} onClick={() => onOpenChange(false)}>
                   {content}
                 </Link>
-              )
+              );
             }
 
             return (
-              <div
-                key={app.name}
-                className="opacity-60 cursor-not-allowed"
-              >
+              <div key={app.name} className="opacity-60 cursor-not-allowed">
                 {content}
               </div>
-            )
+            );
           })}
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

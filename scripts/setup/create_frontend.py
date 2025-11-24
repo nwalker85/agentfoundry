@@ -7,12 +7,13 @@ Creates the critical missing chat UI components
 from pathlib import Path
 from textwrap import dedent
 
+
 def create_chat_page():
     """Create the missing chat interface page"""
     chat_dir = Path("app/chat")
     chat_dir.mkdir(parents=True, exist_ok=True)
-    
-    content = dedent('''
+
+    content = dedent("""
     'use client'
     
     import { useState, useEffect } from 'react'
@@ -71,19 +72,20 @@ def create_chat_page():
             </div>
         )
     }
-    ''').strip()
-    
-    with open(chat_dir / "page.tsx", 'w') as f:
+    """).strip()
+
+    with open(chat_dir / "page.tsx", "w") as f:
         f.write(content)
-    
-    print(f"✓ Created app/chat/page.tsx")
+
+    print("✓ Created app/chat/page.tsx")
+
 
 def create_api_routes():
     """Create the missing API routes for MCP integration"""
     api_dir = Path("app/api/chat")
     api_dir.mkdir(parents=True, exist_ok=True)
-    
-    content = dedent('''
+
+    content = dedent("""
     import { NextRequest, NextResponse } from 'next/server'
     
     const MCP_SERVER_URL = process.env.MCP_SERVER_URL || 'http://localhost:8001'
@@ -118,20 +120,21 @@ def create_api_routes():
             )
         }
     }
-    ''').strip()
-    
-    with open(api_dir / "route.ts", 'w') as f:
+    """).strip()
+
+    with open(api_dir / "route.ts", "w") as f:
         f.write(content)
-    
-    print(f"✓ Created app/api/chat/route.ts")
+
+    print("✓ Created app/api/chat/route.ts")
+
 
 def create_components():
     """Create the missing UI components"""
     comp_dir = Path("app/components")
     comp_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # ChatInterface component
-    chat_interface = dedent('''
+    chat_interface = dedent("""
     'use client'
     
     import { useState } from 'react'
@@ -174,15 +177,15 @@ def create_components():
             </form>
         )
     }
-    ''').strip()
-    
-    with open(comp_dir / "ChatInterface.tsx", 'w') as f:
+    """).strip()
+
+    with open(comp_dir / "ChatInterface.tsx", "w") as f:
         f.write(chat_interface)
-    
-    print(f"✓ Created app/components/ChatInterface.tsx")
-    
+
+    print("✓ Created app/components/ChatInterface.tsx")
+
     # MessageList component
-    message_list = dedent('''
+    message_list = dedent("""
     interface Message {
         role: 'user' | 'assistant'
         content: string
@@ -225,16 +228,17 @@ def create_components():
             </div>
         )
     }
-    ''').strip()
-    
-    with open(comp_dir / "MessageList.tsx", 'w') as f:
+    """).strip()
+
+    with open(comp_dir / "MessageList.tsx", "w") as f:
         f.write(message_list)
-    
-    print(f"✓ Created app/components/MessageList.tsx")
+
+    print("✓ Created app/components/MessageList.tsx")
+
 
 def create_dockerfile():
     """Create Docker configuration for containerization"""
-    content = dedent('''
+    content = dedent("""
     # Multi-stage build for Python + Node.js
     FROM python:3.12-slim as python-base
     
@@ -293,15 +297,15 @@ def create_dockerfile():
     
     # Start both services
     CMD ["sh", "-c", "python mcp_server.py & npm start"]
-    ''').strip()
-    
-    with open("Dockerfile", 'w') as f:
+    """).strip()
+
+    with open("Dockerfile", "w") as f:
         f.write(content)
-    
-    print(f"✓ Created Dockerfile")
-    
+
+    print("✓ Created Dockerfile")
+
     # Docker Compose
-    compose_content = dedent('''
+    compose_content = dedent("""
     version: '3.8'
     
     services:
@@ -329,30 +333,31 @@ def create_dockerfile():
     
     volumes:
       redis_data:
-    ''').strip()
-    
-    with open("docker-compose.yml", 'w') as f:
+    """).strip()
+
+    with open("docker-compose.yml", "w") as f:
         f.write(compose_content)
-    
-    print(f"✓ Created docker-compose.yml")
+
+    print("✓ Created docker-compose.yml")
+
 
 def main():
     print("=" * 50)
     print("🚀 Frontend Implementation Generator")
     print("=" * 50)
-    
+
     print("\n📱 Creating Chat UI...")
     create_chat_page()
-    
+
     print("\n🔌 Creating API Routes...")
     create_api_routes()
-    
+
     print("\n🎨 Creating Components...")
     create_components()
-    
+
     print("\n🐳 Creating Docker Configuration...")
     create_dockerfile()
-    
+
     print("\n" + "=" * 50)
     print("✅ Frontend scaffold complete!")
     print("\nNext steps:")
@@ -360,6 +365,7 @@ def main():
     print("2. Update MCP server with /api/agent/process endpoint")
     print("3. Test chat interface locally")
     print("4. Build Docker image for containerized deployment")
+
 
 if __name__ == "__main__":
     main()

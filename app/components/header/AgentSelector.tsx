@@ -27,9 +27,10 @@ export function AgentSelector({
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const filteredAgents = agents.filter((agent) =>
-    agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agent.display_name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAgents = agents.filter(
+    (agent) =>
+      agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      agent.display_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Close dropdown when clicking outside
@@ -51,15 +52,15 @@ export function AgentSelector({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-md",
-          "hover:bg-gray-800 transition-colors min-w-[200px]",
-          isOpen && "bg-gray-800"
+          'flex items-center gap-2 px-3 py-1.5 rounded-md',
+          'hover:bg-gray-800 transition-colors min-w-[200px]',
+          isOpen && 'bg-gray-800'
         )}
       >
         <div className="flex items-center flex-1 min-w-0">
           <div
             className={cn(
-              "w-2 h-2 rounded-full mr-2 flex-shrink-0",
+              'w-2 h-2 rounded-full mr-2 flex-shrink-0',
               selectedAgent?.status === 'active' ? 'bg-green-500' : 'bg-gray-500'
             )}
           />
@@ -69,8 +70,8 @@ export function AgentSelector({
         </div>
         <ChevronDown
           className={cn(
-            "w-4 h-4 text-gray-400 transition-transform flex-shrink-0",
-            isOpen && "rotate-180"
+            'w-4 h-4 text-gray-400 transition-transform flex-shrink-0',
+            isOpen && 'rotate-180'
           )}
         />
       </button>
@@ -95,9 +96,7 @@ export function AgentSelector({
           {/* Agent List */}
           <div className="max-h-64 overflow-y-auto">
             {filteredAgents.length === 0 ? (
-              <div className="px-3 py-8 text-gray-500 text-sm text-center">
-                No agents found
-              </div>
+              <div className="px-3 py-8 text-gray-500 text-sm text-center">No agents found</div>
             ) : (
               filteredAgents.map((agent) => (
                 <button
@@ -111,7 +110,7 @@ export function AgentSelector({
                 >
                   <div
                     className={cn(
-                      "w-2 h-2 rounded-full flex-shrink-0",
+                      'w-2 h-2 rounded-full flex-shrink-0',
                       agent.status === 'active' ? 'bg-green-500' : 'bg-gray-500'
                     )}
                   />

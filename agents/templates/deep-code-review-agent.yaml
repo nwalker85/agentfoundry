@@ -1,0 +1,108 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: Deep Code Review Agent
+  type: user
+  version: 1.0.0
+  description: A deep agent workflow for comprehensive code review with planning, execution, and quality validation
+  tags: [deep-agent, code-review, planner, critic, template]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Code Review Entry
+          description: Entry point for code review requests
+
+      - id: planner
+        type: deepPlanner
+        position: { x: 300, y: 150 }
+        data:
+          label: Review Planner
+          description: Plan code review strategy (architecture, security, performance, style)
+          strategy: sequential
+          max_subtasks: 8
+
+      - id: executor
+        type: deepExecutor
+        position: { x: 300, y: 280 }
+        data:
+          label: Review Executor
+          description: Execute code review tasks with filesystem access
+          model: claude-sonnet-4-5-20250929
+          enable_todos: true
+          enable_filesystem: true
+          enable_subagents: false
+          enable_summarization: true
+          max_iterations: 3
+
+      - id: security_check
+        type: subAgent
+        position: { x: 150, y: 410 }
+        data:
+          label: Security Specialist
+          description: Dedicated agent for security analysis
+          specialization: Security
+          tools: [static_analyzer, vulnerability_scanner]
+          max_depth: 2
+
+      - id: performance_check
+        type: subAgent
+        position: { x: 450, y: 410 }
+        data:
+          label: Performance Specialist
+          description: Dedicated agent for performance analysis
+          specialization: Performance
+          tools: [profiler, complexity_analyzer]
+          max_depth: 2
+
+      - id: critic
+        type: deepCritic
+        position: { x: 300, y: 540 }
+        data:
+          label: Review Validator
+          description: Validate review quality and completeness
+          validation_criteria: [completeness, accuracy, clarity, efficiency]
+          quality_threshold: 0.85
+          auto_replan: true
+
+      - id: end
+        type: end
+        position: { x: 300, y: 670 }
+        data:
+          label: End
+          description: Return code review results
+
+    edges:
+      - id: e1
+        source: entry
+        target: planner
+
+      - id: e2
+        source: planner
+        target: executor
+
+      - id: e3
+        source: executor
+        target: security_check
+
+      - id: e4
+        source: executor
+        target: performance_check
+
+      - id: e5
+        source: security_check
+        target: critic
+
+      - id: e6
+        source: performance_check
+        target: critic
+
+      - id: e7
+        source: critic
+        target: end

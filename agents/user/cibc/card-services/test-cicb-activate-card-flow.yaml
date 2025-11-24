@@ -1,0 +1,207 @@
+id: 279f037d-eb15-4992-9e7e-0c726980272e
+organization_id: cibc
+domain_id: card-services
+name: Test CICB activate card flow
+display_name: Test CICB activate card flow
+description: ""
+version: 1.0.0
+status: draft
+environment: dev
+yaml_path: /app/agents/user/cibc/card-services/test-cicb-activate-card-flow.yaml
+is_system_agent: 0
+system_tier: null
+created_by: system
+tags: "[]"
+graph_type: user
+channel: null
+yaml_content: '{"metadata": {"name": "Test CICB activate card flow", "display_name":
+  "Test CICB activate card flow", "description": "", "type": "user", "organization_id":
+  "cibc", "domain_id": "card-services", "version": "1.0.0", "status": "draft", "id":
+  "279f037d-eb15-4992-9e7e-0c726980272e", "updated": "2025-11-18T14:17:53.745856Z"},
+  "spec": {"state_schema_id": null, "triggers": [], "graph": {"nodes": [{"id": "entryPoint-1763475268496",
+  "type": "entryPoint", "position": {"x": 388.71815009978945, "y": 244.23244169650627},
+  "data": {"label": "Entry Point", "description": ""}, "width": 180, "height": 68,
+  "selected": false, "dragging": false, "positionAbsolute": {"x": 388.71815009978945,
+  "y": 244.23244169650627}}, {"id": "process-1763475270971", "type": "process", "position":
+  {"x": 287.322172080015, "y": 342.2403277854594}, "data": {"label": "verify card",
+  "description": "ask for the last 4 digits of the card number and the expiration
+  date", "model": "gpt-4o-mini", "temperature": 0.7, "maxTokens": 1000}, "width":
+  413, "height": 102, "selected": false, "positionAbsolute": {"x": 287.322172080015,
+  "y": 342.2403277854594}, "dragging": false}, {"id": "human-1763475274569", "type":
+  "human", "position": {"x": 327.2934373905659, "y": 474.1369298975495}, "data": {"label":
+  "Human Input", "description": "wait for the user to provide card info", "prompt":
+  "Please provide input...", "timeout": 3600}, "width": 242, "height": 97, "selected":
+  false, "positionAbsolute": {"x": 327.2934373905659, "y": 474.1369298975495}, "dragging":
+  false}, {"id": "process-1763475277079", "type": "process", "position": {"x": 328.4409589704302,
+  "y": 572.5151331094984}, "data": {"label": "security question", "description": "ask
+  the user to confirm a security question, what is their mother''s maiden name", "model":
+  "gpt-4o-mini", "temperature": 0.7, "maxTokens": 1000}, "width": 487, "height": 102,
+  "selected": false, "positionAbsolute": {"x": 328.4409589704302, "y": 572.5151331094984},
+  "dragging": false}, {"id": "human-1763475285733", "type": "human", "position": {"x":
+  357.2852656532361, "y": 690.1105691968037}, "data": {"label": "Human Input", "description":
+  "wait for the user to provide security info", "prompt": "Please provide input...",
+  "timeout": 3600}, "width": 263, "height": 97, "selected": false, "positionAbsolute":
+  {"x": 357.2852656532361, "y": 690.1105691968037}, "dragging": false}, {"id": "process-1763475289925",
+  "type": "process", "position": {"x": 406.11452877172354, "y": 801.5700896859424},
+  "data": {"label": "finish", "description": "thank the caller, advise card is active,
+  ask if they need anytjhing else", "model": "gpt-4o-mini", "temperature": 0.7, "maxTokens":
+  1000}, "width": 424, "height": 102, "selected": false, "positionAbsolute": {"x":
+  406.11452877172354, "y": 801.5700896859424}, "dragging": false}], "edges": [{"source":
+  "entryPoint-1763475268496", "sourceHandle": null, "target": "process-1763475270971",
+  "targetHandle": null, "animated": true, "id": "reactflow__edge-entryPoint-1763475268496-process-1763475270971"},
+  {"source": "process-1763475270971", "sourceHandle": null, "target": "human-1763475274569",
+  "targetHandle": null, "animated": true, "id": "reactflow__edge-process-1763475270971-human-1763475274569"},
+  {"source": "process-1763475277079", "sourceHandle": null, "target": "human-1763475285733",
+  "targetHandle": null, "animated": true, "id": "reactflow__edge-process-1763475277079-human-1763475285733"},
+  {"source": "human-1763475285733", "sourceHandle": null, "target": "process-1763475289925",
+  "targetHandle": null, "animated": true, "id": "reactflow__edge-human-1763475285733-process-1763475289925"}]}}}'
+created_at: "2025-11-18 14:17:53"
+updated_at: "2025-11-18 14:17:53"
+metadata:
+  id: 279f037d-eb15-4992-9e7e-0c726980272e
+  name: Test CICB activate card flow
+  display_name: Test CICB activate card flow
+  description: ""
+  type: user
+  channel: null
+  organization_id: cibc
+  domain_id: card-services
+  version: 1.0.0
+  status: active
+  updated: "2025-11-18T14:23:06.140583Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entryPoint-1763475268496
+        type: entryPoint
+        position:
+          x: 388.71815009978945
+          y: 244.23244169650627
+        data:
+          label: Entry Point
+          description: ""
+        width: 180
+        height: 68
+        selected: false
+        dragging: false
+        positionAbsolute:
+          x: 388.71815009978945
+          y: 244.23244169650627
+      - id: process-1763475270971
+        type: process
+        position:
+          x: 287.322172080015
+          y: 342.2403277854594
+        data:
+          label: verify card
+          description: ask for the last 4 digits of the card number and the expiration
+            date
+          model: gpt-4o-mini
+          temperature: 0.7
+          maxTokens: 1000
+        width: 413
+        height: 102
+        selected: false
+        positionAbsolute:
+          x: 287.322172080015
+          y: 342.2403277854594
+        dragging: false
+      - id: human-1763475274569
+        type: human
+        position:
+          x: 327.2934373905659
+          y: 474.1369298975495
+        data:
+          label: Human Input
+          description: wait for the user to provide card info
+          prompt: Please provide input...
+          timeout: 3600
+        width: 242
+        height: 97
+        selected: false
+        positionAbsolute:
+          x: 327.2934373905659
+          y: 474.1369298975495
+        dragging: false
+      - id: process-1763475277079
+        type: process
+        position:
+          x: 328.4409589704302
+          y: 572.5151331094984
+        data:
+          label: security question
+          description: ask the user to confirm a security question, what is their mother's
+            maiden name
+          model: gpt-4o-mini
+          temperature: 0.7
+          maxTokens: 1000
+        width: 487
+        height: 102
+        selected: false
+        positionAbsolute:
+          x: 328.4409589704302
+          y: 572.5151331094984
+        dragging: false
+      - id: human-1763475285733
+        type: human
+        position:
+          x: 357.2852656532361
+          y: 690.1105691968037
+        data:
+          label: Human Input
+          description: wait for the user to provide security info
+          prompt: Please provide input...
+          timeout: 3600
+        width: 263
+        height: 97
+        selected: false
+        positionAbsolute:
+          x: 357.2852656532361
+          y: 690.1105691968037
+        dragging: false
+      - id: process-1763475289925
+        type: process
+        position:
+          x: 406.11452877172354
+          y: 801.5700896859424
+        data:
+          label: finish
+          description: thank the caller, advise card is active, ask if they need anytjhing
+            else
+          model: gpt-4o-mini
+          temperature: 0.7
+          maxTokens: 1000
+        width: 424
+        height: 102
+        selected: false
+        positionAbsolute:
+          x: 406.11452877172354
+          y: 801.5700896859424
+        dragging: false
+    edges:
+      - source: entryPoint-1763475268496
+        sourceHandle: null
+        target: process-1763475270971
+        targetHandle: null
+        animated: true
+        id: reactflow__edge-entryPoint-1763475268496-process-1763475270971
+      - source: process-1763475270971
+        sourceHandle: null
+        target: human-1763475274569
+        targetHandle: null
+        animated: true
+        id: reactflow__edge-process-1763475270971-human-1763475274569
+      - source: process-1763475277079
+        sourceHandle: null
+        target: human-1763475285733
+        targetHandle: null
+        animated: true
+        id: reactflow__edge-process-1763475277079-human-1763475285733
+      - source: human-1763475285733
+        sourceHandle: null
+        target: process-1763475289925
+        targetHandle: null
+        animated: true
+        id: reactflow__edge-human-1763475285733-process-1763475289925

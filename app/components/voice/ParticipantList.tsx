@@ -17,10 +17,7 @@ export function ParticipantList() {
           const isSpeaking = participant.isSpeaking;
 
           return (
-            <div
-              key={participant.sid}
-              className={`participant ${isSpeaking ? 'speaking' : ''}`}
-            >
+            <div key={participant.sid} className={`participant ${isSpeaking ? 'speaking' : ''}`}>
               <div className="participant-icon">
                 {isAgent ? <Bot size={16} /> : <User size={16} />}
               </div>

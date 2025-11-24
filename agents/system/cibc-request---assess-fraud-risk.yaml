@@ -1,0 +1,193 @@
+id: cibc-cibc-request-assess-fraud-risk
+metadata:
+  id: cibc-cibc-request-assess-fraud-risk
+  name: CIBC Request - Assess Fraud Risk
+  display_name: CIBC Request - Assess Fraud Risk
+  description: Pindrop checkpoint for replacement request risk assessment
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-3
+    - request-orchestration
+    - fraud-assessment
+    - pindrop
+  updated: "2025-11-18T01:28:58.576544Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 400
+          y: 50
+        data:
+          label: Risk Assessment Checkpoint
+          description: Evaluate request fraud risk
+      - id: get_fraud_score
+        type: toolCall
+        position:
+          x: 400
+          y: 150
+        data:
+          label: Get Pindrop Score
+          description: Query fraud detection API
+          tool: func-get-fraud-risk-score
+      - id: evaluate_high_risk_criteria
+        type: process
+        position:
+          x: 400
+          y: 280
+        data:
+          label: Evaluate High-Risk Criteria
+          description: Check all 8 high-risk conditions
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Evaluate high-risk criteria:
+
+
+            1. Address change on file
+
+            2. Fraud score > 50
+
+            3. Multiple replacement requests (> 3 in 12 months)
+
+            4. Recent unauthorized transactions
+
+            5. Account less than 90 days old
+
+            6. Inconsistent contact information
+
+            7. Rush delivery requested
+
+            8. International shipping address
+
+
+            All 8 must be checked.
+
+            "
+      - id: calculate_risk_tier
+        type: toolCall
+        position:
+          x: 400
+          y: 410
+        data:
+          label: Calculate Risk Tier
+          description: Determine routing tier
+          tool: func-calculate-request-risk-score
+      - id: tier_decision
+        type: decision
+        position:
+          x: 400
+          y: 540
+        data:
+          label: Risk Tier
+          description: Route based on calculated risk
+          conditions:
+            - label: Auto (Score < 30, No High-Risk Criteria)
+              expression: risk_tier == 'auto'
+              next: auto_approve_path
+            - label: Tier 1 (Financial Risk Only)
+              expression: risk_tier == 'tier1'
+              next: tier1_queue
+            - label: Tier 2 (Fraud Risk)
+              expression: risk_tier == 'tier2'
+              next: tier2_queue
+            - label: Blocked (Score > 70)
+              expression: risk_tier == 'blocked'
+              next: block_and_escalate
+      - id: auto_approve_path
+        type: process
+        position:
+          x: 100
+          y: 670
+        data:
+          label: Auto-Approve Path
+          description: Low risk - proceed automatically
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: tier1_queue
+        type: process
+        position:
+          x: 300
+          y: 670
+        data:
+          label: Route to Tier 1 (CIF Officer)
+          description: Financial risk - fee waivers, rush delivery
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: tier2_queue
+        type: process
+        position:
+          x: 500
+          y: 670
+        data:
+          label: Route to Tier 2 (CIF Supervisor)
+          description: Fraud risk - address changes, high scores
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: block_and_escalate
+        type: process
+        position:
+          x: 700
+          y: 670
+        data:
+          label: Block & Escalate
+          description: Critical fraud risk - Card Security Officer
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: end
+        type: end
+        position:
+          x: 400
+          y: 800
+        data:
+          label: Risk Assessment Complete
+    edges:
+      - id: e1
+        source: entry
+        target: get_fraud_score
+      - id: e2
+        source: get_fraud_score
+        target: evaluate_high_risk_criteria
+      - id: e3
+        source: evaluate_high_risk_criteria
+        target: calculate_risk_tier
+      - id: e4
+        source: calculate_risk_tier
+        target: tier_decision
+      - id: e5
+        source: tier_decision
+        target: auto_approve_path
+        sourceHandle: Auto (Score < 30, No High-Risk Criteria)
+      - id: e6
+        source: tier_decision
+        target: tier1_queue
+        sourceHandle: Tier 1 (Financial Risk Only)
+      - id: e7
+        source: tier_decision
+        target: tier2_queue
+        sourceHandle: Tier 2 (Fraud Risk)
+      - id: e8
+        source: tier_decision
+        target: block_and_escalate
+        sourceHandle: Blocked (Score > 70)
+      - id: e9
+        source: auto_approve_path
+        target: end
+      - id: e10
+        source: tier1_queue
+        target: end
+      - id: e11
+        source: tier2_queue
+        target: end
+      - id: e12
+        source: block_and_escalate
+        target: end

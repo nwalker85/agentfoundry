@@ -1,0 +1,199 @@
+id: cibc-cibc-request-route-tier1
+metadata:
+  id: cibc-cibc-request-route-tier1
+  name: CIBC Request - Route Tier 1
+  display_name: CIBC Request - Route Tier 1
+  description: Tier 1 approval gate - CIF Officer (financial risk, fee waivers, rush
+    delivery)
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-3
+    - request-orchestration
+    - tier1
+    - cif-officer
+  updated: "2025-11-18T01:28:58.625529Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Tier 1 Queue
+          description: Request routed to CIF Officer
+      - id: prepare_review_package
+        type: process
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Prepare Review Package
+          description: Compile request details for officer
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Prepare review package:
+
+
+            Include:
+
+            - Customer profile summary
+
+            - Request details (reason, channel, timestamp)
+
+            - Fraud score
+
+            - Fee waiver eligibility
+
+            - Rush delivery request
+
+            - Recent replacement history
+
+            "
+      - id: check_fee_decision
+        type: toolCall
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Automated Fee Decision
+          description: Calculate fee waiver eligibility
+          tool: func-create-fee-decision
+      - id: present_to_officer
+        type: process
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Present to CIF Officer
+          description: Display request for human review
+          model: gpt-4o
+          temperature: 0.5
+          prompt: "Present to CIF Officer for approval:
+
+
+            Officer can:
+
+            - Approve request
+
+            - Approve with fee waiver
+
+            - Approve with rush delivery
+
+            - Request additional verification
+
+            - Deny request
+
+            "
+      - id: officer_decision
+        type: decision
+        position:
+          x: 300
+          y: 540
+        data:
+          label: Officer Decision
+          description: CIF Officer approval
+          conditions:
+            - label: Approved
+              expression: officer_approved == true
+              next: update_request_status
+            - label: Additional Verification Required
+              expression: additional_verification == true
+              next: request_verification
+            - label: Denied
+              expression: officer_approved == false
+              next: notify_denial
+      - id: update_request_status
+        type: process
+        position:
+          x: 150
+          y: 670
+        data:
+          label: Update Request Status
+          description: Mark as approved by Tier 1
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: request_verification
+        type: process
+        position:
+          x: 350
+          y: 670
+        data:
+          label: Request Additional Verification
+          description: Initiate outbound call to customer
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: notify_denial
+        type: process
+        position:
+          x: 550
+          y: 670
+        data:
+          label: Notify Customer of Denial
+          description: Send denial notification
+          model: gpt-4o
+          temperature: 0.6
+      - id: queue_for_gd
+        type: process
+        position:
+          x: 150
+          y: 800
+        data:
+          label: Queue for G&D Submission
+          description: Add to batch for card production
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 930
+        data:
+          label: Tier 1 Complete
+    edges:
+      - id: e1
+        source: entry
+        target: prepare_review_package
+      - id: e2
+        source: prepare_review_package
+        target: check_fee_decision
+      - id: e3
+        source: check_fee_decision
+        target: present_to_officer
+      - id: e4
+        source: present_to_officer
+        target: officer_decision
+      - id: e5
+        source: officer_decision
+        target: update_request_status
+        sourceHandle: Approved
+      - id: e6
+        source: officer_decision
+        target: request_verification
+        sourceHandle: Additional Verification Required
+      - id: e7
+        source: officer_decision
+        target: notify_denial
+        sourceHandle: Denied
+      - id: e8
+        source: update_request_status
+        target: queue_for_gd
+      - id: e9
+        source: queue_for_gd
+        target: end
+      - id: e10
+        source: request_verification
+        target: end
+      - id: e11
+        source: notify_denial
+        target: end

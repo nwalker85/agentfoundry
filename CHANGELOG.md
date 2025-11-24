@@ -3,131 +3,196 @@
 All notable changes to Agent Foundry will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [0.9.0] - 2025-01-16
+## [0.9.0] - 2025-11-24
 
-### 🎯 Phase 2: Core Agent Pages - COMPLETE
+### 🚀 Production-Ready Platform with Complete Forge Editor
 
-Complete implementation of agent and tool management pages with advanced search, filtering, and detail views.
+This release marks Agent Foundry as production-ready with a fully functional
+visual graph editor, agent version management, and multi-tenant control plane.
 
 ### Added
-- 📋 **Agents Registry Page** (`/agents`)
+
+- 🎨 **Forge Visual Graph Editor** (`/app/graphs`)
+
+  - Drag-and-drop node creation (Process, Decision, Tool Call, Entry, End)
+  - ReactFlow-based graph visualization with zoom/pan
+  - Node configuration side panel with live editing
+  - State schema management tab
+  - Trigger configuration tab
+  - Multi-tab graph navigation
+  - Keyboard shortcuts (Cmd+S to save)
+  - Unsaved changes dialog with proper UI (replaced window.confirm)
+
+- 📦 **Agent Version Management**
+
+  - Auto-increment versioning (0.0.1 → 0.0.2 → 0.0.3)
+  - Version history dropdown with timestamps and authors
+  - Deploy specific versions to environments
+  - "Deployed" badge indicator on active versions
+  - Version API endpoints (`/api/graphs/{id}/versions`)
+
+- 🗑️ **Enhanced Delete Functionality**
+
+  - Proper cleanup of structured YAML files
+  - Cleanup of deployment artifacts (`{uuid}.agent.yaml`, `{uuid}.py`)
+  - Marshal registry unregistration
+  - Cascade deletion of agent versions
+
+- 🔐 **RBAC & Authentication**
+
+  - Zitadel SSO integration
+  - Permission-based access control
+  - Organization/domain scoping
+  - Session management with NextAuth
+
+- 📊 **Agents Registry Page** (`/app/agents`)
+
   - Advanced search and filtering (status, environment, tags)
-  - 4 summary metric cards (Active Agents, Executions, Success Rate, Cost)
-  - Responsive agent card grid with hover effects
-  - Active filter chips with clear all functionality
-  - Empty state with clear filters action
-  - Debounced search (300ms) with memoized filtering
+  - Real-time metrics from WebSocket events
+  - Agent activity stream
+  - Metric cards (Active Agents, Executions, Success Rate)
 
-- 🔍 **Agent Detail Page** (`/agents/[id]`)
-  - 4-tab interface (Overview, Metrics & Logs, Deployments, Configuration)
-  - Test Agent and Duplicate actions
-  - 4 key metric cards with trends
-  - Recent traces with links to monitoring
-  - Deployment history with performance deltas
-  - YAML configuration viewer
-  - 404 handling for invalid agent IDs
+- 🔧 **Tools Catalog Page** (`/app/tools`)
 
-- 🔧 **Tools Catalog Page** (`/tools`)
-  - Advanced filtering (status, category, verification)
-  - Search across name, description, vendor, tags
-  - 4 summary metrics (Installed, Updates Available, Invocations, Success Rate)
-  - Tool cards showing metrics for installed tools
-  - Install/Uninstall workflows with loading states
-  - Update available indicators
+  - Integration tool discovery via MCP
+  - Health monitoring per tool
+  - Install/configure workflows
+  - Favorites support
 
-- 📦 **Tool Detail Page** (`/tools/[id]`)
-  - 5-tab interface (Overview, Usage & Metrics, Agents, Permissions, Documentation)
-  - Install/Uninstall with state management
-  - Usage statistics and recent invocations
-  - List of agents using this tool with links
-  - Required permissions display
-  - Tool documentation and handler code viewer
-  - 404 handling for invalid tool IDs
+- 💬 **Chat Playground** (`/app/chat`)
 
-- 🛠️ **Forge Page Enhancement**
-  - Replaced header with PageHeader component
-  - Added LoadingState overlay during operations
-  - Added EmptyState when no workflow nodes exist
-  - Replaced alert() calls with state-based error/success messages
-  - Visual consistency with other pages
-  - Improved error handling
+  - Agent selection dropdown
+  - Voice toggle with LiveKit WebRTC
+  - Activity stream sidebar
+  - Real-time streaming responses
+
+- 🛠️ **Admin Pages** (`/app/admin`)
+  - Database browser and management
+  - Multi-database support (PostgreSQL, Redis)
+  - Backup and restore functionality
 
 ### Changed
-- Enhanced StatusBadge component with `rolled_back` and `cancelled` statuses for deployment support
-- Improved error handling across all pages (no more alert() dialogs)
-- Standardized page structure patterns for all registry and detail pages
 
-### Technical
-- **Code Statistics**: 1,798 lines of new TypeScript code
-- **Routes Created**: 5 new/enhanced routes
-- **Component Integration**: All pages use Phase 1 shared components (PageHeader, SearchBar, FilterPanel, MetricCard, StatusBadge, EmptyState, LoadingState)
-- **Type Safety**: 100% TypeScript with full type coverage
-- **Mock Data**: Full integration with Phase 1 mock data (agents, tools, deployments, traces)
-- **Build Status**: All builds passing, 13 total routes, optimized bundle sizes
-- **Documentation**: Complete phase documentation in `docs/PHASE_2_COMPLETE.md`
+- **Backend** (`backend/`)
 
-### Performance
-- Debounced search (300ms delay) prevents excessive re-renders
-- Memoized filtering with `useMemo` for optimized performance
-- Responsive grids (1/2/3 columns) based on viewport
-- Smooth transitions and hover effects
+  - `delete_graph()` now cleans up all artifacts (YAML, Python, versions)
+  - `delete_graph_endpoint()` unregisters from Marshal registry
+  - `upsert_graph()` checks by ID first for proper version tracking
+  - Added `deploy_agent_version()` for deploy workflow
+  - Added `get_deployed_agents()` for deployed-only listings
 
-### UX Improvements
-- Consistent design patterns across all pages
-- Clear visual feedback with status badges and trends
-- Empty states with helpful actions
-- Loading states during async operations
-- Keyboard navigation support
-- Accessible (semantic HTML, ARIA labels)
+- **Frontend** (`app/`)
+
+  - Replaced `window.confirm()` with ConfirmDialog component
+  - Added debounced saves in node editor to prevent flickering
+  - Version dropdown shows deployment history with deploy button
+  - LeftNav uses proper navigation with unsaved changes check
+
+- **API Endpoints**
+  - `POST /api/graphs/{id}/versions/{vid}/deploy` - Deploy specific version
+  - `GET /api/graphs/deployed` - List only deployed versions
+  - Enhanced `/api/graphs` to include Marshal registry agents
+
+### Fixed
+
+- Node editor flickering when typing (removed auto-save, added debounce)
+- Version history only showing current version (fixed ID handling in save)
+- Delete not removing YAML files (added deployment artifact cleanup)
+- Ghost agents appearing after delete (Marshal registry cleanup)
+
+### Technical Stack
+
+**Frontend (Next.js 14 + React 18)**
+- Core: Next.js 14, React 18, TypeScript 5.3
+- UI: Shadcn/ui, Radix primitives, Tailwind CSS 3.4
+- State: Zustand, TanStack Query
+- Graphs: ReactFlow 11.11 (workflow editor)
+- Editor: Monaco Editor (code/YAML)
+- Voice: LiveKit Client, Socket.IO
+
+**Backend (FastAPI + Python 3.12)**
+- Core: FastAPI 0.109, Uvicorn, Pydantic 2.9
+- AI/Agents: LangChain 1.0.8, LangGraph 1.0.3
+- LLM: OpenAI, Anthropic Claude
+- Voice: LiveKit 1.0, Deepgram (STT), ElevenLabs/OpenAI (TTS)
+- Database: PostgreSQL 16, SQLAlchemy 2.0
+- Cache: Redis 7
+
+**Infrastructure (Docker Compose)**
+- LiveKit: WebRTC voice/video (port 7880)
+- Redis: State/cache/sessions (port 6379)
+- PostgreSQL: Control plane DB (port 5432)
+- LocalStack: AWS emulation - Secrets, S3 (port 4566)
+- Prometheus: Metrics collection (port 9090)
+- Tempo: Distributed tracing (port 4317)
+
+### Architecture
+
+- **Control Plane**: Forge builder, manifests, RBAC, monitoring
+- **Data Plane**: LangGraph agents, MCP tools, Redis state
+- **Agent Model**: IO → Supervisor → Domain Agent → MCP Tools
+- **Multi-Tenant**: Organization → Domain → Environment hierarchy
+- **Security**: Row-Level Security, Zitadel SSO, field encryption
 
 ## [0.8.1] - 2025-11-16
 
 ### 🎨 MVP UI Scaffolding Complete
 
-Complete redesign of the frontend with professional dark theme, modern component library, and production-ready navigation system.
+Complete redesign of the frontend with professional dark theme, modern component
+library, and production-ready navigation system.
 
 ### Added
+
 - 🎨 **Shadcn UI Component Library**
+
   - Installed complete Shadcn component system
   - Button, Card, Input, Badge, Avatar, Dropdown, Dialog, Table components
   - Customized with Ravenhelm dark theme colors
   - CSS variables for consistent theming across all components
 
 - 🌙 **Ravenhelm Dark Theme**
+
   - Custom color palette (bg-0/1/2, fg-0/1/2, blue-600, cyan-400)
   - Professional dark mode optimized for long sessions
   - Consistent contrast ratios for accessibility
   - Smooth transitions and animations
 
 - 🧭 **Global Navigation System**
+
   - **TopNav** - Persistent header with org switcher, app menu, user dropdown
-  - **LeftNav** - Collapsible sidebar with main navigation (responsive - hidden on mobile)
+  - **LeftNav** - Collapsible sidebar with main navigation (responsive - hidden
+    on mobile)
   - **OrgSwitcher Modal** - Organization management interface (stub)
   - **AppMenu Modal** - Application launcher (Forge AI, Crucible AI, DIS)
   - Mobile-responsive with breakpoints
 
 - 📊 **Dashboard** (`/`)
+
   - Metric cards showing Organizations, Projects, Instances, Artifacts
   - System status integration with API monitoring
   - Recent activity feed with empty state
   - Merged previous homepage functionality
 
 - 📁 **Projects Page** (`/projects`)
+
   - Table layout with search and filter controls
   - Empty state with create project CTA
   - Ready for CRUD implementation
   - Responsive table design
 
 - 🖥️ **Instance Monitoring** (`/instances`)
+
   - Agent instance browser (stub)
   - Empty state placeholder
   - Ready for LiveKit integration
 
 - 📦 **Artifacts Browser** (`/artifacts`)
+
   - Generated artifacts display (stub)
   - Empty state placeholder
   - Ready for artifact management
@@ -139,6 +204,7 @@ Complete redesign of the frontend with professional dark theme, modern component
   - Added connection status bar
 
 ### Changed
+
 - Standardized all icons to lucide-react (removed @heroicons/react dependency)
 - Migrated from `tailwind.config.js` to `tailwind.config.ts` with TypeScript
 - Updated root layout to use global app shell structure
@@ -146,30 +212,38 @@ Complete redesign of the frontend with professional dark theme, modern component
 - Backend port references updated from 8001 to 8000 in documentation
 
 ### Removed
+
 - Backlog page and components (out of MVP scope)
 - Standalone page headers (replaced by global TopNav)
 - @heroicons/react dependency
 
 ### Fixed
+
 - Import path issues with Shadcn components
 - TypeScript compilation errors in EnhancedMessage and AudioVisualizer
 - Responsive layout on mobile devices
 - Build process now passes with zero errors
 
 ### Technical
+
 - Added `components.json` for Shadcn configuration
 - Created `app/lib/utils.ts` with cn() utility
-- Installed dependencies: tailwindcss-animate, @radix-ui/react-icons, tailwind-merge
+- Installed dependencies: tailwindcss-animate, @radix-ui/react-icons,
+  tailwind-merge
 - Production build verified: 31 files changed, 1,624 insertions, 695 deletions
 
 ## [0.8.0] - 2025-11-16
 
 ### 🏆 Major Achievement: Complete Platform Modernization
 
-This release represents a **complete platform modernization** - not just voice integration, but a comprehensive upgrade of the entire technology stack while maintaining architectural integrity.
+This release represents a **complete platform modernization** - not just voice
+integration, but a comprehensive upgrade of the entire technology stack while
+maintaining architectural integrity.
 
 ### Added
+
 - 🎉 **End-to-end voice chat with LiveKit + WebRTC**
+
   - Browser microphone capture and audio playback
   - Real-time bidirectional audio communication
   - Multi-turn voice conversations with context preservation
@@ -179,6 +253,7 @@ This release represents a **complete platform modernization** - not just voice i
   - Connection recovery and graceful degradation
 
 - 🚀 **Dynamic agent composition from YAML manifests**
+
   - Runtime agent creation from configuration files
   - Hot-reload with file watcher (< 30 second updates)
   - YAML schema validation
@@ -187,6 +262,7 @@ This release represents a **complete platform modernization** - not just voice i
   - No code deployment required for new agents
 
 - 🐳 **Complete Docker containerization**
+
   - LiveKit server containerized (livekit/livekit-server:latest)
   - Redis containerized with health checks
   - Backend containerized with dependency management
@@ -206,6 +282,7 @@ This release represents a **complete platform modernization** - not just voice i
 ### Changed
 
 - **BREAKING: LangChain/LangGraph Major Version Upgrade**
+
   - Upgraded from deprecated 0.2.x/0.3.x to LangChain 1.0.7
   - Upgraded to LangGraph 1.0.3 (LTS version)
   - **Requires Python 3.12** (breaking change)
@@ -217,6 +294,7 @@ This release represents a **complete platform modernization** - not just voice i
   - Resolved all dependency conflicts
 
 - **BREAKING: LiveKit Migration**
+
   - Migrated from Homebrew installation to Docker Compose
   - Updated `LIVEKIT_URL` configuration:
     - Backend: `ws://livekit:7880` (Docker internal network)
@@ -234,6 +312,7 @@ This release represents a **complete platform modernization** - not just voice i
 ### Infrastructure
 
 - **Docker Compose Stack**
+
   - LiveKit service with WebRTC port configuration
     - HTTP/WebSocket: 7880
     - RTC TCP: 7881
@@ -245,6 +324,7 @@ This release represents a **complete platform modernization** - not just voice i
   - Service startup ordering with `depends_on`
 
 - **Network Architecture**
+
   - Docker bridge network for internal communication
   - Port mapping for external access
   - No mixed container/native services
@@ -258,6 +338,7 @@ This release represents a **complete platform modernization** - not just voice i
 ### Performance
 
 - **Voice Pipeline Metrics**
+
   - Voice round-trip latency: 2.5-5.5 seconds ✅
   - Connection establishment: < 2 seconds ✅
   - STT processing: < 1 second ✅
@@ -284,6 +365,7 @@ This release represents a **complete platform modernization** - not just voice i
 ### Dependencies
 
 **Major Upgrades:**
+
 - langchain: 0.2.x → 1.0.7
 - langgraph: 0.2.x → 1.0.3
 - langchain-anthropic: 0.2.x → 1.0.x
@@ -292,6 +374,7 @@ This release represents a **complete platform modernization** - not just voice i
 - Python: 3.11 → 3.12 (required)
 
 **New Dependencies:**
+
 - livekit-server-sdk-python: ^0.11.0
 - livekit-client: ^2.15.15 (frontend)
 - @livekit/components-react: ^2.9.15 (frontend)
@@ -299,12 +382,14 @@ This release represents a **complete platform modernization** - not just voice i
 ### Documentation
 
 - Added `docs/artifacts/VOICE_INTEGRATION_VALIDATION.md`
+
   - Comprehensive validation report
   - Full scope of modernization documented
   - Performance metrics captured
   - Success criteria validation
 
 - Updated `LIVEKIT_DOCKER_MIGRATION.md`
+
   - Migration status: COMPLETE
   - Validation results documented
 
@@ -316,6 +401,7 @@ This release represents a **complete platform modernization** - not just voice i
 ### Validation
 
 **Docker Stack:**
+
 - ✅ All services healthy (livekit, redis, backend, compiler)
 - ✅ Health checks passing
 - ✅ Service dependencies working
@@ -323,6 +409,7 @@ This release represents a **complete platform modernization** - not just voice i
 - ✅ Network communication validated
 
 **Voice Integration:**
+
 - ✅ LiveKit WebSocket connection established
 - ✅ Audio capture and playback working
 - ✅ STT processing functional
@@ -331,6 +418,7 @@ This release represents a **complete platform modernization** - not just voice i
 - ✅ Multi-browser compatibility (Chrome, Safari, Firefox)
 
 **Agent Architecture:**
+
 - ✅ YAML-based agent composition working
 - ✅ Hot-reload functional (< 30 seconds)
 - ✅ File watcher detecting changes
@@ -339,6 +427,7 @@ This release represents a **complete platform modernization** - not just voice i
 - ✅ LangGraph 1.0 integration complete
 
 **Platform Stability:**
+
 - ✅ No Homebrew processes running
 - ✅ All services containerized
 - ✅ Reproducible deployment (docker-compose up)
@@ -349,18 +438,21 @@ This release represents a **complete platform modernization** - not just voice i
 **For Developers:**
 
 1. **Update Python:**
+
    ```bash
    # Python 3.12 required
    python --version  # Should be 3.12+
    ```
 
 2. **Install Dependencies:**
+
    ```bash
    cd backend
    pip install -r requirements.txt --break-system-packages
    ```
 
 3. **Update Agent Code:**
+
    - Old: `from langchain.agents import AgentExecutor`
    - New: `from langgraph.prebuilt import create_react_agent`
 
@@ -374,12 +466,14 @@ This release represents a **complete platform modernization** - not just voice i
 
 - **Week 1 of MVP plan completed ahead of schedule**
 - **Achievement level: Exceptional** 🏆
+
   - Most projects would abandon LangGraph for simpler approach
   - Most would skip real-time voice (too complex)
   - Most would stay on deprecated versions
   - We: Upgraded everything, maintained architecture, added voice
 
 - **Production readiness: 85%**
+
   - Core functionality: ✅ Complete
   - Docker stack: ✅ Production-ready
   - Voice pipeline: ✅ Working
@@ -428,19 +522,23 @@ curl http://localhost:8000/health  # Backend health
 ## [0.8.1-dev] - 2025-11-15
 
 ### Changed
+
 - Migrated LiveKit from Homebrew installation to Docker Compose service
 - Updated docker-compose.yml with LiveKit service configuration
-- Modified backend LIVEKIT_URL to use Docker internal networking (ws://livekit:7880)
+- Modified backend LIVEKIT_URL to use Docker internal networking
+  (ws://livekit:7880)
 - Added LiveKit health checks and service dependencies in Docker Compose
 - Removed Homebrew LiveKit dependency from local development workflow
 
 ### Infrastructure
+
 - LiveKit now runs as containerized service (livekit/livekit-server:latest)
 - Improved local development setup with consistent Docker networking
 - Added service health checks for Redis and LiveKit
 - Added depends_on configuration for backend service
 
 ### Technical Details
+
 - HTTP/WebSocket port: 7880
 - RTC TCP port: 7881
 - WebRTC UDP range: 40000-40100
@@ -448,12 +546,14 @@ curl http://localhost:8000/health  # Backend health
 - Volume mount for LiveKit config: ./livekit-config.yaml
 
 ### Fixed
+
 - Frontend LiveKit connection using localhost:7880 port mapping
 - Backend-to-LiveKit communication via Docker internal networking
 
 ## [0.8.0-dev] - 2025-11-14
 
 ### Added
+
 - Initial LiveKit voice integration
 - FastAPI backend with MCP server capabilities
 - LangGraph agent orchestration
@@ -464,6 +564,7 @@ curl http://localhost:8000/health  # Backend health
 - Agent registry system (YAML-based)
 
 ### Infrastructure
+
 - Docker containerization for all services
 - Multi-service orchestration via Docker Compose
 - Volume mounts for hot-reload development
@@ -471,6 +572,8 @@ curl http://localhost:8000/health  # Backend health
 
 ---
 
-[Unreleased]: https://github.com/ravenhelm/agentfoundry/compare/v0.8.1-dev...HEAD
-[0.8.1-dev]: https://github.com/ravenhelm/agentfoundry/compare/v0.8.0-dev...v0.8.1-dev
+[Unreleased]:
+  https://github.com/ravenhelm/agentfoundry/compare/v0.8.1-dev...HEAD
+[0.8.1-dev]:
+  https://github.com/ravenhelm/agentfoundry/compare/v0.8.0-dev...v0.8.1-dev
 [0.8.0-dev]: https://github.com/ravenhelm/agentfoundry/releases/tag/v0.8.0-dev

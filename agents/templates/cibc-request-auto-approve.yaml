@@ -1,0 +1,153 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Request - Auto-Approve
+  type: system
+  version: 1.0.0
+  description: Automated approval for low-risk replacement requests
+  tags: [cibc, agent-group-3, request-orchestration, auto-approve, low-risk]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Auto-Approve Path
+          description: Low-risk request eligible for automation
+
+      - id: final_risk_check
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Final Risk Verification
+          description: Confirm auto-approval eligibility
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Verify all auto-approval criteria:
+
+            ✓ Fraud score < 30
+            ✓ No address change
+            ✓ No high-risk criteria
+            ✓ Less than 2 replacements in 12 months
+            ✓ Account > 90 days old
+            ✓ No recent fraud memos
+            ✓ No active card watches
+
+      - id: check_blocking_codes
+        type: toolCall
+        position: { x: 300, y: 280 }
+        data:
+          label: RMU Pre-Flight Check
+          description: Verify no blocking status codes
+          tool: func-check-blocking-status-codes
+
+      - id: blocking_check_decision
+        type: decision
+        position: { x: 300, y: 410 }
+        data:
+          label: Can Auto-Approve?
+          description: Final gate before approval
+          conditions:
+            - label: Clear to Approve
+              expression: can_proceed == true
+              next: approve_request
+            - label: Blocking Codes Present
+              expression: can_proceed == false
+              next: route_manual_review
+
+      - id: approve_request
+        type: process
+        position: { x: 200, y: 540 }
+        data:
+          label: Approve Request
+          description: Mark as auto-approved
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: create_fee_decision
+        type: toolCall
+        position: { x: 200, y: 670 }
+        data:
+          label: Create Fee Decision
+          description: Automated fee calculation
+          tool: func-create-fee-decision
+
+      - id: queue_for_gd
+        type: process
+        position: { x: 200, y: 800 }
+        data:
+          label: Queue for G&D Batch
+          description: Add to 5:30 PM batch
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: send_confirmation
+        type: toolCall
+        position: { x: 200, y: 930 }
+        data:
+          label: Send Confirmation
+          description: Notify customer of approval
+          tool: func-send-notification
+
+      - id: route_manual_review
+        type: process
+        position: { x: 400, y: 540 }
+        data:
+          label: Route to Manual Review
+          description: Exception - needs human review
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: end
+        type: end
+        position: { x: 300, y: 1060 }
+        data:
+          label: Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: final_risk_check
+
+      - id: e2
+        source: final_risk_check
+        target: check_blocking_codes
+
+      - id: e3
+        source: check_blocking_codes
+        target: blocking_check_decision
+
+      - id: e4
+        source: blocking_check_decision
+        target: approve_request
+        sourceHandle: Clear to Approve
+
+      - id: e5
+        source: blocking_check_decision
+        target: route_manual_review
+        sourceHandle: Blocking Codes Present
+
+      - id: e6
+        source: approve_request
+        target: create_fee_decision
+
+      - id: e7
+        source: create_fee_decision
+        target: queue_for_gd
+
+      - id: e8
+        source: queue_for_gd
+        target: send_confirmation
+
+      - id: e9
+        source: send_confirmation
+        target: end
+
+      - id: e10
+        source: route_manual_review
+        target: end

@@ -3,8 +3,8 @@
  * Standardized status indicator with color coding
  */
 
-import { cn } from "@/lib/utils";
-import { Circle } from "lucide-react";
+import { cn } from '@/lib/utils';
+import { Circle } from 'lucide-react';
 
 type StatusType =
   | 'active'
@@ -30,100 +30,92 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<
-  StatusType,
-  { color: string; bgColor: string; label: string }
-> = {
+const statusConfig: Record<StatusType, { color: string; bgColor: string; label: string }> = {
   active: {
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-    label: "Active",
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+    label: 'Active',
   },
   inactive: {
-    color: "text-fg-2",
-    bgColor: "bg-fg-2/10",
-    label: "Inactive",
+    color: 'text-fg-2',
+    bgColor: 'bg-fg-2/10',
+    label: 'Inactive',
   },
   success: {
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-    label: "Success",
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+    label: 'Success',
   },
   error: {
-    color: "text-red-500",
-    bgColor: "bg-red-500/10",
-    label: "Error",
+    color: 'text-red-500',
+    bgColor: 'bg-red-500/10',
+    label: 'Error',
   },
   warning: {
-    color: "text-yellow-500",
-    bgColor: "bg-yellow-500/10",
-    label: "Warning",
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-500/10',
+    label: 'Warning',
   },
   pending: {
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    label: "Pending",
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    label: 'Pending',
   },
   running: {
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    label: "Running",
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    label: 'Running',
   },
   complete: {
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-    label: "Complete",
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+    label: 'Complete',
   },
   failed: {
-    color: "text-red-500",
-    bgColor: "bg-red-500/10",
-    label: "Failed",
+    color: 'text-red-500',
+    bgColor: 'bg-red-500/10',
+    label: 'Failed',
   },
   draft: {
-    color: "text-fg-2",
-    bgColor: "bg-fg-2/10",
-    label: "Draft",
+    color: 'text-fg-2',
+    bgColor: 'bg-fg-2/10',
+    label: 'Draft',
   },
   archived: {
-    color: "text-fg-2",
-    bgColor: "bg-fg-2/10",
-    label: "Archived",
+    color: 'text-fg-2',
+    bgColor: 'bg-fg-2/10',
+    label: 'Archived',
   },
   connected: {
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-    label: "Connected",
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+    label: 'Connected',
   },
   disconnected: {
-    color: "text-red-500",
-    bgColor: "bg-red-500/10",
-    label: "Disconnected",
+    color: 'text-red-500',
+    bgColor: 'bg-red-500/10',
+    label: 'Disconnected',
   },
   rolled_back: {
-    color: "text-yellow-500",
-    bgColor: "bg-yellow-500/10",
-    label: "Rolled Back",
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-500/10',
+    label: 'Rolled Back',
   },
   cancelled: {
-    color: "text-fg-2",
-    bgColor: "bg-fg-2/10",
-    label: "Cancelled",
+    color: 'text-fg-2',
+    bgColor: 'bg-fg-2/10',
+    label: 'Cancelled',
   },
 };
 
-export function StatusBadge({
-  status,
-  label,
-  showDot = true,
-  className,
-}: StatusBadgeProps) {
+export function StatusBadge({ status, label, showDot = true, className }: StatusBadgeProps) {
   const config = statusConfig[status];
   const displayLabel = label || config.label;
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium",
+        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium',
         config.bgColor,
         config.color,
         className

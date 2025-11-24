@@ -13,13 +13,12 @@ Usage:
 """
 
 import argparse
-import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict
 
-def parse_env_file(path: Path) -> Dict[str, str]:
+
+def parse_env_file(path: Path) -> dict[str, str]:
     """Parse a .env file into a dict of {KEY: VALUE}.
 
     Handles:
@@ -47,24 +46,24 @@ def parse_env_file(path: Path) -> Dict[str, str]:
         value = value.strip()
 
         # Validate key (env var names should be alphanumeric + underscore)
-        if not re.match(r'^[A-Z_][A-Z0-9_]*$', key):
+        if not re.match(r"^[A-Z_][A-Z0-9_]*$", key):
             print(f"Warning: Key '{key}' on line {line_num} doesn't match typical env var naming", file=sys.stderr)
 
         # Strip optional surrounding quotes
         if len(value) >= 2:
-            if (value.startswith('"') and value.endswith('"')) or \
-               (value.startswith("'") and value.endswith("'")):
+            if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
                 value = value[1:-1]
 
         # Handle inline comments for unquoted values
         # If the original value wasn't quoted, strip inline comments
-        if not (original_line.strip().split('=', 1)[1].strip().startswith(('"', "'"))):
+        if not (original_line.strip().split("=", 1)[1].strip().startswith(('"', "'"))):
             # Remove inline comment
-            value = value.split('#')[0].strip()
+            value = value.split("#")[0].strip()
 
         env[key] = value
 
     return env
+
 
 def validate_ssm_parameter_name(name: str) -> bool:
     """Validate SSM parameter name meets AWS requirements.
@@ -75,9 +74,10 @@ def validate_ssm_parameter_name(name: str) -> bool:
     """
     if len(name) > 2048:
         return False
-    if not re.match(r'^[a-zA-Z0-9_.\-/]+$', name):
+    if not re.match(r"^[a-zA-Z0-9_.\-/]+$", name):
         return False
     return True
+
 
 def normalize_name_for_tf(key: str) -> str:
     """Convert ENV_VAR_NAME to env_var_name for Terraform resource names."""
@@ -91,6 +91,7 @@ def normalize_name_for_tf(key: str) -> str:
         s = "param_" + s
     return s
 
+
 def bash_escape_single_quote(value: str) -> str:
     """Escape a value for use within single quotes in bash.
 
@@ -99,7 +100,8 @@ def bash_escape_single_quote(value: str) -> str:
     """
     return value.replace("'", "'\"'\"'")
 
-def generate_bash(env_dict: Dict[str, str], prefix: str, overwrite: bool = False, region: str = None) -> str:
+
+def generate_bash(env_dict: dict[str, str], prefix: str, overwrite: bool = False, region: str = None) -> str:
     """Generate a bash script with aws ssm put-parameter calls.
 
     Uses single quotes to avoid shell expansion of $, `, etc.
@@ -118,37 +120,41 @@ def generate_bash(env_dict: Dict[str, str], prefix: str, overwrite: bool = False
     ]
 
     if region:
-        lines.extend([
-            f'AWS_REGION="{region}"',
-            'export AWS_REGION',
-            "",
-        ])
+        lines.extend(
+            [
+                f'AWS_REGION="{region}"',
+                "export AWS_REGION",
+                "",
+            ]
+        )
 
-    lines.extend([
-        f'PREFIX="{prefix_clean}"',
-        "",
-        "# WARNING:",
-        "# - This script writes your .env values into AWS SSM Parameter Store as SecureStrings.",
-        "# - Verify you are in the correct AWS account and region before running.",
-        "# - Run: aws sts get-caller-identity",
-        "",
-        f'echo "AWS Account: $(aws sts get-caller-identity --query Account --output text)"',
-        f'echo "AWS Region: ${{{region and "AWS_REGION" or "AWS_DEFAULT_REGION:-us-east-1"}}}"',
-        'echo "Prefix: $PREFIX"',
-        'echo ""',
-        'read -p "Continue? (y/N) " -n 1 -r',
-        'echo',
-        'if [[ ! $REPLY =~ ^[Yy]$ ]]; then',
-        '    echo "Aborted."',
-        '    exit 1',
-        'fi',
-        'echo ""',
-        "",
-    ])
+    lines.extend(
+        [
+            f'PREFIX="{prefix_clean}"',
+            "",
+            "# WARNING:",
+            "# - This script writes your .env values into AWS SSM Parameter Store as SecureStrings.",
+            "# - Verify you are in the correct AWS account and region before running.",
+            "# - Run: aws sts get-caller-identity",
+            "",
+            'echo "AWS Account: $(aws sts get-caller-identity --query Account --output text)"',
+            f'echo "AWS Region: ${{{(region and "AWS_REGION") or "AWS_DEFAULT_REGION:-us-east-1"}}}"',
+            'echo "Prefix: $PREFIX"',
+            'echo ""',
+            'read -p "Continue? (y/N) " -n 1 -r',
+            "echo",
+            "if [[ ! $REPLY =~ ^[Yy]$ ]]; then",
+            '    echo "Aborted."',
+            "    exit 1",
+            "fi",
+            'echo ""',
+            "",
+        ]
+    )
 
     invalid_params = []
     for key, value in sorted(env_dict.items()):
-        param_name = f'{prefix_clean}/{key}'
+        param_name = f"{prefix_clean}/{key}"
 
         # Validate parameter name
         if not validate_ssm_parameter_name(param_name):
@@ -160,15 +166,17 @@ def generate_bash(env_dict: Dict[str, str], prefix: str, overwrite: bool = False
 
         overwrite_flag = "--overwrite" if overwrite else ""
 
-        lines.extend([
-            f'echo "Writing {param_name}..."',
-            f"aws ssm put-parameter \\",
-            f"  --name '{param_name}' \\",
-            f"  --type 'SecureString' \\",
-            f"  --value '{safe_value}' \\",
-            f"  {overwrite_flag}".rstrip(),
-            "",
-        ])
+        lines.extend(
+            [
+                f'echo "Writing {param_name}..."',
+                "aws ssm put-parameter \\",
+                f"  --name '{param_name}' \\",
+                "  --type 'SecureString' \\",
+                f"  --value '{safe_value}' \\",
+                f"  {overwrite_flag}".rstrip(),
+                "",
+            ]
+        )
 
     if invalid_params:
         lines.insert(0, "# WARNING: The following parameters have invalid names and were skipped:")
@@ -181,7 +189,8 @@ def generate_bash(env_dict: Dict[str, str], prefix: str, overwrite: bool = False
 
     return "\n".join(lines) + "\n"
 
-def generate_terraform(env_dict: Dict[str, str], prefix: str) -> str:
+
+def generate_terraform(env_dict: dict[str, str], prefix: str) -> str:
     """Generate Terraform aws_ssm_parameter resources.
 
     NOTE: This embeds values directly into HCL, which is sensitive.
@@ -190,11 +199,11 @@ def generate_terraform(env_dict: Dict[str, str], prefix: str) -> str:
     """
     prefix_clean = prefix.rstrip("/")
     blocks = [
-        '###############################################',
-        '# GENERATED BY env_to_ssm.py                  #',
-        '# ⚠️  CONTAINS SENSITIVE DATA                 #',
-        '# 🚫 DO NOT COMMIT TO GIT                     #',
-        '###############################################',
+        "###############################################",
+        "# GENERATED BY env_to_ssm.py                  #",
+        "# ⚠️  CONTAINS SENSITIVE DATA                 #",
+        "# 🚫 DO NOT COMMIT TO GIT                     #",
+        "###############################################",
         "",
         "# Add this to your .gitignore:",
         "# secrets.tf",
@@ -214,10 +223,10 @@ def generate_terraform(env_dict: Dict[str, str], prefix: str) -> str:
 
         # Escape for HCL string literals
         # HCL uses \ as escape character, so we need to escape: \, ", $, %
-        hcl_value = (value
-            .replace("\\", "\\\\")  # Backslash must be first
-            .replace('"', '\\"')    # Double quotes
-            .replace("$", "$$")     # Dollar sign (for interpolation)
+        hcl_value = (
+            value.replace("\\", "\\\\")  # Backslash must be first
+            .replace('"', '\\"')  # Double quotes
+            .replace("$", "$$")  # Dollar sign (for interpolation)
         )
 
         block = f'''resource "aws_ssm_parameter" "{tf_name}" {{
@@ -273,6 +282,7 @@ def generate_terraform(env_dict: Dict[str, str], prefix: str) -> str:
 
     return "\n".join(blocks)
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Convert .env to AWS SSM Parameter Store (bash or terraform).",
@@ -291,20 +301,18 @@ Examples:
 
   # Specify AWS region
   %(prog)s -e .env -p /foundry/dev -f bash --region us-west-2 > put_params.sh
-        """
+        """,
     )
-    parser.add_argument("--env-file", "-e", type=str, default=".env",
-                        help="Path to .env file (default: .env)")
-    parser.add_argument("--prefix", "-p", type=str, required=True,
-                        help="SSM path prefix, e.g. /foundry/dev or /myapp/prod")
-    parser.add_argument("--format", "-f", choices=["bash", "tf"], default="bash",
-                        help="Output format: bash (script) or tf (terraform)")
-    parser.add_argument("--overwrite", action="store_true",
-                        help="For bash: include --overwrite in put-parameter calls")
-    parser.add_argument("--region", "-r", type=str,
-                        help="AWS region (e.g., us-east-1, us-west-2)")
-    parser.add_argument("--validate-only", action="store_true",
-                        help="Only validate .env file, don't generate output")
+    parser.add_argument("--env-file", "-e", type=str, default=".env", help="Path to .env file (default: .env)")
+    parser.add_argument(
+        "--prefix", "-p", type=str, required=True, help="SSM path prefix, e.g. /foundry/dev or /myapp/prod"
+    )
+    parser.add_argument(
+        "--format", "-f", choices=["bash", "tf"], default="bash", help="Output format: bash (script) or tf (terraform)"
+    )
+    parser.add_argument("--overwrite", action="store_true", help="For bash: include --overwrite in put-parameter calls")
+    parser.add_argument("--region", "-r", type=str, help="AWS region (e.g., us-east-1, us-west-2)")
+    parser.add_argument("--validate-only", action="store_true", help="Only validate .env file, don't generate output")
     args = parser.parse_args()
 
     env_path = Path(args.env_file)
@@ -357,6 +365,7 @@ Examples:
         print("  2. Add 'secrets.tf' to .gitignore", file=sys.stderr)
         print("  3. Review before applying: terraform plan", file=sys.stderr)
         print("  4. Apply: terraform apply", file=sys.stderr)
+
 
 if __name__ == "__main__":
     main()

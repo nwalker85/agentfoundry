@@ -1,0 +1,148 @@
+id: cibc-cibc-session-initiate-outbound-approval-call
+metadata:
+  id: cibc-cibc-session-initiate-outbound-approval-call
+  name: CIBC Session - Outbound Approval Call
+  display_name: CIBC Session - Outbound Approval Call
+  description: Secondary cardholder scenario - outbound call to primary for approval
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-4
+    - session
+    - outbound
+    - secondary-cardholder
+  updated: "2025-11-18T01:28:58.684688Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Secondary Reports Lost Card
+          description: Secondary cardholder initiates request
+      - id: verify_secondary
+        type: toolCall
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Verify Secondary Cardholder
+          description: Execute verification protocol
+          tool: func-verify-5-question-protocol
+      - id: safety_block
+        type: toolCall
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Apply Safety Block
+          description: Block card immediately for safety
+          tool: func-block-card-safety
+      - id: initiate_outbound
+        type: toolCall
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Call Primary Cardholder
+          description: Initiate outbound AI voice call to primary
+          tool: func-initiate-outbound-call
+      - id: primary_response
+        type: decision
+        position:
+          x: 300
+          y: 540
+        data:
+          label: Primary Response
+          description: Primary approves or declines
+          conditions:
+            - label: Approved
+              expression: primary_approved == true
+              next: create_replacement
+            - label: Declined
+              expression: primary_approved == false
+              next: escalate_queue
+            - label: No Answer
+              expression: primary_approved == null
+              next: retry_outbound
+      - id: create_replacement
+        type: toolCall
+        position:
+          x: 100
+          y: 670
+        data:
+          label: Create Replacement Request
+          description: Proceed with replacement
+          tool: func-create-replacement-request
+      - id: escalate_queue
+        type: process
+        position:
+          x: 300
+          y: 670
+        data:
+          label: Escalate to Queue
+          description: Route to CIF officer for investigation
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: retry_outbound
+        type: process
+        position:
+          x: 500
+          y: 670
+        data:
+          label: Schedule Retry
+          description: Schedule retry call in 2 hours
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 800
+        data:
+          label: Complete
+    edges:
+      - id: e1
+        source: entry
+        target: verify_secondary
+      - id: e2
+        source: verify_secondary
+        target: safety_block
+      - id: e3
+        source: safety_block
+        target: initiate_outbound
+      - id: e4
+        source: initiate_outbound
+        target: primary_response
+      - id: e5
+        source: primary_response
+        target: create_replacement
+        sourceHandle: Approved
+      - id: e6
+        source: primary_response
+        target: escalate_queue
+        sourceHandle: Declined
+      - id: e7
+        source: primary_response
+        target: retry_outbound
+        sourceHandle: No Answer
+      - id: e8
+        source: create_replacement
+        target: end
+      - id: e9
+        source: escalate_queue
+        target: end
+      - id: e10
+        source: retry_outbound
+        target: end

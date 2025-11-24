@@ -2,15 +2,15 @@
 const nextConfig = {
   // Enable React strict mode for better development experience
   reactStrictMode: true,
-  
+  turbopack: {},
   // Disable x-powered-by header for security
   poweredByHeader: false,
-  
+
   // Environment variables that will be available in the browser
   env: {
     MCP_SERVER_URL: process.env.MCP_SERVER_URL || 'http://localhost:8001',
   },
-  
+
   // Webpack configuration
   webpack: (config, { isServer }) => {
     // Fixes npm packages that depend on node modules

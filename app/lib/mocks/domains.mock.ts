@@ -3,22 +3,15 @@
  * Sample domain models using DIS (Domain Intelligence Schema)
  */
 
-import {
-  Domain,
-  Entity,
-  Role,
-  Relationship,
-  Application,
-  Endpoint,
-  DomainTemplate,
-} from '@/types';
+import { Domain, Entity, Role, Relationship, Application, Endpoint, DomainTemplate } from '@/types';
 
 export const mockDomains: Domain[] = [
   {
     id: 'dom-001',
     name: 'ecommerce-domain',
     display_name: 'E-Commerce Domain Model',
-    description: 'Complete domain model for e-commerce operations including orders, customers, and inventory',
+    description:
+      'Complete domain model for e-commerce operations including orders, customers, and inventory',
     version: '2.3.0',
     dossier_json: {
       domain: 'ecommerce',
@@ -55,7 +48,12 @@ export const mockDomains: Domain[] = [
         attributes: [
           { name: 'order_id', type: 'string', required: true },
           { name: 'customer_id', type: 'string', required: true },
-          { name: 'status', type: 'string', required: true, description: 'pending, processing, shipped, delivered, cancelled' },
+          {
+            name: 'status',
+            type: 'string',
+            required: true,
+            description: 'pending, processing, shipped, delivered, cancelled',
+          },
           { name: 'total_amount', type: 'number', required: true },
           { name: 'items', type: 'array', required: true },
           { name: 'created_at', type: 'date', required: true },
@@ -142,9 +140,7 @@ export const mockDomains: Domain[] = [
         name: 'InventoryManager',
         display_name: 'Inventory Manager',
         description: 'Agent role for managing product inventory',
-        permissions: [
-          { entity_id: 'ent-003', actions: ['read', 'update'] },
-        ],
+        permissions: [{ entity_id: 'ent-003', actions: ['read', 'update'] }],
         function_bindings: [
           {
             function_name: 'update_inventory',
@@ -282,7 +278,8 @@ export const mockDomains: Domain[] = [
     id: 'dom-002',
     name: 'banking-domain',
     display_name: 'Banking & Financial Services',
-    description: 'Domain model for banking operations including accounts, transactions, and customers',
+    description:
+      'Domain model for banking operations including accounts, transactions, and customers',
     version: '1.8.0',
     dossier_json: {
       domain: 'banking',
@@ -302,7 +299,12 @@ export const mockDomains: Domain[] = [
         attributes: [
           { name: 'account_number', type: 'string', required: true },
           { name: 'customer_id', type: 'string', required: true },
-          { name: 'account_type', type: 'string', required: true, description: 'checking, savings, credit' },
+          {
+            name: 'account_type',
+            type: 'string',
+            required: true,
+            description: 'checking, savings, credit',
+          },
           { name: 'balance', type: 'number', required: true },
           { name: 'currency', type: 'string', required: true },
           { name: 'status', type: 'string', required: true },
@@ -592,15 +594,15 @@ export const mockDomainTemplates: DomainTemplate[] = [
 
 // Helper functions
 export function getDomainById(id: string): Domain | undefined {
-  return mockDomains.find(domain => domain.id === id);
+  return mockDomains.find((domain) => domain.id === id);
 }
 
 export function getValidDomains(): Domain[] {
-  return mockDomains.filter(domain => domain.dossier_valid);
+  return mockDomains.filter((domain) => domain.dossier_valid);
 }
 
 export function getDomainsByAgent(agentId: string): Domain[] {
-  return mockDomains.filter(domain => domain.used_by_agents.includes(agentId));
+  return mockDomains.filter((domain) => domain.used_by_agents.includes(agentId));
 }
 
 export function getEntitiesByDomain(domainId: string): Entity[] {
@@ -616,10 +618,10 @@ export function getRolesByDomain(domainId: string): Role[] {
 export function searchDomains(query: string): Domain[] {
   const lowercaseQuery = query.toLowerCase();
   return mockDomains.filter(
-    domain =>
+    (domain) =>
       domain.name.toLowerCase().includes(lowercaseQuery) ||
       domain.display_name.toLowerCase().includes(lowercaseQuery) ||
       domain.description.toLowerCase().includes(lowercaseQuery) ||
-      domain.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
+      domain.tags.some((tag) => tag.toLowerCase().includes(lowercaseQuery))
   );
 }

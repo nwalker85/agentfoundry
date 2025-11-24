@@ -1,0 +1,207 @@
+id: cibc-cibc-card-block-safety
+metadata:
+  id: cibc-cibc-card-block-safety
+  name: CIBC Card - Block (Safety/Emergency)
+  display_name: CIBC Card - Block (Safety/Emergency)
+  description: Emergency block pre-verification for customer safety
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-1
+    - card-lifecycle
+    - block
+    - safety
+    - emergency
+  updated: "2025-11-18T01:28:58.378022Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Emergency Block Request
+          description: Customer reports fraud or emergency
+      - id: assess_urgency
+        type: process
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Assess Urgency
+          description: Determine if immediate block needed
+          model: gpt-4o
+          temperature: 0.5
+          prompt: "Assess urgency based on customer statement:
+
+
+            Immediate block scenarios:
+
+            - Suspected fraud in progress
+
+            - Card stolen in active use
+
+            - Customer under duress
+
+            - Unauthorized transactions reported
+
+
+            Keywords: fraud, stolen, unauthorized, suspicious
+
+            "
+      - id: urgency_decision
+        type: decision
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Safety Block Needed?
+          description: Determine if safety block warranted
+          conditions:
+            - label: Emergency - Block Immediately
+              expression: urgency == 'high'
+              next: apply_safety_block
+            - label: Standard - Verify First
+              expression: urgency == 'low'
+              next: standard_verification
+      - id: apply_safety_block
+        type: toolCall
+        position:
+          x: 150
+          y: 410
+        data:
+          label: Apply Safety Block
+          description: Immediate block for customer protection
+          tool: func-block-card-safety
+      - id: create_fraud_memo
+        type: toolCall
+        position:
+          x: 150
+          y: 540
+        data:
+          label: Create Fraud Memo
+          description: Document emergency block
+          tool: func-create-fraud-memo
+      - id: verify_post_block
+        type: toolCall
+        position:
+          x: 150
+          y: 670
+        data:
+          label: Verify Customer Post-Block
+          description: Verify identity after safety block applied
+          tool: func-verify-5-question-protocol
+      - id: standard_verification
+        type: toolCall
+        position:
+          x: 450
+          y: 410
+        data:
+          label: Standard Verification
+          description: Verify before blocking
+          tool: func-verify-5-question-protocol
+      - id: standard_block
+        type: toolCall
+        position:
+          x: 450
+          y: 540
+        data:
+          label: Standard Block
+          description: Block after verification
+          tool: func-block-card
+      - id: verification_result
+        type: decision
+        position:
+          x: 150
+          y: 800
+        data:
+          label: Post-Block Verification
+          description: Was customer verified after safety block?
+          conditions:
+            - label: Verified
+              expression: verification_passed == true
+              next: confirm_and_offer_replacement
+            - label: Not Verified
+              expression: verification_passed == false
+              next: escalate_fraud_team
+      - id: confirm_and_offer_replacement
+        type: process
+        position:
+          x: 100
+          y: 930
+        data:
+          label: Confirm & Offer Replacement
+          description: Confirm block and offer replacement
+          model: gpt-4o
+          temperature: 0.7
+      - id: escalate_fraud_team
+        type: process
+        position:
+          x: 300
+          y: 930
+        data:
+          label: Escalate to Fraud Team
+          description: Unverified emergency - fraud investigation
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 1060
+        data:
+          label: Complete
+    edges:
+      - id: e1
+        source: entry
+        target: assess_urgency
+      - id: e2
+        source: assess_urgency
+        target: urgency_decision
+      - id: e3
+        source: urgency_decision
+        target: apply_safety_block
+        sourceHandle: Emergency - Block Immediately
+      - id: e4
+        source: urgency_decision
+        target: standard_verification
+        sourceHandle: Standard - Verify First
+      - id: e5
+        source: apply_safety_block
+        target: create_fraud_memo
+      - id: e6
+        source: create_fraud_memo
+        target: verify_post_block
+      - id: e7
+        source: verify_post_block
+        target: verification_result
+      - id: e8
+        source: verification_result
+        target: confirm_and_offer_replacement
+        sourceHandle: Verified
+      - id: e9
+        source: verification_result
+        target: escalate_fraud_team
+        sourceHandle: Not Verified
+      - id: e10
+        source: standard_verification
+        target: standard_block
+      - id: e11
+        source: standard_block
+        target: confirm_and_offer_replacement
+      - id: e12
+        source: confirm_and_offer_replacement
+        target: end
+      - id: e13
+        source: escalate_fraud_team
+        target: end

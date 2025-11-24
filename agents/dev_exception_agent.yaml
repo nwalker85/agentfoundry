@@ -22,7 +22,7 @@ spec:
     - hitl_escalation
     - dead_letter_queue
     - exponential_backoff
-  
+
   workflow:
     type: langgraph.StateGraph
     entry_point: execute_with_resilience
@@ -36,59 +36,59 @@ spec:
           - execute_fallback
           - escalate_to_human
         timeout_seconds: 120
-      
+
       - id: calculate_backoff
         handler: agents.workers.exception_agent.ExceptionAgent._calculate_backoff
         description: Calculate exponential backoff delay for retries
         next:
           - execute_with_resilience
         timeout_seconds: 5
-      
+
       - id: execute_fallback
         handler: agents.workers.exception_agent.ExceptionAgent._execute_with_timeout
         description: Execute fallback function when all retries exhausted
         next:
           - END
         timeout_seconds: 60
-      
+
       - id: escalate_to_human
         handler: agents.workers.exception_agent.ExceptionAgent._escalate_to_human
         description: Human-in-the-loop escalation for unrecoverable errors
         next:
           - END
         timeout_seconds: 30
-  
+
   integrations:
     - type: redis
       required: true
       operations:
         - circuit_breaker_state
         - dead_letter_queue
-    
+
     - type: openai
       required: false
       operations:
         - error_analysis
-  
+
   resource_limits:
     max_concurrent_tasks: 20
     timeout_seconds: 180
     memory_mb: 512
     max_tokens_per_request: 8000
-  
+
   observability:
     trace_level: info
     metrics_enabled: true
     metrics_interval_seconds: 30
     log_retention_days: 90
     structured_logging: true
-  
+
   health_check:
     enabled: true
     interval_seconds: 30
     timeout_seconds: 5
     unhealthy_threshold: 3
-  
+
   configuration:
     default_max_retries: 3
     default_timeout_seconds: 60
@@ -104,4 +104,3 @@ status:
   state: active
   last_health_check: "2025-11-16T00:00:00Z"
   health_status: healthy
-

@@ -3,14 +3,14 @@
  * Standardized filter sidebar with multiple filter types
  */
 
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface FilterOption {
   id: string;
@@ -45,7 +45,7 @@ export function FilterPanel({
   );
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn('space-y-6', className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-fg-0">Filters</h3>
@@ -66,13 +66,10 @@ export function FilterPanel({
         <div key={group.id}>
           {index > 0 && <Separator className="mb-6" />}
           <div className="space-y-3">
-            <h4 className="text-xs font-medium text-fg-2 uppercase tracking-wide">
-              {group.label}
-            </h4>
+            <h4 className="text-xs font-medium text-fg-2 uppercase tracking-wide">{group.label}</h4>
             <div className="space-y-2">
               {group.options.map((option) => {
-                const isChecked =
-                  selectedFilters[group.id]?.includes(option.id) || false;
+                const isChecked = selectedFilters[group.id]?.includes(option.id) || false;
 
                 return (
                   <div key={option.id} className="flex items-center space-x-2">
@@ -89,9 +86,7 @@ export function FilterPanel({
                     >
                       <span className="text-fg-1">{option.label}</span>
                       {option.count !== undefined && (
-                        <span className="text-xs text-fg-2 ml-2">
-                          {option.count}
-                        </span>
+                        <span className="text-xs text-fg-2 ml-2">{option.count}</span>
                       )}
                     </Label>
                   </div>
@@ -140,7 +135,7 @@ export function ActiveFilters({
   if (activeFilters.length === 0) return null;
 
   return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
+    <div className={cn('flex flex-wrap gap-2', className)}>
       {activeFilters.map((filter) => (
         <button
           key={`${filter.groupId}-${filter.optionId}`}

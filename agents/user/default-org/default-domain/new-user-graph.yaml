@@ -1,0 +1,32 @@
+metadata:
+  name: New user Graph
+  display_name: New user Graph
+  description: ""
+  type: user
+  organization_id: default-org
+  domain_id: default-domain
+  version: 1.0.0
+  status: draft
+  id: c808562d-05ad-4b5b-8482-1a37bde81ec4
+  updated: "2025-11-18T02:28:34.565614Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entryPoint-1763432826496
+        type: entryPoint
+        position:
+          x: 467.69202434061674
+          y: 245.29231807772965
+        data:
+          label: Entry Point
+          description: hahaasdf
+        width: 180
+        height: 68
+        selected: true
+        dragging: false
+        positionAbsolute:
+          x: 467.69202434061674
+          y: 245.29231807772965
+    edges: []

@@ -1,0 +1,27 @@
+metadata:
+  name: nate
+  display_name: nate
+  description: ""
+  type: user
+  organization_id: default-org
+  domain_id: default-domain
+  version: 1.0.0
+  status: draft
+  id: b4151faa-4a85-42ab-9079-498568f64628
+  updated: "2025-11-18T02:46:42.963137Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entryPoint-1763434001813
+        type: entryPoint
+        position:
+          x: 130.501828913575
+          y: 338.0686751326769
+        data:
+          label: Entry Point
+          description: ""
+        width: 180
+        height: 68
+    edges: []

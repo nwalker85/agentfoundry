@@ -9,13 +9,13 @@ metadata:
 
 spec:
   entries:
-    # Tier 0 system agents (platform core)
+    # Tier 0 system agents (platform core - NOT scoped to org/domain)
     - agent_id: io-agent
       yaml_path: dev_io_agent.yaml
-      organization_id: default-org
-      organization_name: Default Organization
-      domain_id: default-domain
-      domain_name: Default Domain
+      organization_id: null # Platform-level agent
+      organization_name: null
+      domain_id: null
+      domain_name: null
       environment: dev
       instance_id: dev
       is_system_agent: true
@@ -27,10 +27,10 @@ spec:
 
     - agent_id: supervisor-agent
       yaml_path: dev_supervisor_agent.yaml
-      organization_id: default-org
-      organization_name: Default Organization
-      domain_id: default-domain
-      domain_name: Default Domain
+      organization_id: null # Platform-level agent
+      organization_name: null
+      domain_id: null
+      domain_name: null
       environment: dev
       instance_id: dev
       is_system_agent: true
@@ -42,10 +42,10 @@ spec:
 
     - agent_id: context-agent
       yaml_path: dev_context_agent.yaml
-      organization_id: default-org
-      organization_name: Default Organization
-      domain_id: default-domain
-      domain_name: Default Domain
+      organization_id: null # Platform-level agent
+      organization_name: null
+      domain_id: null
+      domain_name: null
       environment: dev
       instance_id: dev
       is_system_agent: true
@@ -57,10 +57,10 @@ spec:
 
     - agent_id: coherence-agent
       yaml_path: dev_coherence_agent.yaml
-      organization_id: default-org
-      organization_name: Default Organization
-      domain_id: default-domain
-      domain_name: Default Domain
+      organization_id: null # Platform-level agent
+      organization_name: null
+      domain_id: null
+      domain_name: null
       environment: dev
       instance_id: dev
       is_system_agent: true
@@ -70,13 +70,13 @@ spec:
       last_editor: system
       tags: [platform, coherence, assembly]
 
-    # Tier 1 system agents (production readiness)
+    # Tier 1 system agents (production readiness - NOT scoped to org/domain)
     - agent_id: exception-agent
       yaml_path: dev_exception_agent.yaml
-      organization_id: default-org
-      organization_name: Default Organization
-      domain_id: default-domain
-      domain_name: Default Domain
+      organization_id: null # Platform-level agent
+      organization_name: null
+      domain_id: null
+      domain_name: null
       environment: dev
       instance_id: dev
       is_system_agent: true
@@ -88,10 +88,10 @@ spec:
 
     - agent_id: observability-agent
       yaml_path: dev_observability_agent.yaml
-      organization_id: default-org
-      organization_name: Default Organization
-      domain_id: default-domain
-      domain_name: Default Domain
+      organization_id: null # Platform-level agent
+      organization_name: null
+      domain_id: null
+      domain_name: null
       environment: dev
       instance_id: dev
       is_system_agent: true
@@ -103,10 +103,10 @@ spec:
 
     - agent_id: governance-agent
       yaml_path: dev_governance_agent.yaml
-      organization_id: default-org
-      organization_name: Default Organization
-      domain_id: default-domain
-      domain_name: Default Domain
+      organization_id: null # Platform-level agent
+      organization_name: null
+      domain_id: null
+      domain_name: null
       environment: dev
       instance_id: dev
       is_system_agent: true
@@ -115,5 +115,3 @@ spec:
       author: system
       last_editor: system
       tags: [platform, security, compliance, governance]
-
-

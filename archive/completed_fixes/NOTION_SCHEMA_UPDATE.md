@@ -1,13 +1,16 @@
 # Notion Schema Update Implementation
 
 ## Overview
-Updated the MCP Notion integration to align with the new database schemas defined in the CSV imports.
+
+Updated the MCP Notion integration to align with the new database schemas
+defined in the CSV imports.
 
 ## Changes Made
 
 ### 1. Updated Story Schema (`notion_import_stories.csv`)
 
 **New Fields Supported:**
+
 - `Title` - Story title (was "Name")
 - `Epic` - Relation to epics database
 - `User Story` - Standard user story format
@@ -24,6 +27,7 @@ Updated the MCP Notion integration to align with the new database schemas define
 - `AI Generated` - Checkbox for AI-created stories
 
 **Status Mapping:**
+
 - Removed: TODO, In QA
 - Added: Ready (stories ready to start)
 - Kept: Backlog, In Progress, In Review, Done
@@ -31,6 +35,7 @@ Updated the MCP Notion integration to align with the new database schemas define
 ### 2. Updated Epic Schema (`notion_import_epics.csv`)
 
 **New Fields Supported:**
+
 - `Title` - Epic title
 - `Description` - Epic description
 - `Status` - Active/Planning/On Hold
@@ -43,6 +48,7 @@ Updated the MCP Notion integration to align with the new database schemas define
 ### 3. Implementation Enhancements
 
 **Added Helper Methods:**
+
 - `_determine_technical_type()` - Auto-categorizes stories
 - `_estimate_story_points()` - Estimates based on complexity
 - `_format_user_story()` - Generates standard user story format
@@ -50,6 +56,7 @@ Updated the MCP Notion integration to align with the new database schemas define
 - `update_story_github_url()` - Updates GitHub integration fields
 
 **Improved Content Generation:**
+
 - Stories now use to-do blocks for acceptance criteria
 - Callout blocks for epic context
 - Better structured page content
@@ -58,6 +65,7 @@ Updated the MCP Notion integration to align with the new database schemas define
 ### 4. Schema File Updates
 
 **Updated `mcp/schemas.py`:**
+
 - Removed `TODO` and `IN_QA` statuses
 - Added `READY` status
 - Comments clarify Notion alignment
@@ -65,6 +73,7 @@ Updated the MCP Notion integration to align with the new database schemas define
 ## Testing
 
 Created `test_notion_schema.py` to validate:
+
 1. Story creation with full schema
 2. Epic creation/lookup
 3. GitHub URL updates
@@ -73,11 +82,13 @@ Created `test_notion_schema.py` to validate:
 ## Migration Steps
 
 1. **Import CSVs to Notion:**
+
    - Import `notion_import_epics.csv` to Epics database
    - Import `notion_import_stories.csv` to Stories database
    - This will create proper field types and options
 
 2. **Verify Database IDs:**
+
    - Stories: `2a6517b8b98e808bbe23f3c7ce5ac6fd`
    - Epics: `2a6517b8b98e80b99c13fb8d933e44cc`
 
@@ -88,10 +99,12 @@ Created `test_notion_schema.py` to validate:
 
 ## Benefits
 
-1. **Richer Data Model:** Supports sprint planning, technical categorization, and GitHub integration
+1. **Richer Data Model:** Supports sprint planning, technical categorization,
+   and GitHub integration
 2. **Better Tracking:** AI-generated flag, assignees, story points
 3. **Improved Workflow:** Ready status for sprint planning
-4. **Epic Management:** Full epic lifecycle with business value and technical areas
+4. **Epic Management:** Full epic lifecycle with business value and technical
+   areas
 5. **GitHub Integration:** Direct links to issues and PRs
 
 ## Next Steps
@@ -105,6 +118,7 @@ Created `test_notion_schema.py` to validate:
 ## Backward Compatibility
 
 The implementation gracefully handles:
+
 - Missing epic relations (creates new epics as needed)
 - Empty GitHub fields (populated when issues created)
 - Unassigned stories (for AI-generated content)

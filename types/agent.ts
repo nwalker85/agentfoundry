@@ -16,6 +16,12 @@ export interface Agent {
   status: AgentStatus;
   environment: Environment;
 
+  // Organization & Domain binding
+  organization_id: string;
+  organization_name?: string;
+  domain_id: string;
+  domain_name?: string;
+
   // Metadata
   created_at: string;
   updated_at: string;

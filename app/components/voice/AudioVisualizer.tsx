@@ -20,7 +20,8 @@ export function AudioVisualizer() {
           className="visualizer-bar"
           style={{
             width: `${volumeLevel}%`,
-            backgroundColor: volumeLevel > 70 ? '#ef4444' : volumeLevel > 40 ? '#f59e0b' : '#10b981'
+            backgroundColor:
+              volumeLevel > 70 ? '#ef4444' : volumeLevel > 40 ? '#f59e0b' : '#10b981',
           }}
         />
       </div>

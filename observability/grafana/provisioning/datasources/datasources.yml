@@ -1,0 +1,59 @@
+# Grafana Datasource Provisioning
+# Auto-configures Prometheus and Tempo datasources
+#
+# Prometheus: Metrics (http://prometheus:9090)
+# Tempo: Distributed Traces (http://tempo:3200)
+
+apiVersion: 1
+
+datasources:
+  # Prometheus - Metrics
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.47.0
+
+  # Tempo - Distributed Tracing
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: http://tempo:3200
+    isDefault: false
+    editable: false
+    jsonData:
+      httpMethod: GET
+      # Link traces to logs (if Loki is added later)
+      tracesToLogs:
+        datasourceUid: ""
+        mapTagNamesEnabled: false
+      # Link traces to metrics
+      tracesToMetrics:
+        datasourceUid: prometheus
+        spanStartTimeShift: "-1h"
+        spanEndTimeShift: "1h"
+        tags:
+          - key: "service.name"
+            value: "service"
+      # Search configuration
+      search:
+        hide: false
+      # Node graph visualization
+      nodeGraph:
+        enabled: true
+      # Service graph from traces
+      serviceMap:
+        datasourceUid: prometheus
+      # TraceQL for query language
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: "1h"
+        spanEndTimeShift: "-1h"

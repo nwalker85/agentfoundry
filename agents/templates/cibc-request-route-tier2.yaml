@@ -1,0 +1,173 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Request - Route Tier 2
+  type: system
+  version: 1.0.0
+  description: Tier 2 approval gate - CIF Supervisor (fraud risk, address changes, high scores)
+  tags: [cibc, agent-group-3, request-orchestration, tier2, cif-supervisor, fraud]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Tier 2 Queue
+          description: Request routed to CIF Supervisor
+
+      - id: prepare_fraud_review
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Prepare Fraud Review Package
+          description: Compile fraud indicators for supervisor
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Prepare fraud review package:
+
+            Fraud Indicators:
+            - Pindrop fraud score
+            - Address change flag
+            - Replacement request frequency
+            - Unauthorized transaction reports
+            - Account age and history
+            - Device fingerprint anomalies
+
+      - id: check_fraud_history
+        type: process
+        position: { x: 300, y: 280 }
+        data:
+          label: Check Fraud History
+          description: Query fraud memos and card watches
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: present_to_supervisor
+        type: process
+        position: { x: 300, y: 410 }
+        data:
+          label: Present to CIF Supervisor
+          description: Display for supervisor decision
+          model: gpt-4o
+          temperature: 0.5
+          prompt: |
+            Present to CIF Supervisor for fraud assessment:
+
+            Supervisor can:
+            - Approve request (fraud indicators acceptable)
+            - Approve with enhanced monitoring
+            - Request in-person verification (branch visit)
+            - Deny and escalate to Card Security Officer
+            - Apply temporary fraud hold
+
+      - id: supervisor_decision
+        type: decision
+        position: { x: 300, y: 540 }
+        data:
+          label: Supervisor Decision
+          description: CIF Supervisor approval
+          conditions:
+            - label: Approved
+              expression: supervisor_approved == true
+              next: update_and_monitor
+            - label: Require Branch Visit
+              expression: require_branch_visit == true
+              next: notify_branch_required
+            - label: Escalate to Security Officer
+              expression: escalate_security == true
+              next: escalate_fraud_team
+
+      - id: update_and_monitor
+        type: process
+        position: { x: 100, y: 670 }
+        data:
+          label: Approve with Monitoring
+          description: Approve and apply enhanced monitoring
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: notify_branch_required
+        type: process
+        position: { x: 300, y: 670 }
+        data:
+          label: Notify Branch Requirement
+          description: Customer must visit branch with ID
+          model: gpt-4o
+          temperature: 0.6
+
+      - id: escalate_fraud_team
+        type: process
+        position: { x: 500, y: 670 }
+        data:
+          label: Escalate to Security Officer
+          description: Fraud investigation required
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: queue_for_gd
+        type: process
+        position: { x: 100, y: 800 }
+        data:
+          label: Queue for G&D Submission
+          description: Add to production batch
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: end
+        type: end
+        position: { x: 300, y: 930 }
+        data:
+          label: Tier 2 Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: prepare_fraud_review
+
+      - id: e2
+        source: prepare_fraud_review
+        target: check_fraud_history
+
+      - id: e3
+        source: check_fraud_history
+        target: present_to_supervisor
+
+      - id: e4
+        source: present_to_supervisor
+        target: supervisor_decision
+
+      - id: e5
+        source: supervisor_decision
+        target: update_and_monitor
+        sourceHandle: Approved
+
+      - id: e6
+        source: supervisor_decision
+        target: notify_branch_required
+        sourceHandle: Require Branch Visit
+
+      - id: e7
+        source: supervisor_decision
+        target: escalate_fraud_team
+        sourceHandle: Escalate to Security Officer
+
+      - id: e8
+        source: update_and_monitor
+        target: queue_for_gd
+
+      - id: e9
+        source: queue_for_gd
+        target: end
+
+      - id: e10
+        source: notify_branch_required
+        target: end
+
+      - id: e11
+        source: escalate_fraud_team
+        target: end

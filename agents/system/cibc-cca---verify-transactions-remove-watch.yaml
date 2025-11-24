@@ -1,0 +1,427 @@
+id: cibc-cibc-cca-verify-transactions-remove-watch
+metadata:
+  id: cibc-cibc-cca-verify-transactions-remove-watch
+  name: CIBC CCA - Verify Transactions Remove Watch
+  display_name: CIBC CCA - Verify Transactions Remove Watch
+  description: Card Call Authorization - Customer verifies transactions to remove
+    CW20 watch
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-2
+    - security-fraud
+    - cca
+    - card-watch-removal
+    - verification
+  updated: "2025-11-18T01:28:58.417979Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: CCA Transaction Verification
+          description: Customer called to verify flagged transactions
+      - id: verify_customer_identity
+        type: toolCall
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Verify Customer Identity
+          description: 5Q protocol with fraud scoring
+          tool: func-verify-5-question-protocol
+      - id: identity_check
+        type: decision
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Identity Verified?
+          description: Customer must pass verification to proceed
+          conditions:
+            - label: Verified Successfully
+              expression: verification_passed == true
+              next: retrieve_flagged_transactions
+            - label: Verification Failed
+              expression: verification_passed == false
+              next: escalate_failed_verification
+      - id: retrieve_flagged_transactions
+        type: toolCall
+        position:
+          x: 200
+          y: 410
+        data:
+          label: Retrieve Flagged Transactions
+          description: Get transactions that triggered CW20 watch
+          tool: func-query-suspicious-transactions
+      - id: get_card_watch_details
+        type: toolCall
+        position:
+          x: 200
+          y: 540
+        data:
+          label: Get Card Watch Details
+          description: Retrieve CW20 watch reason and duration
+          tool: func-check-card-watch-status
+      - id: present_transactions
+        type: process
+        position:
+          x: 200
+          y: 670
+        data:
+          label: Present Transactions to Customer
+          description: Review each flagged transaction with customer
+          model: gpt-4o
+          temperature: 0.5
+          prompt: 'Present each flagged transaction to customer:
+
+
+            For each transaction, ask:
+
+            "Do you recognize this transaction?"
+
+            - Date and time
+
+            - Merchant name and location
+
+            - Transaction amount
+
+            - Transaction type (purchase | withdrawal | online)
+
+
+            Record customer response:
+
+            - Authorized (customer confirms)
+
+            - Unauthorized (customer denies)
+
+            - Uncertain (customer cannot confirm)
+
+            '
+      - id: collect_verification_responses
+        type: process
+        position:
+          x: 200
+          y: 800
+        data:
+          label: Collect Verification Responses
+          description: Record customer authorization for each transaction
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Collect responses for all flagged transactions:
+
+
+            Track:
+
+            - Total transactions reviewed
+
+            - Authorized count
+
+            - Unauthorized count
+
+            - Uncertain count
+
+
+            Flag any unauthorized or uncertain transactions for investigation.
+
+            "
+      - id: assess_verification_outcome
+        type: process
+        position:
+          x: 200
+          y: 930
+        data:
+          label: Assess Verification Outcome
+          description: Determine next action based on responses
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Assess verification outcome:
+
+
+            All authorized:
+
+            - Remove CW20 watch
+
+            - Update fraud memos
+
+            - No further action needed
+
+
+            Some unauthorized:
+
+            - Keep CW20 watch active
+
+            - Create fraud investigation case
+
+            - Block card if multiple unauthorized
+
+            - Issue replacement card
+
+
+            All/mostly uncertain:
+
+            - Extend CW20 watch
+
+            - Request in-person verification at branch
+
+            - Enhanced monitoring
+
+            "
+      - id: outcome_decision
+        type: decision
+        position:
+          x: 200
+          y: 1060
+        data:
+          label: Verification Outcome
+          description: Route based on transaction verification results
+          conditions:
+            - label: All Authorized - Remove Watch
+              expression: all_authorized == true
+              next: remove_card_watch
+            - label: Has Unauthorized - Investigate
+              expression: has_unauthorized == true
+              next: create_fraud_investigation
+            - label: Mostly Uncertain - Extend Watch
+              expression: mostly_uncertain == true
+              next: extend_watch_and_escalate
+      - id: remove_card_watch
+        type: toolCall
+        position:
+          x: 50
+          y: 1190
+        data:
+          label: Remove CW20 Card Watch
+          description: Deactivate card watch - all transactions verified
+          tool: func-remove-card-watch
+      - id: update_fraud_memo_cleared
+        type: toolCall
+        position:
+          x: 50
+          y: 1320
+        data:
+          label: Update Fraud Memo (Cleared)
+          description: Document successful verification
+          tool: func-create-fraud-memo
+      - id: notify_customer_cleared
+        type: toolCall
+        position:
+          x: 50
+          y: 1450
+        data:
+          label: Notify Customer (Watch Removed)
+          description: Confirm card monitoring removed
+          tool: func-send-notification
+      - id: create_fraud_investigation
+        type: process
+        position:
+          x: 250
+          y: 1190
+        data:
+          label: Create Fraud Investigation Case
+          description: Escalate unauthorized transactions
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Create fraud investigation case:
+
+
+            Include:
+
+            - All unauthorized transaction details
+
+            - Customer verification responses
+
+            - Fraud score at time of transactions
+
+            - Geographic/device data
+
+            - Recommended actions (block card, issue replacement)
+
+            "
+      - id: determine_block_decision
+        type: decision
+        position:
+          x: 250
+          y: 1320
+        data:
+          label: Should Block Card?
+          description: Block if multiple unauthorized or high value
+          conditions:
+            - label: Block Card (≥2 unauthorized or >$500)
+              expression: unauthorized_count >= 2 || max_unauthorized_amount > 500
+              next: block_card_and_replace
+            - label: Keep Watch Active
+              expression: unauthorized_count < 2 && max_unauthorized_amount <= 500
+              next: maintain_watch_investigate
+      - id: block_card_and_replace
+        type: toolCall
+        position:
+          x: 200
+          y: 1450
+        data:
+          label: Block Card & Issue Replacement
+          description: Apply fraud block and initiate replacement
+          tool: func-apply-fraud-block
+      - id: maintain_watch_investigate
+        type: process
+        position:
+          x: 300
+          y: 1450
+        data:
+          label: Maintain Watch & Investigate
+          description: Keep CW20 active while fraud team investigates
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: extend_watch_and_escalate
+        type: process
+        position:
+          x: 450
+          y: 1190
+        data:
+          label: Extend Watch & Escalate
+          description: Customer uncertain - requires branch visit
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Customer unable to verify transactions:
+
+
+            Actions:
+
+            - Extend CW20 watch by 14 days
+
+            - Request in-person branch visit with ID
+
+            - Escalate to CIF Supervisor for review
+
+            - Consider temporary transaction limits
+
+            "
+      - id: notify_branch_visit
+        type: toolCall
+        position:
+          x: 450
+          y: 1320
+        data:
+          label: Notify Customer (Branch Visit Required)
+          description: Inform customer of in-person requirement
+          tool: func-send-notification
+      - id: escalate_failed_verification
+        type: process
+        position:
+          x: 400
+          y: 410
+        data:
+          label: Escalate Failed Verification
+          description: Customer failed identity verification
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Customer failed 5Q verification:
+
+
+            Security actions:
+
+            - Maintain CW20 watch
+
+            - Add fraud memo (failed verification attempt)
+
+            - Escalate to fraud team
+
+            - Consider card block if high fraud score
+
+            "
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 1580
+        data:
+          label: CCA Verification Complete
+    edges:
+      - id: e1
+        source: entry
+        target: verify_customer_identity
+      - id: e2
+        source: verify_customer_identity
+        target: identity_check
+      - id: e3
+        source: identity_check
+        target: retrieve_flagged_transactions
+        sourceHandle: Verified Successfully
+      - id: e4
+        source: identity_check
+        target: escalate_failed_verification
+        sourceHandle: Verification Failed
+      - id: e5
+        source: retrieve_flagged_transactions
+        target: get_card_watch_details
+      - id: e6
+        source: get_card_watch_details
+        target: present_transactions
+      - id: e7
+        source: present_transactions
+        target: collect_verification_responses
+      - id: e8
+        source: collect_verification_responses
+        target: assess_verification_outcome
+      - id: e9
+        source: assess_verification_outcome
+        target: outcome_decision
+      - id: e10
+        source: outcome_decision
+        target: remove_card_watch
+        sourceHandle: All Authorized - Remove Watch
+      - id: e11
+        source: outcome_decision
+        target: create_fraud_investigation
+        sourceHandle: Has Unauthorized - Investigate
+      - id: e12
+        source: outcome_decision
+        target: extend_watch_and_escalate
+        sourceHandle: Mostly Uncertain - Extend Watch
+      - id: e13
+        source: remove_card_watch
+        target: update_fraud_memo_cleared
+      - id: e14
+        source: update_fraud_memo_cleared
+        target: notify_customer_cleared
+      - id: e15
+        source: notify_customer_cleared
+        target: end
+      - id: e16
+        source: create_fraud_investigation
+        target: determine_block_decision
+      - id: e17
+        source: determine_block_decision
+        target: block_card_and_replace
+        sourceHandle: Block Card (≥2 unauthorized or >$500)
+      - id: e18
+        source: determine_block_decision
+        target: maintain_watch_investigate
+        sourceHandle: Keep Watch Active
+      - id: e19
+        source: block_card_and_replace
+        target: end
+      - id: e20
+        source: maintain_watch_investigate
+        target: end
+      - id: e21
+        source: extend_watch_and_escalate
+        target: notify_branch_visit
+      - id: e22
+        source: notify_branch_visit
+        target: end
+      - id: e23
+        source: escalate_failed_verification
+        target: end

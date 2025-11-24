@@ -1,0 +1,291 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC FDS - Create Fraud Memo
+  type: system
+  version: 1.0.0
+  description: Automated fraud memo creation from FDS alert triggers
+  tags: [cibc, agent-group-2, security-fraud, fds, fraud-memo, automation]
+
+spec:
+  state_schema_id: null
+  triggers:
+    - type: webhook
+      path: /cibc/fds/fraud-alert
+      method: POST
+      description: FDS system sends fraud alert payload
+
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: FDS Alert Received
+          description: Fraud Detection System triggered alert
+
+      - id: parse_fds_alert
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Parse FDS Alert
+          description: Extract fraud indicators from payload
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Parse FDS alert payload:
+
+            Extract:
+            - Alert type (unauthorized transaction | suspicious pattern | velocity trigger)
+            - Card ID and customer ID
+            - Transaction details (if applicable)
+            - Risk score from FDS
+            - Fraud indicators detected
+            - Alert timestamp
+
+      - id: get_card_context
+        type: toolCall
+        position: { x: 300, y: 280 }
+        data:
+          label: Get Card Context
+          description: Retrieve card status and history
+          tool: func-get-card-details
+
+      - id: check_existing_memos
+        type: toolCall
+        position: { x: 300, y: 410 }
+        data:
+          label: Check Existing Fraud Memos
+          description: Query for recent fraud memos on this card
+          tool: func-query-fraud-memos
+
+      - id: assess_severity
+        type: process
+        position: { x: 300, y: 540 }
+        data:
+          label: Assess Fraud Severity
+          description: Classify severity and determine response
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Assess fraud severity based on:
+
+            Critical (immediate block):
+            - Multiple high-value unauthorized transactions
+            - Card compromise confirmed
+            - Identity theft indicators
+            - Velocity trigger on high-risk merchant
+
+            High (apply watch, notify security):
+            - Single high-value unauthorized transaction
+            - Suspicious cross-border activity
+            - Pattern match with known fraud rings
+
+            Medium (apply watch, monitor):
+            - Address verification mismatch
+            - Multiple small transactions (testing behavior)
+            - Geolocation anomalies
+
+            Low (memo only, no action):
+            - Single AVS mismatch
+            - Low-value declined transaction
+            - Customer-reported lost card (no unauthorized activity)
+
+      - id: severity_decision
+        type: decision
+        position: { x: 300, y: 670 }
+        data:
+          label: Severity Level
+          description: Route based on fraud severity
+          conditions:
+            - label: Critical - Immediate Block
+              expression: severity == 'critical'
+              next: block_card_immediately
+            - label: High - Apply Watch & Notify
+              expression: severity == 'high'
+              next: create_memo_high
+            - label: Medium - Apply Watch
+              expression: severity == 'medium'
+              next: create_memo_medium
+            - label: Low - Memo Only
+              expression: severity == 'low'
+              next: create_memo_low
+
+      - id: block_card_immediately
+        type: toolCall
+        position: { x: 100, y: 800 }
+        data:
+          label: Emergency Block Card
+          description: Apply immediate fraud block
+          tool: func-apply-fraud-block
+
+      - id: create_memo_critical
+        type: toolCall
+        position: { x: 100, y: 930 }
+        data:
+          label: Create Critical Fraud Memo
+          description: Document critical fraud event
+          tool: func-create-fraud-memo
+
+      - id: escalate_security_officer
+        type: process
+        position: { x: 100, y: 1060 }
+        data:
+          label: Escalate to Card Security Officer
+          description: Immediate escalation for critical fraud
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: create_memo_high
+        type: toolCall
+        position: { x: 300, y: 800 }
+        data:
+          label: Create High Priority Fraud Memo
+          description: Document high-risk fraud indicators
+          tool: func-create-fraud-memo
+
+      - id: apply_card_watch_high
+        type: toolCall
+        position: { x: 300, y: 930 }
+        data:
+          label: Apply Card Watch (CW20)
+          description: Enable enhanced monitoring
+          tool: func-apply-card-watch
+
+      - id: notify_fraud_team_high
+        type: process
+        position: { x: 300, y: 1060 }
+        data:
+          label: Notify Fraud Investigation Team
+          description: Alert fraud team for follow-up
+          model: gpt-4o-mini
+          temperature: 0.5
+
+      - id: create_memo_medium
+        type: toolCall
+        position: { x: 500, y: 800 }
+        data:
+          label: Create Medium Priority Fraud Memo
+          description: Document suspicious activity
+          tool: func-create-fraud-memo
+
+      - id: apply_card_watch_medium
+        type: toolCall
+        position: { x: 500, y: 930 }
+        data:
+          label: Apply Card Watch (CW20)
+          description: Enable transaction monitoring
+          tool: func-apply-card-watch
+
+      - id: create_memo_low
+        type: toolCall
+        position: { x: 700, y: 800 }
+        data:
+          label: Create Low Priority Fraud Memo
+          description: Document informational alert
+          tool: func-create-fraud-memo
+
+      - id: update_fds_status
+        type: process
+        position: { x: 300, y: 1190 }
+        data:
+          label: Update FDS Alert Status
+          description: Acknowledge alert processed
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Send acknowledgment to FDS:
+
+            Include:
+            - Alert ID
+            - Processing timestamp
+            - Actions taken (block | watch | memo)
+            - Fraud memo ID created
+            - Escalation status
+
+      - id: end
+        type: end
+        position: { x: 300, y: 1320 }
+        data:
+          label: FDS Alert Processed
+
+    edges:
+      - id: e1
+        source: entry
+        target: parse_fds_alert
+
+      - id: e2
+        source: parse_fds_alert
+        target: get_card_context
+
+      - id: e3
+        source: get_card_context
+        target: check_existing_memos
+
+      - id: e4
+        source: check_existing_memos
+        target: assess_severity
+
+      - id: e5
+        source: assess_severity
+        target: severity_decision
+
+      - id: e6
+        source: severity_decision
+        target: block_card_immediately
+        sourceHandle: Critical - Immediate Block
+
+      - id: e7
+        source: severity_decision
+        target: create_memo_high
+        sourceHandle: High - Apply Watch & Notify
+
+      - id: e8
+        source: severity_decision
+        target: create_memo_medium
+        sourceHandle: Medium - Apply Watch
+
+      - id: e9
+        source: severity_decision
+        target: create_memo_low
+        sourceHandle: Low - Memo Only
+
+      - id: e10
+        source: block_card_immediately
+        target: create_memo_critical
+
+      - id: e11
+        source: create_memo_critical
+        target: escalate_security_officer
+
+      - id: e12
+        source: escalate_security_officer
+        target: update_fds_status
+
+      - id: e13
+        source: create_memo_high
+        target: apply_card_watch_high
+
+      - id: e14
+        source: apply_card_watch_high
+        target: notify_fraud_team_high
+
+      - id: e15
+        source: notify_fraud_team_high
+        target: update_fds_status
+
+      - id: e16
+        source: create_memo_medium
+        target: apply_card_watch_medium
+
+      - id: e17
+        source: apply_card_watch_medium
+        target: update_fds_status
+
+      - id: e18
+        source: create_memo_low
+        target: update_fds_status
+
+      - id: e19
+        source: update_fds_status
+        target: end

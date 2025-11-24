@@ -1,0 +1,182 @@
+id: cibc-cibc-session-ivr-intelligent-routing
+metadata:
+  id: cibc-cibc-session-ivr-intelligent-routing
+  name: CIBC Session - IVR Intelligent Routing
+  display_name: CIBC Session - IVR Intelligent Routing
+  description: Silent ANI lookup and context-aware routing without customer-facing
+    menus
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-4
+    - session
+    - ivr
+    - ani-lookup
+    - routing
+  updated: "2025-11-18T01:28:58.694548Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 400
+          y: 50
+        data:
+          label: IVR Call Received
+          description: Customer calls IVR
+      - id: ani_lookup
+        type: process
+        position:
+          x: 400
+          y: 150
+        data:
+          label: Silent ANI Lookup
+          description: Identify customer from phone number
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: "Perform ANI (Automatic Number Identification) lookup.
+
+
+            Extract:
+
+            - Customer ID from phone number
+
+            - PWM status (ACQ ST = PRWLTH)
+
+            - Account relationships
+
+            "
+      - id: load_context
+        type: toolCall
+        position:
+          x: 400
+          y: 280
+        data:
+          label: Load Customer Context
+          description: Get recent interactions and history
+          tool: func-get-customer-context
+      - id: detect_intent
+        type: process
+        position:
+          x: 400
+          y: 410
+        data:
+          label: Detect Intent
+          description: Understand customer need from initial speech
+          model: gpt-4o
+          temperature: 0.6
+          prompt: "Listen to customer's initial statement and detect intent:
+
+
+            Intents:
+
+            - card_activation
+
+            - card_lost_stolen
+
+            - card_blocked
+
+            - fraud_verification
+
+            - general_inquiry
+
+            - pwm_specialist_request
+
+            "
+      - id: route_decision
+        type: decision
+        position:
+          x: 400
+          y: 540
+        data:
+          label: Routing Decision
+          description: Route based on intent and PWM status
+          conditions:
+            - label: PWM + Complex
+              expression: pwm_customer && intent_complexity == 'high'
+              next: route_pwm_specialist
+            - label: Standard Intent
+              expression: intent_complexity == 'low'
+              next: route_ai_agent
+            - label: Fraud/Security
+              expression: intent == 'fraud_verification'
+              next: route_security_agent
+      - id: route_ai_agent
+        type: process
+        position:
+          x: 200
+          y: 670
+        data:
+          label: Route to AI Agent
+          description: Context-loaded AI handles request
+          model: gpt-4o
+          temperature: 0.7
+      - id: route_pwm_specialist
+        type: toolCall
+        position:
+          x: 400
+          y: 670
+        data:
+          label: Warm Transfer to PWM
+          description: Transfer with full context
+          tool: func-route-to-pwm-specialist
+      - id: route_security_agent
+        type: process
+        position:
+          x: 600
+          y: 670
+        data:
+          label: Route to Security Agent
+          description: Specialized fraud/security agent
+          model: gpt-4o
+          temperature: 0.5
+      - id: end
+        type: end
+        position:
+          x: 400
+          y: 800
+        data:
+          label: Routed
+    edges:
+      - id: e1
+        source: entry
+        target: ani_lookup
+      - id: e2
+        source: ani_lookup
+        target: load_context
+      - id: e3
+        source: load_context
+        target: detect_intent
+      - id: e4
+        source: detect_intent
+        target: route_decision
+      - id: e5
+        source: route_decision
+        target: route_ai_agent
+        sourceHandle: Standard Intent
+      - id: e6
+        source: route_decision
+        target: route_pwm_specialist
+        sourceHandle: PWM + Complex
+      - id: e7
+        source: route_decision
+        target: route_security_agent
+        sourceHandle: Fraud/Security
+      - id: e8
+        source: route_ai_agent
+        target: end
+      - id: e9
+        source: route_pwm_specialist
+        target: end
+      - id: e10
+        source: route_security_agent
+        target: end

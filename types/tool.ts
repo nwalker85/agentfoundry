@@ -50,6 +50,77 @@ export interface Tool {
   tags: string[];
 }
 
+export interface IntegrationToolHealth {
+  success?: number;
+  failure?: number;
+  last_error?: string | null;
+}
+
+export interface JsonSchemaProperty {
+  type: string;
+  description?: string;
+  enum?: string[];
+  default?: unknown;
+  properties?: Record<string, JsonSchemaProperty>;
+  items?: JsonSchemaProperty;
+}
+
+export interface JsonSchema {
+  type: string;
+  properties?: Record<string, JsonSchemaProperty>;
+  required?: string[];
+  additionalProperties?: boolean;
+}
+
+export interface ToolExample {
+  input: Record<string, unknown>;
+  output: Record<string, unknown>;
+}
+
+export interface IntegrationToolCatalogItem {
+  toolName: string;
+  displayName: string;
+  description: string;
+  category: string;
+  logo: string;
+  tags: string[];
+  metadata?: Record<string, unknown>;
+  health?: IntegrationToolHealth;
+  // Schema fields (populated on detail view)
+  inputSchema?: JsonSchema;
+  outputSchema?: JsonSchema;
+  examples?: ToolExample[];
+}
+
+export interface IntegrationConfig {
+  id: string;
+  tool_name: string;
+  organization_id: string;
+  project_id?: string;
+  domain_id: string;
+  environment: string;
+  instance_name: string;
+  base_url: string;
+  auth_method: string;
+  credentials: Record<string, string>;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface IntegrationConfigRequest {
+  organization_id: string;
+  project_id?: string;
+  domain_id: string;
+  environment?: string;
+  instance_name: string;
+  base_url: string;
+  auth_method: string;
+  credentials?: Record<string, string>;
+  metadata?: Record<string, unknown>;
+  user_id?: string;
+}
+
 export interface ToolPermission {
   resource: string;
   action: 'read' | 'write' | 'execute' | 'delete';

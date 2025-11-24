@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # Ollama LLM service
@@ -26,7 +26,7 @@ services:
       dockerfile: Dockerfile
     container_name: pm_agent_app
     ports:
-      - "8501:8501"  # Streamlit UI
+      - "8501:8501" # Streamlit UI
     volumes:
       - /Users/nate/Development/1. Projects/Engineering Department:/app/project_source:ro
       - /Users/nate/Documents/Engineering Department:/app/working_dir:rw

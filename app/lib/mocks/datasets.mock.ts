@@ -16,10 +16,30 @@ export const mockDatasets: Dataset[] = [
     file_size_bytes: 524288,
     row_count: 500,
     schema: [
-      { name: 'query', type: 'string', description: 'Customer question or request', required: true },
-      { name: 'expected_intent', type: 'string', description: 'Expected intent classification', required: true },
-      { name: 'expected_response', type: 'string', description: 'Expected agent response', required: false },
-      { name: 'metadata', type: 'object', description: 'Additional test metadata', required: false },
+      {
+        name: 'query',
+        type: 'string',
+        description: 'Customer question or request',
+        required: true,
+      },
+      {
+        name: 'expected_intent',
+        type: 'string',
+        description: 'Expected intent classification',
+        required: true,
+      },
+      {
+        name: 'expected_response',
+        type: 'string',
+        description: 'Expected agent response',
+        required: false,
+      },
+      {
+        name: 'metadata',
+        type: 'object',
+        description: 'Additional test metadata',
+        required: false,
+      },
     ],
     version: '1.2.0',
     versions: [
@@ -73,9 +93,24 @@ export const mockDatasets: Dataset[] = [
     file_size_bytes: 262144,
     row_count: 200,
     schema: [
-      { name: 'lead_data', type: 'object', description: 'Lead information and context', required: true },
-      { name: 'expected_score', type: 'number', description: 'Expected lead score (0-100)', required: true },
-      { name: 'expected_action', type: 'string', description: 'Expected routing action', required: true },
+      {
+        name: 'lead_data',
+        type: 'object',
+        description: 'Lead information and context',
+        required: true,
+      },
+      {
+        name: 'expected_score',
+        type: 'number',
+        description: 'Expected lead score (0-100)',
+        required: true,
+      },
+      {
+        name: 'expected_action',
+        type: 'string',
+        description: 'Expected routing action',
+        required: true,
+      },
     ],
     version: '2.0.0',
     versions: [
@@ -119,9 +154,24 @@ export const mockDatasets: Dataset[] = [
     row_count: 150,
     schema: [
       { name: 'image_url', type: 'string', description: 'URL to invoice image', required: true },
-      { name: 'ground_truth_total', type: 'number', description: 'Actual invoice total', required: true },
-      { name: 'ground_truth_vendor', type: 'string', description: 'Actual vendor name', required: true },
-      { name: 'ground_truth_date', type: 'string', description: 'Actual invoice date', required: true },
+      {
+        name: 'ground_truth_total',
+        type: 'number',
+        description: 'Actual invoice total',
+        required: true,
+      },
+      {
+        name: 'ground_truth_vendor',
+        type: 'string',
+        description: 'Actual vendor name',
+        required: true,
+      },
+      {
+        name: 'ground_truth_date',
+        type: 'string',
+        description: 'Actual invoice date',
+        required: true,
+      },
     ],
     version: '1.0.0',
     versions: [
@@ -164,10 +214,25 @@ export const mockDatasets: Dataset[] = [
     file_size_bytes: 2097152,
     row_count: 1000,
     schema: [
-      { name: 'question', type: 'string', description: 'Natural language question', required: true },
+      {
+        name: 'question',
+        type: 'string',
+        description: 'Natural language question',
+        required: true,
+      },
       { name: 'sql_query', type: 'string', description: 'Correct SQL query', required: true },
-      { name: 'database_schema', type: 'object', description: 'Relevant schema info', required: true },
-      { name: 'difficulty', type: 'string', description: 'Query difficulty level', required: false },
+      {
+        name: 'database_schema',
+        type: 'object',
+        description: 'Relevant schema info',
+        required: true,
+      },
+      {
+        name: 'difficulty',
+        type: 'string',
+        description: 'Query difficulty level',
+        required: false,
+      },
     ],
     version: '3.1.0',
     versions: [
@@ -211,9 +276,24 @@ export const mockDatasets: Dataset[] = [
     row_count: 2000,
     schema: [
       { name: 'content', type: 'string', description: 'User-generated content', required: true },
-      { name: 'content_type', type: 'string', description: 'text, image, or video', required: true },
-      { name: 'expected_label', type: 'string', description: 'safe, warning, or violation', required: true },
-      { name: 'violation_categories', type: 'array', description: 'List of policy violations', required: false },
+      {
+        name: 'content_type',
+        type: 'string',
+        description: 'text, image, or video',
+        required: true,
+      },
+      {
+        name: 'expected_label',
+        type: 'string',
+        description: 'safe, warning, or violation',
+        required: true,
+      },
+      {
+        name: 'violation_categories',
+        type: 'array',
+        description: 'List of policy violations',
+        required: false,
+      },
     ],
     version: '1.5.0',
     versions: [
@@ -256,11 +336,26 @@ export const mockDatasets: Dataset[] = [
     file_size_bytes: 3145728,
     row_count: 75,
     schema: [
-      { name: 'transcript', type: 'string', description: 'Full meeting transcript', required: true },
+      {
+        name: 'transcript',
+        type: 'string',
+        description: 'Full meeting transcript',
+        required: true,
+      },
       { name: 'duration_minutes', type: 'number', description: 'Meeting duration', required: true },
       { name: 'participants', type: 'array', description: 'List of participants', required: true },
-      { name: 'expected_summary', type: 'string', description: 'Human-written summary', required: true },
-      { name: 'expected_action_items', type: 'array', description: 'List of action items', required: true },
+      {
+        name: 'expected_summary',
+        type: 'string',
+        description: 'Human-written summary',
+        required: true,
+      },
+      {
+        name: 'expected_action_items',
+        type: 'array',
+        description: 'List of action items',
+        required: true,
+      },
     ],
     version: '1.0.0',
     versions: [
@@ -283,7 +378,7 @@ export const mockDatasets: Dataset[] = [
       total_evaluations: 3,
       last_run_at: '2025-01-14T13:00:00Z',
       best_pass_rate: 0.947,
-      worst_pass_rate: 0.920,
+      worst_pass_rate: 0.92,
       avg_pass_rate: 0.933,
       avg_latency_ms: 5234,
       trend: 'stable',
@@ -480,23 +575,23 @@ export const mockEvaluationResults: EvaluationResult[] = [
 
 // Helper functions
 export function getDatasetById(id: string): Dataset | undefined {
-  return mockDatasets.find(ds => ds.id === id);
+  return mockDatasets.find((ds) => ds.id === id);
 }
 
 export function getDatasetsByType(type: string): Dataset[] {
-  return mockDatasets.filter(ds => ds.type === type);
+  return mockDatasets.filter((ds) => ds.type === type);
 }
 
 export function getDatasetsByAgent(agentId: string): Dataset[] {
-  return mockDatasets.filter(ds => ds.used_by_agents.includes(agentId));
+  return mockDatasets.filter((ds) => ds.used_by_agents.includes(agentId));
 }
 
 export function getEvaluationsByDataset(datasetId: string): Evaluation[] {
-  return mockEvaluations.filter(evaluation => evaluation.dataset_id === datasetId);
+  return mockEvaluations.filter((evaluation) => evaluation.dataset_id === datasetId);
 }
 
 export function getEvaluationsByAgent(agentId: string): Evaluation[] {
-  return mockEvaluations.filter(evaluation => evaluation.agent_id === agentId);
+  return mockEvaluations.filter((evaluation) => evaluation.agent_id === agentId);
 }
 
 export function getRecentEvaluations(limit: number = 10): Evaluation[] {
@@ -511,6 +606,7 @@ export function getDatasetStats() {
     total_rows: mockDatasets.reduce((sum, ds) => sum + ds.row_count, 0),
     total_evaluations: mockEvaluations.length,
     avg_pass_rate:
-      mockEvaluations.reduce((sum, evaluation) => sum + evaluation.pass_rate, 0) / mockEvaluations.length,
+      mockEvaluations.reduce((sum, evaluation) => sum + evaluation.pass_rate, 0) /
+      mockEvaluations.length,
   };
 }

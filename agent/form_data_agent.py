@@ -8,9 +8,9 @@ provide dynamic options for dropdowns, defaults, etc.
 
 from __future__ import annotations
 
-from typing import TypedDict, Optional, List, Any
+from typing import Any, TypedDict
 
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 
 from .data_agent import DataAgent
 
@@ -29,7 +29,7 @@ class FormDataState(TypedDict, total=False):
 
     # Outputs
     result: Any
-    error: Optional[str]
+    error: str | None
 
 
 class FormDataAgent:
@@ -116,5 +116,3 @@ class FormDataAgent:
             state["error"] = f"FormDataAgent failed: {e}"
 
         return state
-
-

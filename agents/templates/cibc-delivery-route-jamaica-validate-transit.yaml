@@ -1,0 +1,347 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Delivery - Route Jamaica Validate Transit
+  type: system
+  version: 1.0.0
+  description: Jamaica territory delivery with mandatory transit code validation
+  tags: [cibc, agent-group-5, delivery-fulfillment, jamaica, transit-code, territory-routing]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Jamaica Delivery Request
+          description: Card approved for Jamaica territory
+
+      - id: validate_jamaica_address
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Validate Jamaica Address
+          description: Verify address format and parish
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Validate Jamaica address:
+
+            Required fields:
+            - Street address
+            - Parish (14 parishes in Jamaica)
+            - Postal code (optional but recommended)
+            - Country = Jamaica
+
+            Valid parishes:
+            Kingston, St. Andrew, St. Catherine, Clarendon
+            Manchester, St. Elizabeth, Westmoreland, Hanover
+            St. James, Trelawny, St. Ann, St. Mary
+            Portland, St. Thomas
+
+            Address validation:
+            - Street number and name required
+            - Community/district name helpful
+            - P.O. Box acceptable for some parishes
+
+      - id: extract_transit_code
+        type: process
+        position: { x: 300, y: 280 }
+        data:
+          label: Extract Transit Code
+          description: Get CIBC FirstCaribbean transit code
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Extract CIBC FirstCaribbean transit code:
+
+            Transit code sources:
+            - Customer account profile (primary)
+            - Card record (if replacement)
+            - Branch association (customer's home branch)
+
+            Jamaica transit codes:
+            - Format: 5-digit code
+            - Links customer to specific branch
+            - Required for card delivery routing
+            - Determines which branch handles pickup/delivery
+
+      - id: validate_transit_code
+        type: toolCall
+        position: { x: 300, y: 410 }
+        data:
+          label: Validate Transit Code
+          description: Verify transit code in routing table
+          tool: func-validate-transit-code
+
+      - id: transit_validation_decision
+        type: decision
+        position: { x: 300, y: 540 }
+        data:
+          label: Transit Code Valid?
+          description: Check if transit code exists and is active
+          conditions:
+            - label: Valid Transit Code
+              expression: transit_valid == true
+              next: lookup_branch_details
+            - label: Invalid Transit Code
+              expression: transit_valid == false
+              next: handle_invalid_transit
+            - label: Missing Transit Code
+              expression: transit_code == null
+              next: request_transit_code
+
+      - id: lookup_branch_details
+        type: toolCall
+        position: { x: 150, y: 670 }
+        data:
+          label: Lookup Branch Details
+          description: Get branch name, address, and contact info
+          tool: func-lookup-transit-code-details
+
+      - id: determine_delivery_method
+        type: process
+        position: { x: 150, y: 800 }
+        data:
+          label: Determine Delivery Method
+          description: Branch pickup or local delivery
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Determine Jamaica delivery method:
+
+            Branch pickup (standard):
+            - Card ships to customer's home branch (transit code)
+            - Customer notified when ready for pickup
+            - Requires ID for collection
+            - Available for 60 days
+
+            Local delivery (select branches only):
+            - Available for Kingston, Montego Bay, Ocho Rios
+            - Courier delivery from branch to customer address
+            - Additional 2-3 days after branch arrival
+            - Signature required
+
+            Express (rush or PWM):
+            - DHL Express direct to customer address
+            - Bypass branch routing
+            - 3-5 business days from Toronto
+
+      - id: create_branch_routing
+        type: process
+        position: { x: 150, y: 930 }
+        data:
+          label: Create Branch Routing
+          description: Route card to customer's home branch
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Create branch routing instruction:
+
+            Ship to branch:
+            - Branch name and transit code
+            - Branch physical address
+            - Contact person (branch operations manager)
+            - Customer name for pickup
+            - Customer account number
+
+      - id: calculate_delivery_timeline
+        type: toolCall
+        position: { x: 150, y: 1060 }
+        data:
+          label: Calculate Delivery Timeline
+          description: Estimate arrival at branch
+          tool: func-calculate-delivery-eta
+
+      - id: create_delivery_instruction
+        type: toolCall
+        position: { x: 150, y: 1190 }
+        data:
+          label: Create Delivery Instruction
+          description: Record Jamaica routing with transit code
+          tool: func-create-delivery-instruction
+
+      - id: notify_customer_shipped
+        type: toolCall
+        position: { x: 150, y: 1320 }
+        data:
+          label: Send Shipment Notification
+          description: Notify customer card is in transit to branch
+          tool: func-send-notification
+
+      - id: notify_branch_incoming
+        type: process
+        position: { x: 150, y: 1450 }
+        data:
+          label: Notify Branch of Incoming Card
+          description: Alert branch operations of expected arrival
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: handle_invalid_transit
+        type: process
+        position: { x: 450, y: 670 }
+        data:
+          label: Handle Invalid Transit Code
+          description: Transit code not found in routing table
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Invalid transit code detected:
+
+            Possible causes:
+            - Outdated transit code (branch merged/closed)
+            - Data entry error
+            - Account transferred between branches
+            - New branch not yet in routing table
+
+            Resolution steps:
+            1. Check transit code routing table update date
+            2. Contact Jamaica operations for valid code
+            3. Use default transit based on customer parish
+            4. Escalate to operations team
+
+      - id: check_parish_default
+        type: toolCall
+        position: { x: 450, y: 800 }
+        data:
+          label: Check Parish Default Transit
+          description: Use parish-based default branch
+          tool: func-get-default-transit-by-parish
+
+      - id: apply_default_transit
+        type: process
+        position: { x: 450, y: 930 }
+        data:
+          label: Apply Default Transit Code
+          description: Use parish default for routing
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Apply parish-based default transit code:
+
+            Parish defaults:
+            - Kingston/St. Andrew → Kingston Main Branch
+            - St. James → Montego Bay Branch
+            - St. Ann → Ocho Rios Branch
+            - Other parishes → Nearest major branch
+
+            Update customer record with correct transit code.
+
+      - id: request_transit_code
+        type: process
+        position: { x: 600, y: 670 }
+        data:
+          label: Request Transit Code from Customer
+          description: Transit code missing - contact customer
+          model: gpt-4o
+          temperature: 0.5
+          prompt: |
+            Transit code missing - request from customer:
+
+            Ask customer:
+            "Which CIBC FirstCaribbean branch do you normally visit?"
+
+            Options:
+            - Provide list of branches by parish
+            - Use customer's stated preference
+            - Assign transit code based on selection
+            - Update customer profile
+
+      - id: update_customer_transit
+        type: process
+        position: { x: 600, y: 800 }
+        data:
+          label: Update Customer Transit Code
+          description: Save transit code to customer profile
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: end
+        type: end
+        position: { x: 300, y: 1580 }
+        data:
+          label: Jamaica Routing Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: validate_jamaica_address
+
+      - id: e2
+        source: validate_jamaica_address
+        target: extract_transit_code
+
+      - id: e3
+        source: extract_transit_code
+        target: validate_transit_code
+
+      - id: e4
+        source: validate_transit_code
+        target: transit_validation_decision
+
+      - id: e5
+        source: transit_validation_decision
+        target: lookup_branch_details
+        sourceHandle: Valid Transit Code
+
+      - id: e6
+        source: transit_validation_decision
+        target: handle_invalid_transit
+        sourceHandle: Invalid Transit Code
+
+      - id: e7
+        source: transit_validation_decision
+        target: request_transit_code
+        sourceHandle: Missing Transit Code
+
+      - id: e8
+        source: lookup_branch_details
+        target: determine_delivery_method
+
+      - id: e9
+        source: determine_delivery_method
+        target: create_branch_routing
+
+      - id: e10
+        source: create_branch_routing
+        target: calculate_delivery_timeline
+
+      - id: e11
+        source: calculate_delivery_timeline
+        target: create_delivery_instruction
+
+      - id: e12
+        source: create_delivery_instruction
+        target: notify_customer_shipped
+
+      - id: e13
+        source: notify_customer_shipped
+        target: notify_branch_incoming
+
+      - id: e14
+        source: notify_branch_incoming
+        target: end
+
+      - id: e15
+        source: handle_invalid_transit
+        target: check_parish_default
+
+      - id: e16
+        source: check_parish_default
+        target: apply_default_transit
+
+      - id: e17
+        source: apply_default_transit
+        target: lookup_branch_details
+
+      - id: e18
+        source: request_transit_code
+        target: update_customer_transit
+
+      - id: e19
+        source: update_customer_transit
+        target: validate_transit_code

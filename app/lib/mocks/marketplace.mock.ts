@@ -52,7 +52,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'agent',
     name: 'customer-support-starter',
     display_name: 'Customer Support Starter',
-    description: 'Pre-configured customer support agent with FAQ knowledge base, order tracking, and ticket creation. Includes Slack and email channel integrations.',
+    description:
+      'Pre-configured customer support agent with FAQ knowledge base, order tracking, and ticket creation. Includes Slack and email channel integrations.',
     category: 'Customer Service',
     author: 'Agent Foundry Team',
     author_verified: true,
@@ -86,7 +87,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'agent',
     name: 'sales-qualifier-pro',
     display_name: 'Sales Lead Qualifier Pro',
-    description: 'Advanced lead qualification agent with CRM integration, scoring logic, and automated demo scheduling. Integrates with Salesforce, HubSpot, and Calendly.',
+    description:
+      'Advanced lead qualification agent with CRM integration, scoring logic, and automated demo scheduling. Integrates with Salesforce, HubSpot, and Calendly.',
     category: 'Sales',
     author: 'Agent Foundry Team',
     author_verified: true,
@@ -115,7 +117,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'agent',
     name: 'data-analyst-sql',
     display_name: 'SQL Data Analyst',
-    description: 'Natural language to SQL agent with support for PostgreSQL, MySQL, BigQuery, and Snowflake. Includes chart generation and export capabilities.',
+    description:
+      'Natural language to SQL agent with support for PostgreSQL, MySQL, BigQuery, and Snowflake. Includes chart generation and export capabilities.',
     category: 'Analytics',
     author: 'DataViz Labs',
     author_verified: true,
@@ -145,7 +148,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'agent',
     name: 'hr-onboarding-complete',
     display_name: 'HR Onboarding Complete',
-    description: 'Comprehensive employee onboarding agent with document collection, orientation scheduling, and IT provisioning workflows.',
+    description:
+      'Comprehensive employee onboarding agent with document collection, orientation scheduling, and IT provisioning workflows.',
     category: 'Human Resources',
     author: 'HR Automation Co.',
     author_verified: true,
@@ -174,7 +178,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'agent',
     name: 'code-reviewer-ai',
     display_name: 'AI Code Reviewer',
-    description: 'Automated code review agent that analyzes pull requests for bugs, security issues, performance problems, and style violations. Supports 15+ languages.',
+    description:
+      'Automated code review agent that analyzes pull requests for bugs, security issues, performance problems, and style violations. Supports 15+ languages.',
     category: 'Development',
     author: 'DevTools Inc.',
     author_verified: true,
@@ -204,7 +209,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'agent',
     name: 'invoice-processor-ocr',
     display_name: 'Invoice Processor with OCR',
-    description: 'Automated invoice processing with OCR extraction, validation, approval routing, and QuickBooks integration.',
+    description:
+      'Automated invoice processing with OCR extraction, validation, approval routing, and QuickBooks integration.',
     category: 'Finance',
     author: 'FinTech Solutions',
     author_verified: true,
@@ -233,7 +239,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'agent',
     name: 'meeting-summarizer-pro',
     display_name: 'Meeting Summarizer Pro',
-    description: 'Transcribe and summarize meetings from Zoom, Teams, or Google Meet. Generates action items, key decisions, and follow-up emails.',
+    description:
+      'Transcribe and summarize meetings from Zoom, Teams, or Google Meet. Generates action items, key decisions, and follow-up emails.',
     category: 'Productivity',
     author: 'MeetingAI Corp',
     author_verified: true,
@@ -263,7 +270,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'agent',
     name: 'content-moderator-ml',
     display_name: 'AI Content Moderator',
-    description: 'Real-time content moderation for text, images, and video. Detects policy violations, toxic content, and spam with 99.4% accuracy.',
+    description:
+      'Real-time content moderation for text, images, and video. Detects policy violations, toxic content, and spam with 99.4% accuracy.',
     category: 'Safety',
     author: 'SafetyFirst AI',
     author_verified: true,
@@ -292,7 +300,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'agent',
     name: 'social-media-manager',
     display_name: 'Social Media Manager',
-    description: 'Automated social media monitoring and response agent for Twitter, LinkedIn, and Facebook. Handles mentions, DMs, and engagement.',
+    description:
+      'Automated social media monitoring and response agent for Twitter, LinkedIn, and Facebook. Handles mentions, DMs, and engagement.',
     category: 'Marketing',
     author: 'SocialAI Labs',
     author_verified: false,
@@ -321,7 +330,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'agent',
     name: 'it-helpdesk-auto',
     display_name: 'IT Helpdesk Automation',
-    description: 'Automated IT support agent that resolves common issues like password resets, VPN setup, and software installations. Integrates with Active Directory and Jira.',
+    description:
+      'Automated IT support agent that resolves common issues like password resets, VPN setup, and software installations. Integrates with Active Directory and Jira.',
     category: 'IT',
     author: 'ITOps Solutions',
     author_verified: true,
@@ -352,7 +362,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'tool',
     name: 'zendesk-integration',
     display_name: 'Zendesk Integration',
-    description: 'Complete Zendesk integration for ticket management, customer lookup, and knowledge base search.',
+    description:
+      'Complete Zendesk integration for ticket management, customer lookup, and knowledge base search.',
     category: 'Customer Service',
     author: 'Zendesk',
     author_verified: true,
@@ -376,7 +387,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'tool',
     name: 'hubspot-crm',
     display_name: 'HubSpot CRM',
-    description: 'HubSpot integration for contact management, deal tracking, and marketing automation.',
+    description:
+      'HubSpot integration for contact management, deal tracking, and marketing automation.',
     category: 'Sales',
     author: 'HubSpot',
     author_verified: true,
@@ -400,7 +412,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'tool',
     name: 'stripe-payments',
     display_name: 'Stripe Payments',
-    description: 'Stripe integration for payment processing, subscription management, and invoice generation.',
+    description:
+      'Stripe integration for payment processing, subscription management, and invoice generation.',
     category: 'Finance',
     author: 'Stripe',
     author_verified: true,
@@ -448,7 +461,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'tool',
     name: 'anthropic-claude',
     display_name: 'Anthropic Claude Models',
-    description: 'Access to Claude 3 Opus, Sonnet, and Haiku models for advanced reasoning and long context.',
+    description:
+      'Access to Claude 3 Opus, Sonnet, and Haiku models for advanced reasoning and long context.',
     category: 'AI Models',
     author: 'Anthropic',
     author_verified: true,
@@ -474,7 +488,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'domain',
     name: 'ecommerce-complete',
     display_name: 'E-Commerce Domain (Complete)',
-    description: 'Comprehensive e-commerce domain model with orders, products, inventory, payments, and shipping.',
+    description:
+      'Comprehensive e-commerce domain model with orders, products, inventory, payments, and shipping.',
     category: 'E-Commerce',
     author: 'Agent Foundry Team',
     author_verified: true,
@@ -498,7 +513,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'domain',
     name: 'banking-core-domain',
     display_name: 'Banking Core Domain',
-    description: 'Banking domain model with accounts, transactions, customers, and compliance frameworks.',
+    description:
+      'Banking domain model with accounts, transactions, customers, and compliance frameworks.',
     category: 'Banking',
     author: 'FinTech Consortium',
     author_verified: true,
@@ -522,7 +538,8 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
     type: 'domain',
     name: 'saas-subscription-domain',
     display_name: 'SaaS Subscription Domain',
-    description: 'SaaS business domain with subscriptions, billing, organizations, and usage tracking.',
+    description:
+      'SaaS business domain with subscriptions, billing, organizations, and usage tracking.',
     category: 'SaaS',
     author: 'SaaS Builders',
     author_verified: false,
@@ -545,28 +562,26 @@ export const mockMarketplaceItems: MarketplaceItem[] = [
 
 // Helper functions
 export function getMarketplaceItemById(id: string): MarketplaceItem | undefined {
-  return mockMarketplaceItems.find(item => item.id === id);
+  return mockMarketplaceItems.find((item) => item.id === id);
 }
 
 export function getMarketplaceItemsByType(type: string): MarketplaceItem[] {
-  return mockMarketplaceItems.filter(item => item.type === type);
+  return mockMarketplaceItems.filter((item) => item.type === type);
 }
 
 export function getMarketplaceItemsByCategory(category: string): MarketplaceItem[] {
-  return mockMarketplaceItems.filter(item => item.category === category);
+  return mockMarketplaceItems.filter((item) => item.category === category);
 }
 
 export function getFeaturedItems(limit: number = 6): MarketplaceItem[] {
   return [...mockMarketplaceItems]
-    .filter(item => item.verified)
+    .filter((item) => item.verified)
     .sort((a, b) => b.downloads - a.downloads)
     .slice(0, limit);
 }
 
 export function getPopularItems(limit: number = 10): MarketplaceItem[] {
-  return [...mockMarketplaceItems]
-    .sort((a, b) => b.downloads - a.downloads)
-    .slice(0, limit);
+  return [...mockMarketplaceItems].sort((a, b) => b.downloads - a.downloads).slice(0, limit);
 }
 
 export function getRecentItems(limit: number = 10): MarketplaceItem[] {
@@ -587,23 +602,23 @@ export function getTopRatedItems(limit: number = 10): MarketplaceItem[] {
 export function searchMarketplace(query: string): MarketplaceItem[] {
   const lowercaseQuery = query.toLowerCase();
   return mockMarketplaceItems.filter(
-    item =>
+    (item) =>
       item.name.toLowerCase().includes(lowercaseQuery) ||
       item.display_name.toLowerCase().includes(lowercaseQuery) ||
       item.description.toLowerCase().includes(lowercaseQuery) ||
-      item.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
+      item.tags.some((tag) => tag.toLowerCase().includes(lowercaseQuery))
   );
 }
 
 export function getMarketplaceStats() {
   return {
     total_items: mockMarketplaceItems.length,
-    total_agents: mockMarketplaceItems.filter(i => i.type === 'agent').length,
-    total_tools: mockMarketplaceItems.filter(i => i.type === 'tool').length,
-    total_domains: mockMarketplaceItems.filter(i => i.type === 'domain').length,
+    total_agents: mockMarketplaceItems.filter((i) => i.type === 'agent').length,
+    total_tools: mockMarketplaceItems.filter((i) => i.type === 'tool').length,
+    total_domains: mockMarketplaceItems.filter((i) => i.type === 'domain').length,
     total_downloads: mockMarketplaceItems.reduce((sum, i) => sum + i.downloads, 0),
-    verified_items: mockMarketplaceItems.filter(i => i.verified).length,
-    free_items: mockMarketplaceItems.filter(i => i.price === 0).length,
-    paid_items: mockMarketplaceItems.filter(i => i.price > 0).length,
+    verified_items: mockMarketplaceItems.filter((i) => i.verified).length,
+    free_items: mockMarketplaceItems.filter((i) => i.price === 0).length,
+    paid_items: mockMarketplaceItems.filter((i) => i.price > 0).length,
   };
 }

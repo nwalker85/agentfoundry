@@ -1,0 +1,824 @@
+##############################################
+# CIBC Card Operations Tool Catalog
+# 35 tools across 5 agent groups
+##############################################
+
+# ============================================
+# Card Lifecycle Tools (Group 1)
+# ============================================
+
+- name: func-activate-card
+  display_name: Activate Card
+  description: Activate a card across IVR, web, mobile, or phone channels
+  category: card_lifecycle
+  agent_group: group_1_card_lifecycle
+  parameters:
+    card_id:
+      type: string
+      description: Unique card identifier
+      required: true
+    activation_channel:
+      type: string
+      enum: [ivr, web, mobile, phone]
+      description: Channel where activation is requested
+      required: true
+    customer_id:
+      type: string
+      description: Customer identifier for verification
+      required: true
+    verification_passed:
+      type: boolean
+      description: Whether customer passed verification
+      required: true
+  returns:
+    type: object
+    properties:
+      activation_status: { type: string }
+      activation_timestamp: { type: string }
+      activation_request_id: { type: string }
+
+- name: func-block-card
+  display_name: Block Card (Verified)
+  description: Block card for a verified customer (post-verification)
+  category: card_lifecycle
+  agent_group: group_1_card_lifecycle
+  parameters:
+    card_id:
+      type: string
+      required: true
+    reason:
+      type: string
+      enum: [lost, stolen, damaged, compromised, customer_request]
+      required: true
+    blocked_by:
+      type: string
+      description: Agent or system identifier
+      required: true
+  returns:
+    type: object
+    properties:
+      block_status: { type: string }
+      previous_status: { type: string }
+      timestamp: { type: string }
+
+- name: func-block-card-safety
+  display_name: Block Card (Safety/Emergency)
+  description: Emergency block pre-verification for customer safety
+  category: card_lifecycle
+  agent_group: group_1_card_lifecycle
+  parameters:
+    card_id:
+      type: string
+      required: true
+    reason:
+      type: string
+      enum: [fraud_suspected, customer_emergency]
+      required: true
+  returns:
+    type: object
+    properties:
+      block_status: { type: string }
+      safety_hold_applied: { type: boolean }
+
+- name: func-update-card-status
+  display_name: Update Card Status
+  description: System automation for card status updates
+  category: card_lifecycle
+  agent_group: group_1_card_lifecycle
+  parameters:
+    card_id:
+      type: string
+      required: true
+    new_status_code:
+      type: string
+      required: true
+    status_reason:
+      type: string
+      required: false
+    changed_by:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      status_updated: { type: boolean }
+      history_record_id: { type: string }
+
+- name: func-create-card-record
+  display_name: Create Card Record
+  description: Create new card record post-approval
+  category: card_lifecycle
+  agent_group: group_1_card_lifecycle
+  parameters:
+    customer_id:
+      type: string
+      required: true
+    card_type:
+      type: string
+      required: true
+    territory:
+      type: string
+      required: true
+    is_primary:
+      type: boolean
+      default: true
+  returns:
+    type: object
+    properties:
+      card_id: { type: string }
+      status: { type: string }
+
+- name: func-cancel-card
+  display_name: Cancel Card
+  description: Automated card cancellation workflow
+  category: card_lifecycle
+  agent_group: group_1_card_lifecycle
+  parameters:
+    card_id:
+      type: string
+      required: true
+    cancellation_reason:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      cancellation_status: { type: string }
+      effective_date: { type: string }
+
+# ============================================
+# Security & Fraud Tools (Group 2)
+# ============================================
+
+- name: func-apply-card-watch
+  display_name: Apply Card Watch (CW20)
+  description: Apply CW20 watch with date bounds for fraud monitoring
+  category: security_fraud
+  agent_group: group_2_security_fraud
+  parameters:
+    card_id:
+      type: string
+      required: true
+    start_date:
+      type: string
+      format: date
+      required: true
+    end_date:
+      type: string
+      format: date
+      required: false
+    reason:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      watch_id: { type: string }
+      watch_status: { type: string }
+
+- name: func-remove-card-watch
+  display_name: Remove Card Watch
+  description: Remove watch after transaction verification
+  category: security_fraud
+  agent_group: group_2_security_fraud
+  parameters:
+    watch_id:
+      type: string
+      required: true
+    removed_by:
+      type: string
+      required: true
+    all_transactions_verified:
+      type: boolean
+      required: true
+  returns:
+    type: object
+    properties:
+      watch_removed: { type: boolean }
+      removal_timestamp: { type: string }
+
+- name: func-create-fraud-memo
+  display_name: Create Fraud Memo
+  description: Create fraud memo (automated from FDS)
+  category: security_fraud
+  agent_group: group_2_security_fraud
+  parameters:
+    card_id:
+      type: string
+      required: true
+    memo_source:
+      type: string
+      enum: [FDS, Manual, Pindrop]
+      default: FDS
+    risk_level:
+      type: string
+      enum: [LOW, MEDIUM, HIGH, CRITICAL]
+      required: true
+    fraud_score:
+      type: integer
+      min: 0
+      max: 100
+    details:
+      type: object
+      required: true
+  returns:
+    type: object
+    properties:
+      memo_id: { type: string }
+      created_at: { type: string }
+
+- name: func-flag-transaction
+  display_name: Flag Suspicious Transaction
+  description: Flag a transaction as suspicious for review
+  category: security_fraud
+  agent_group: group_2_security_fraud
+  parameters:
+    card_id:
+      type: string
+      required: true
+    transaction_id:
+      type: string
+      required: true
+    amount:
+      type: number
+      required: true
+    merchant:
+      type: string
+      required: true
+    flagged_reason:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      flagged_transaction_id: { type: string }
+      watch_applied: { type: boolean }
+
+- name: func-verify-flagged-transactions
+  display_name: Verify Flagged Transactions
+  description: Customer verification of flagged transactions
+  category: security_fraud
+  agent_group: group_2_security_fraud
+  parameters:
+    transaction_ids:
+      type: array
+      items: { type: string }
+      required: true
+    customer_response:
+      type: string
+      enum: [legitimate, fraud]
+      required: true
+    verified_by:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      verified_count: { type: integer }
+      watch_removal_eligible: { type: boolean }
+
+- name: func-get-fraud-risk-score
+  display_name: Get Fraud Risk Score
+  description: Pindrop API integration for fraud scoring
+  category: security_fraud
+  agent_group: group_2_security_fraud
+  external_api: pindrop
+  parameters:
+    session_id:
+      type: string
+      required: true
+    customer_id:
+      type: string
+      required: true
+    phone_number:
+      type: string
+      required: false
+  returns:
+    type: object
+    properties:
+      fraud_score: { type: integer }
+      risk_level: { type: string }
+      confidence: { type: number }
+
+# ============================================
+# Request Orchestration Tools (Group 3)
+# ============================================
+
+- name: func-create-replacement-request
+  display_name: Create Replacement Request
+  description: Create card replacement request (customer-facing)
+  category: request_orchestration
+  agent_group: group_3_request_orchestration
+  parameters:
+    card_id:
+      type: string
+      required: true
+    customer_id:
+      type: string
+      required: true
+    request_type:
+      type: string
+      enum: [lost, stolen, damaged, compromised]
+      required: true
+    request_channel:
+      type: string
+      required: true
+    address_change_flag:
+      type: boolean
+      default: false
+    rush_flag:
+      type: boolean
+      default: false
+  returns:
+    type: object
+    properties:
+      request_id: { type: string }
+      initial_status: { type: string }
+
+- name: func-calculate-request-risk-score
+  display_name: Calculate Request Risk Score
+  description: Calculate risk using Pindrop + business criteria
+  category: request_orchestration
+  agent_group: group_3_request_orchestration
+  parameters:
+    request_id:
+      type: string
+      required: true
+    fraud_score:
+      type: integer
+      required: true
+    address_change:
+      type: boolean
+      required: true
+    previous_requests_count:
+      type: integer
+      default: 0
+  returns:
+    type: object
+    properties:
+      risk_tier: { type: string }
+      routing_decision: { type: string }
+
+- name: func-route-by-fraud-score
+  display_name: Route by Fraud Score
+  description: Route request to Tier 1/Tier 2/Block based on risk
+  category: request_orchestration
+  agent_group: group_3_request_orchestration
+  parameters:
+    request_id:
+      type: string
+      required: true
+    risk_tier:
+      type: string
+      enum: [auto, tier1, tier2, blocked]
+      required: true
+  returns:
+    type: object
+    properties:
+      routed_to: { type: string }
+      queue_assignment: { type: string }
+
+- name: func-create-fee-decision
+  display_name: Create Fee Decision
+  description: Automated fee waiver logic
+  category: request_orchestration
+  agent_group: group_3_request_orchestration
+  parameters:
+    request_id:
+      type: string
+      required: true
+    fee_type:
+      type: string
+      required: true
+    fee_amount:
+      type: number
+      required: true
+    waiver_criteria:
+      type: object
+      required: false
+  returns:
+    type: object
+    properties:
+      fee_decision_id: { type: string }
+      waiver_approved: { type: boolean }
+      waiver_reason: { type: string }
+
+- name: func-check-blocking-status-codes
+  display_name: Check Blocking Status Codes
+  description: RMU pre-flight checks for blocking codes
+  category: request_orchestration
+  agent_group: group_3_request_orchestration
+  parameters:
+    card_id:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      has_blocking_codes: { type: boolean }
+      blocking_codes: { type: array }
+      can_proceed: { type: boolean }
+
+- name: func-auto-submit-gd-batch
+  display_name: Auto-Submit G&D Batch
+  description: Scheduled batch submission (5:30 PM Barbados)
+  category: request_orchestration
+  agent_group: group_3_request_orchestration
+  external_api: gd_production
+  scheduled: true
+  schedule_time: "17:30 Atlantic/Barbados"
+  parameters:
+    batch_date:
+      type: string
+      format: date
+      required: true
+  returns:
+    type: object
+    properties:
+      batch_id: { type: string }
+      request_count: { type: integer }
+      submission_status: { type: string }
+
+- name: func-submit-gd-rush
+  display_name: Submit G&D Rush
+  description: Real-time rush submission for instant cards
+  category: request_orchestration
+  agent_group: group_3_request_orchestration
+  external_api: gd_production
+  parameters:
+    request_id:
+      type: string
+      required: true
+    priority:
+      type: string
+      enum: [instant, express]
+      default: instant
+  returns:
+    type: object
+    properties:
+      gd_order_id: { type: string }
+      estimated_production_time: { type: string }
+
+- name: func-create-case
+  display_name: Create Case
+  description: Create case for every customer interaction
+  category: request_orchestration
+  agent_group: group_3_request_orchestration
+  parameters:
+    customer_id:
+      type: string
+      required: true
+    session_id:
+      type: string
+      required: true
+    case_type:
+      type: string
+      required: true
+    channel:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      case_id: { type: string }
+      created_at: { type: string }
+
+- name: func-generate-case-summary
+  display_name: Generate Case Summary
+  description: AI-generated YAML case summary
+  category: request_orchestration
+  agent_group: group_3_request_orchestration
+  ai_powered: true
+  parameters:
+    case_id:
+      type: string
+      required: true
+    full_transcript:
+      type: string
+      required: true
+    case_metadata:
+      type: object
+      required: true
+  returns:
+    type: object
+    properties:
+      summary_yaml: { type: string }
+      multi_tags: { type: array }
+      layered_disposition: { type: array }
+
+# ============================================
+# Session & Verification Tools (Group 4)
+# ============================================
+
+- name: func-create-contact-session
+  display_name: Create Contact Session
+  description: Create session for all inbound channels
+  category: session_verification
+  agent_group: group_4_session_verification
+  parameters:
+    customer_id:
+      type: string
+      required: true
+    channel:
+      type: string
+      enum: [phone, chat, sms, web, mobile, ivr, outbound_call]
+      required: true
+    ani:
+      type: string
+      required: false
+    session_metadata:
+      type: object
+      default: {}
+  returns:
+    type: object
+    properties:
+      session_id: { type: string }
+      session_start: { type: string }
+
+- name: func-verify-5-question-protocol
+  display_name: Verify 5-Question Protocol
+  description: Execute 5Q verification protocol
+  category: session_verification
+  agent_group: group_4_session_verification
+  parameters:
+    session_id:
+      type: string
+      required: true
+    customer_id:
+      type: string
+      required: true
+    answers:
+      type: array
+      items: { type: string }
+      minItems: 5
+      maxItems: 5
+      required: true
+  returns:
+    type: object
+    properties:
+      verification_passed: { type: boolean }
+      verification_attempt_id: { type: string }
+
+- name: func-evaluate-verification-with-fraud-score
+  display_name: Evaluate Verification + Fraud Score
+  description: Combine 5Q verification with Pindrop score
+  category: session_verification
+  agent_group: group_4_session_verification
+  parameters:
+    verification_passed:
+      type: boolean
+      required: true
+    fraud_score:
+      type: integer
+      required: true
+  returns:
+    type: object
+    properties:
+      combined_result: { type: string }
+      action_required: { type: string }
+      proceed_allowed: { type: boolean }
+
+- name: func-record-verification-attempt
+  display_name: Record Verification Attempt
+  description: Create audit trail for verification attempts
+  category: session_verification
+  agent_group: group_4_session_verification
+  parameters:
+    session_id:
+      type: string
+      required: true
+    customer_id:
+      type: string
+      required: true
+    verification_method:
+      type: string
+      required: true
+    success:
+      type: boolean
+      required: true
+    fraud_score:
+      type: integer
+      required: false
+    attempt_details:
+      type: object
+      default: {}
+  returns:
+    type: object
+    properties:
+      attempt_id: { type: string }
+      timestamp: { type: string }
+
+- name: func-route-to-pwm-specialist
+  display_name: Route to PWM Specialist
+  description: Detect PWM customer and warm transfer to specialist
+  category: session_verification
+  agent_group: group_4_session_verification
+  parameters:
+    customer_id:
+      type: string
+      required: true
+    session_id:
+      type: string
+      required: true
+    transfer_reason:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      transfer_initiated: { type: boolean }
+      specialist_id: { type: string }
+
+- name: func-initiate-outbound-call
+  display_name: Initiate Outbound Call
+  description: Proactive customer outbound calling (AI voice or human)
+  category: session_verification
+  agent_group: group_4_session_verification
+  parameters:
+    customer_id:
+      type: string
+      required: true
+    call_reason:
+      type: string
+      required: true
+    phone_number:
+      type: string
+      required: true
+    call_type:
+      type: string
+      enum: [ai_voice, human_agent]
+      default: ai_voice
+  returns:
+    type: object
+    properties:
+      outbound_session_id: { type: string }
+      call_status: { type: string }
+
+- name: func-send-notification
+  display_name: Send Notification
+  description: Multi-channel notifications (SMS, email, push, in-app)
+  category: session_verification
+  agent_group: group_4_session_verification
+  parameters:
+    customer_id:
+      type: string
+      required: true
+    notification_type:
+      type: string
+      enum: [card_shipped, card_ready_pickup, fraud_alert, verification_required]
+      required: true
+    channels:
+      type: array
+      items:
+        type: string
+        enum: [sms, email, push, in_app]
+      required: true
+    message_content:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      notification_id: { type: string }
+      sent_channels: { type: array }
+
+- name: func-get-customer-context
+  display_name: Get Customer Context
+  description: Query Customer Context Engine for interaction history
+  category: session_verification
+  agent_group: group_4_session_verification
+  external_api: context_engine
+  parameters:
+    customer_id:
+      type: string
+      required: true
+    context_window_type:
+      type: string
+      enum: [standard, adaptive]
+      default: standard
+  returns:
+    type: object
+    properties:
+      recent_cases: { type: array }
+      recent_interactions: { type: array }
+      customer_profile: { type: object }
+
+- name: func-get-customer-communication-preferences
+  display_name: Get Communication Preferences
+  description: Check customer consent and communication preferences
+  category: session_verification
+  agent_group: group_4_session_verification
+  external_api: core_banking
+  parameters:
+    customer_id:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      sms_consent: { type: boolean }
+      email_consent: { type: boolean }
+      push_consent: { type: boolean }
+      preferred_channel: { type: string }
+
+# ============================================
+# Delivery & Fulfillment Tools (Group 5)
+# ============================================
+
+- name: func-set-delivery-route
+  display_name: Set Delivery Route
+  description: Apply territory-based routing rules
+  category: delivery_fulfillment
+  agent_group: group_5_delivery_fulfillment
+  parameters:
+    card_id:
+      type: string
+      required: true
+    territory:
+      type: string
+      enum: [Barbados, Bahamas, Jamaica, Other]
+      required: true
+    card_type:
+      type: string
+      required: false
+  returns:
+    type: object
+    properties:
+      delivery_method: { type: string }
+      delivery_instruction_id: { type: string }
+
+- name: func-validate-transit-code
+  display_name: Validate Transit Code
+  description: Jamaica transit code validation
+  category: delivery_fulfillment
+  agent_group: group_5_delivery_fulfillment
+  parameters:
+    transit_code:
+      type: string
+      required: true
+    territory:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      is_valid: { type: boolean }
+      branch_info: { type: object }
+
+- name: func-check-gd-batch-cutoff
+  display_name: Check G&D Batch Cutoff
+  description: Check 5:30 PM Barbados cutoff time
+  category: delivery_fulfillment
+  agent_group: group_5_delivery_fulfillment
+  parameters:
+    current_timestamp:
+      type: string
+      format: datetime
+      required: true
+  returns:
+    type: object
+    properties:
+      before_cutoff: { type: boolean }
+      next_batch_time: { type: string }
+
+- name: func-route-to-production
+  display_name: Route to Production
+  description: G&D integration submission
+  category: delivery_fulfillment
+  agent_group: group_5_delivery_fulfillment
+  external_api: gd_production
+  parameters:
+    delivery_instruction_id:
+      type: string
+      required: true
+    production_priority:
+      type: string
+      enum: [standard, rush]
+      default: standard
+  returns:
+    type: object
+    properties:
+      gd_batch_id: { type: string }
+      production_status: { type: string }
+
+- name: func-handle-invalid-transit-exception
+  display_name: Handle Invalid Transit Exception
+  description: Exception handling for invalid transit codes
+  category: delivery_fulfillment
+  agent_group: group_5_delivery_fulfillment
+  parameters:
+    delivery_instruction_id:
+      type: string
+      required: true
+    transit_code:
+      type: string
+      required: true
+    territory:
+      type: string
+      required: true
+  returns:
+    type: object
+    properties:
+      exception_created: { type: boolean }
+      routed_to_queue: { type: string }
+      case_id: { type: string }

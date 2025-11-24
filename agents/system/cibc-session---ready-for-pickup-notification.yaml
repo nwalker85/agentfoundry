@@ -1,0 +1,110 @@
+id: cibc-cibc-session-send-ready-pickup-notification
+metadata:
+  id: cibc-cibc-session-send-ready-pickup-notification
+  name: CIBC Session - Ready for Pickup Notification
+  display_name: CIBC Session - Ready for Pickup Notification
+  description: Notify customer when card arrives at branch for pickup
+  version: 1.0.0
+  type: system
+  status: active
+  environment: dev
+  organization_id: cibc
+  domain_id: card-services
+  created_by: system
+  tags:
+    - cibc
+    - agent-group-4
+    - session
+    - notification
+    - branch-pickup
+  updated: "2025-11-18T01:28:58.711156Z"
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position:
+          x: 300
+          y: 50
+        data:
+          label: Card Arrived at Branch
+          description: Branch receives card delivery
+      - id: get_branch_info
+        type: process
+        position:
+          x: 300
+          y: 150
+        data:
+          label: Get Branch Details
+          description: Retrieve branch address and hours
+          model: gpt-4o-mini
+          temperature: 0.3
+      - id: get_preferences
+        type: toolCall
+        position:
+          x: 300
+          y: 280
+        data:
+          label: Get Communication Preferences
+          description: Check customer notification preferences
+          tool: func-get-customer-communication-preferences
+      - id: prepare_message
+        type: process
+        position:
+          x: 300
+          y: 410
+        data:
+          label: Prepare Pickup Message
+          description: Generate branch pickup notification
+          model: gpt-4o-mini
+          temperature: 0.5
+          prompt: "Create branch pickup notification:
+
+
+            Include:
+
+            - Branch name and address
+
+            - Branch hours
+
+            - ID requirements
+
+            - Card collection deadline (if any)
+
+            - Contact number
+
+            "
+      - id: send_notification
+        type: toolCall
+        position:
+          x: 300
+          y: 540
+        data:
+          label: Send Notification
+          description: Send via preferred channels
+          tool: func-send-notification
+      - id: end
+        type: end
+        position:
+          x: 300
+          y: 670
+        data:
+          label: Customer Notified
+    edges:
+      - id: e1
+        source: entry
+        target: get_branch_info
+      - id: e2
+        source: get_branch_info
+        target: get_preferences
+      - id: e3
+        source: get_preferences
+        target: prepare_message
+      - id: e4
+        source: prepare_message
+        target: send_notification
+      - id: e5
+        source: send_notification
+        target: end

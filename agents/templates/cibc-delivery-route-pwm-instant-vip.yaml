@@ -1,0 +1,386 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Delivery - Route PWM Instant VIP
+  type: system
+  version: 1.0.0
+  description: Private Wealth Management instant card delivery with VIP handling
+  tags: [cibc, agent-group-5, delivery-fulfillment, pwm, vip, instant-card, white-glove]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: PWM VIP Delivery Request
+          description: Private Wealth Management customer card delivery
+
+      - id: verify_pwm_status
+        type: toolCall
+        position: { x: 300, y: 150 }
+        data:
+          label: Verify PWM Customer Status
+          description: Confirm customer is active PWM client
+          tool: func-check-pwm-status
+
+      - id: pwm_status_check
+        type: decision
+        position: { x: 300, y: 280 }
+        data:
+          label: PWM Status Confirmed?
+          description: Verify active PWM designation
+          conditions:
+            - label: Active PWM Customer
+              expression: is_pwm == true && pwm_status == 'active'
+              next: determine_delivery_preference
+            - label: Not PWM - Route Standard
+              expression: is_pwm == false
+              next: route_standard_delivery
+
+      - id: determine_delivery_preference
+        type: process
+        position: { x: 200, y: 410 }
+        data:
+          label: Determine Delivery Preference
+          description: Check PWM customer's preferred delivery method
+          model: gpt-4o
+          temperature: 0.5
+          prompt: |
+            Determine PWM delivery preference:
+
+            Options available for PWM customers:
+
+            1. Instant Card (2-hour production):
+               - G&D rush production
+               - Personal courier delivery to residence or office
+               - White-glove service with appointment
+               - Available in major cities (Toronto, Montreal, Vancouver, Nassau, Bridgetown)
+
+            2. Same-Day Branch Pickup:
+               - Instant card production
+               - Delivered to designated PWM banking centre
+               - VIP lounge pickup with relationship manager greeting
+               - Available 8 AM - 8 PM
+
+            3. Express Courier (Next Business Day):
+               - DHL Express or Purolator VIP
+               - Signature required delivery
+               - Time-specific delivery window
+               - SMS tracking with live updates
+
+            4. Concierge Delivery:
+               - Coordinated with customer's schedule
+               - Delivered to yacht, private jet, hotel, etc.
+               - International concierge service available
+
+      - id: check_instant_card_availability
+        type: toolCall
+        position: { x: 200, y: 540 }
+        data:
+          label: Check Instant Card Availability
+          description: Verify G&D can produce instant card
+          tool: func-check-gd-production-capacity
+
+      - id: instant_availability_decision
+        type: decision
+        position: { x: 200, y: 670 }
+        data:
+          label: Instant Card Available?
+          description: Can G&D deliver instant card?
+          conditions:
+            - label: Instant Available (< 2 hours)
+              expression: instant_available == true
+              next: process_instant_card_request
+            - label: Express Available (Next Day)
+              expression: instant_available == false
+              next: process_express_delivery
+
+      - id: process_instant_card_request
+        type: process
+        position: { x: 100, y: 800 }
+        data:
+          label: Process Instant Card Request
+          description: Initiate 2-hour instant card production
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Instant card production workflow:
+
+            1. Submit rush order to G&D:
+               - Priority: INSTANT (highest)
+               - Production SLA: 2 hours
+               - Packaging: VIP presentation box
+               - Include: Activation instructions, PWM contact card
+
+            2. Coordinate courier:
+               - Dedicated courier (not shared delivery)
+               - Professional appearance required
+               - Customer greeting protocol
+               - Contactless or in-person handoff based on preference
+
+            3. Schedule delivery window:
+               - Coordinate with customer's availability
+               - Provide 30-minute delivery window
+               - Send courier ETA via SMS
+
+      - id: submit_instant_to_gd
+        type: toolCall
+        position: { x: 100, y: 930 }
+        data:
+          label: Submit Instant to G&D
+          description: Rush production order
+          tool: func-submit-gd-rush
+
+      - id: arrange_vip_courier
+        type: process
+        position: { x: 100, y: 1060 }
+        data:
+          label: Arrange VIP Courier
+          description: Book dedicated courier service
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Arrange VIP courier:
+
+            Courier services by location:
+            - Toronto/GTA: Dedicated CIBC courier fleet
+            - Other Canadian cities: Purolator VIP service
+            - Caribbean: Local VIP courier (DHL Premium)
+
+            Courier instructions:
+            - Professional attire
+            - CIBC-branded delivery case
+            - Customer name and address
+            - Special access instructions (gated community, concierge, security)
+            - Photo ID verification protocol
+
+      - id: notify_customer_instant
+        type: toolCall
+        position: { x: 100, y: 1190 }
+        data:
+          label: Notify Customer (Instant Card)
+          description: Confirm instant card delivery details
+          tool: func-send-notification
+
+      - id: coordinate_delivery_window
+        type: process
+        position: { x: 100, y: 1320 }
+        data:
+          label: Coordinate Delivery Window
+          description: Schedule delivery appointment with customer
+          model: gpt-4o
+          temperature: 0.5
+          prompt: |
+            Coordinate delivery appointment:
+
+            Contact customer (PWM relationship manager or direct):
+            - Confirm delivery address
+            - Propose 30-minute delivery windows
+            - Obtain delivery preferences (contactless, in-person)
+            - Collect special instructions
+            - Confirm contact number for courier
+
+            Send confirmation:
+            - Scheduled delivery window
+            - Courier tracking link
+            - PWM relationship manager contact
+            - Activation assistance available
+
+      - id: process_express_delivery
+        type: process
+        position: { x: 300, y: 800 }
+        data:
+          label: Process Express Delivery
+          description: Next-day express courier
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Express delivery workflow:
+
+            Production:
+            - Submit to next available G&D rush slot
+            - VIP packaging
+            - Production: 4-6 hours
+
+            Courier:
+            - DHL Express or Purolator Priority
+            - Next business day delivery
+            - Signature required
+            - Delivery before 10:30 AM (if requested)
+
+      - id: submit_express_to_gd
+        type: toolCall
+        position: { x: 300, y: 930 }
+        data:
+          label: Submit Express to G&D
+          description: Rush production for next-day delivery
+          tool: func-submit-gd-rush
+
+      - id: arrange_express_courier
+        type: toolCall
+        position: { x: 300, y: 1060 }
+        data:
+          label: Arrange Express Courier
+          description: Book express courier service
+          tool: func-create-delivery-instruction
+
+      - id: notify_customer_express
+        type: toolCall
+        position: { x: 300, y: 1190 }
+        data:
+          label: Notify Customer (Express)
+          description: Confirm express delivery details
+          tool: func-send-notification
+
+      - id: notify_relationship_manager
+        type: process
+        position: { x: 200, y: 1450 }
+        data:
+          label: Notify PWM Relationship Manager
+          description: Alert customer's relationship manager
+          model: gpt-4o-mini
+          temperature: 0.5
+          prompt: |
+            Notify PWM relationship manager:
+
+            Send notification to customer's assigned RM:
+            - Card replacement/activation in progress
+            - Delivery method and timeline
+            - Estimated delivery date/time
+            - Suggest proactive customer outreach
+
+            Enable RM to provide white-glove support.
+
+      - id: track_vip_delivery
+        type: process
+        position: { x: 200, y: 1580 }
+        data:
+          label: Track VIP Delivery
+          description: Real-time delivery monitoring
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            VIP delivery tracking:
+
+            Monitor:
+            - Courier pickup from G&D
+            - En route status
+            - Delivery attempt
+            - Successful delivery confirmation
+
+            Proactive alerts:
+            - Send SMS when courier is 15 minutes away
+            - Alert if delivery delay expected
+            - Confirm delivery completion to RM
+
+      - id: route_standard_delivery
+        type: process
+        position: { x: 500, y: 410 }
+        data:
+          label: Route to Standard Delivery
+          description: Not PWM - use standard routing
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Customer not PWM - route to standard delivery:
+
+            Based on territory:
+            - Barbados → Direct mail
+            - Bahamas → Bulk shipment
+            - Jamaica → Transit code validation
+            - Other → Standard courier
+
+      - id: end
+        type: end
+        position: { x: 300, y: 1710 }
+        data:
+          label: PWM Delivery Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: verify_pwm_status
+
+      - id: e2
+        source: verify_pwm_status
+        target: pwm_status_check
+
+      - id: e3
+        source: pwm_status_check
+        target: determine_delivery_preference
+        sourceHandle: Active PWM Customer
+
+      - id: e4
+        source: pwm_status_check
+        target: route_standard_delivery
+        sourceHandle: Not PWM - Route Standard
+
+      - id: e5
+        source: determine_delivery_preference
+        target: check_instant_card_availability
+
+      - id: e6
+        source: check_instant_card_availability
+        target: instant_availability_decision
+
+      - id: e7
+        source: instant_availability_decision
+        target: process_instant_card_request
+        sourceHandle: Instant Available (< 2 hours)
+
+      - id: e8
+        source: instant_availability_decision
+        target: process_express_delivery
+        sourceHandle: Express Available (Next Day)
+
+      - id: e9
+        source: process_instant_card_request
+        target: submit_instant_to_gd
+
+      - id: e10
+        source: submit_instant_to_gd
+        target: arrange_vip_courier
+
+      - id: e11
+        source: arrange_vip_courier
+        target: notify_customer_instant
+
+      - id: e12
+        source: notify_customer_instant
+        target: coordinate_delivery_window
+
+      - id: e13
+        source: coordinate_delivery_window
+        target: notify_relationship_manager
+
+      - id: e14
+        source: process_express_delivery
+        target: submit_express_to_gd
+
+      - id: e15
+        source: submit_express_to_gd
+        target: arrange_express_courier
+
+      - id: e16
+        source: arrange_express_courier
+        target: notify_customer_express
+
+      - id: e17
+        source: notify_customer_express
+        target: notify_relationship_manager
+
+      - id: e18
+        source: notify_relationship_manager
+        target: track_vip_delivery
+
+      - id: e19
+        source: track_vip_delivery
+        target: end
+
+      - id: e20
+        source: route_standard_delivery
+        target: end

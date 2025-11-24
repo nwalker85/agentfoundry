@@ -1,0 +1,368 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Security - Check Fraud Score
+  type: system
+  version: 1.0.0
+  description: Real-time fraud score checkpoint for security-sensitive operations
+  tags: [cibc, agent-group-2, security-fraud, fraud-score, checkpoint, pindrop]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Fraud Score Checkpoint
+          description: Security validation for sensitive operations
+
+      - id: determine_operation_type
+        type: process
+        position: { x: 300, y: 150 }
+        data:
+          label: Determine Operation Type
+          description: Classify the operation being requested
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Classify operation type and determine required fraud score threshold:
+
+            High-risk operations (threshold: fraud_score < 30):
+            - Card activation
+            - Address change
+            - Rush card delivery
+            - PIN reset
+            - Credit limit increase request
+
+            Medium-risk operations (threshold: fraud_score < 50):
+            - Standard card replacement
+            - Fee waiver request
+            - Delivery address confirmation
+            - Account information update
+
+            Low-risk operations (threshold: fraud_score < 70):
+            - Balance inquiry
+            - Transaction history request
+            - Statement request
+            - General account inquiry
+
+            Critical operations (threshold: fraud_score < 20):
+            - Instant card issuance
+            - International wire transfer
+            - Large withdrawal authorization
+
+      - id: get_current_fraud_score
+        type: toolCall
+        position: { x: 300, y: 280 }
+        data:
+          label: Get Current Fraud Score
+          description: Query Pindrop for real-time score
+          tool: func-get-fraud-risk-score
+
+      - id: check_recent_score_history
+        type: toolCall
+        position: { x: 300, y: 410 }
+        data:
+          label: Check Recent Score History
+          description: Analyze fraud score trend
+          tool: func-query-fraud-score-history
+
+      - id: analyze_score_trend
+        type: process
+        position: { x: 300, y: 540 }
+        data:
+          label: Analyze Fraud Score Trend
+          description: Evaluate score stability and changes
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Analyze fraud score trend:
+
+            Red flags:
+            - Sudden spike (>20 points in last 24 hours)
+            - Multiple sessions with increasing scores
+            - Score volatility (variance > 15)
+            - Recent fraud memo on file
+
+            Green signals:
+            - Consistent low score (<30) over time
+            - Stable pattern across multiple sessions
+            - No recent fraud indicators
+
+      - id: evaluate_score_threshold
+        type: decision
+        position: { x: 300, y: 670 }
+        data:
+          label: Fraud Score Evaluation
+          description: Compare score against operation threshold
+          conditions:
+            - label: Pass - Low Risk (Score < threshold)
+              expression: fraud_score < required_threshold && score_trend == 'stable'
+              next: approve_operation
+            - label: Warning - Borderline (Score ± 10 of threshold)
+              expression: fraud_score >= required_threshold && fraud_score < (required_threshold + 10)
+              next: additional_verification
+            - label: Fail - High Risk (Score > threshold + 10)
+              expression: fraud_score >= (required_threshold + 10)
+              next: deny_operation
+            - label: Critical - Score Spike Detected
+              expression: score_trend == 'spike'
+              next: escalate_security
+
+      - id: approve_operation
+        type: process
+        position: { x: 100, y: 800 }
+        data:
+          label: Approve Operation
+          description: Fraud score passes - proceed with operation
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Fraud score check passed:
+
+            Actions:
+            - Log successful fraud check
+            - Record fraud score in transaction audit
+            - Proceed with requested operation
+            - Update session with approval
+
+      - id: log_approval
+        type: toolCall
+        position: { x: 100, y: 930 }
+        data:
+          label: Log Fraud Check Pass
+          description: Audit trail for approved operation
+          tool: func-log-infra-event
+
+      - id: additional_verification
+        type: process
+        position: { x: 300, y: 800 }
+        data:
+          label: Request Additional Verification
+          description: Borderline score - enhanced verification required
+          model: gpt-4o
+          temperature: 0.5
+          prompt: |
+            Fraud score borderline - require additional verification:
+
+            Enhanced verification options:
+            - Request additional identity questions (beyond 5Q)
+            - Verify recent transaction
+            - Request account-specific information
+            - Send one-time verification code to registered contact
+            - Request callback to verified phone number
+
+      - id: perform_enhanced_verification
+        type: toolCall
+        position: { x: 300, y: 930 }
+        data:
+          label: Perform Enhanced Verification
+          description: Additional identity verification step
+          tool: func-verify-5-question-protocol
+
+      - id: enhanced_verification_result
+        type: decision
+        position: { x: 300, y: 1060 }
+        data:
+          label: Enhanced Verification Result
+          description: Did customer pass additional checks?
+          conditions:
+            - label: Passed Enhanced Verification
+              expression: enhanced_verification_passed == true
+              next: approve_with_monitoring
+            - label: Failed Enhanced Verification
+              expression: enhanced_verification_passed == false
+              next: deny_operation
+
+      - id: approve_with_monitoring
+        type: process
+        position: { x: 250, y: 1190 }
+        data:
+          label: Approve with Enhanced Monitoring
+          description: Proceed but apply CW20 watch
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: apply_monitoring_watch
+        type: toolCall
+        position: { x: 250, y: 1320 }
+        data:
+          label: Apply 7-Day Card Watch
+          description: Enhanced monitoring due to borderline score
+          tool: func-apply-card-watch
+
+      - id: deny_operation
+        type: process
+        position: { x: 500, y: 800 }
+        data:
+          label: Deny Operation
+          description: Fraud score too high - deny request
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Fraud score too high - deny operation:
+
+            Customer communication:
+            - Professional denial message
+            - Suggest in-person verification at branch
+            - Provide fraud prevention contact information
+            - No specific fraud score disclosed to customer
+
+      - id: create_denial_memo
+        type: toolCall
+        position: { x: 500, y: 930 }
+        data:
+          label: Create Fraud Memo (Denied Operation)
+          description: Document denial due to fraud score
+          tool: func-create-fraud-memo
+
+      - id: notify_customer_denial
+        type: toolCall
+        position: { x: 500, y: 1060 }
+        data:
+          label: Notify Customer of Denial
+          description: Send denial notification
+          tool: func-send-notification
+
+      - id: escalate_security
+        type: process
+        position: { x: 700, y: 800 }
+        data:
+          label: Escalate to Card Security Officer
+          description: Fraud score spike detected - immediate escalation
+          model: gpt-4o-mini
+          temperature: 0.3
+          prompt: |
+            Critical fraud score spike detected:
+
+            Immediate actions:
+            - Escalate to Card Security Officer
+            - Consider temporary card block
+            - Review recent transactions
+            - Check for fraud patterns
+            - Initiate fraud investigation
+
+      - id: apply_temporary_hold
+        type: toolCall
+        position: { x: 700, y: 930 }
+        data:
+          label: Apply Temporary Security Hold
+          description: Precautionary hold pending investigation
+          tool: func-apply-fraud-block
+
+      - id: create_investigation_case
+        type: process
+        position: { x: 700, y: 1060 }
+        data:
+          label: Create Fraud Investigation
+          description: Initiate formal fraud investigation
+          model: gpt-4o-mini
+          temperature: 0.3
+
+      - id: end
+        type: end
+        position: { x: 300, y: 1450 }
+        data:
+          label: Fraud Check Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: determine_operation_type
+
+      - id: e2
+        source: determine_operation_type
+        target: get_current_fraud_score
+
+      - id: e3
+        source: get_current_fraud_score
+        target: check_recent_score_history
+
+      - id: e4
+        source: check_recent_score_history
+        target: analyze_score_trend
+
+      - id: e5
+        source: analyze_score_trend
+        target: evaluate_score_threshold
+
+      - id: e6
+        source: evaluate_score_threshold
+        target: approve_operation
+        sourceHandle: Pass - Low Risk (Score < threshold)
+
+      - id: e7
+        source: evaluate_score_threshold
+        target: additional_verification
+        sourceHandle: Warning - Borderline (Score ± 10 of threshold)
+
+      - id: e8
+        source: evaluate_score_threshold
+        target: deny_operation
+        sourceHandle: Fail - High Risk (Score > threshold + 10)
+
+      - id: e9
+        source: evaluate_score_threshold
+        target: escalate_security
+        sourceHandle: Critical - Score Spike Detected
+
+      - id: e10
+        source: approve_operation
+        target: log_approval
+
+      - id: e11
+        source: log_approval
+        target: end
+
+      - id: e12
+        source: additional_verification
+        target: perform_enhanced_verification
+
+      - id: e13
+        source: perform_enhanced_verification
+        target: enhanced_verification_result
+
+      - id: e14
+        source: enhanced_verification_result
+        target: approve_with_monitoring
+        sourceHandle: Passed Enhanced Verification
+
+      - id: e15
+        source: enhanced_verification_result
+        target: deny_operation
+        sourceHandle: Failed Enhanced Verification
+
+      - id: e16
+        source: approve_with_monitoring
+        target: apply_monitoring_watch
+
+      - id: e17
+        source: apply_monitoring_watch
+        target: end
+
+      - id: e18
+        source: deny_operation
+        target: create_denial_memo
+
+      - id: e19
+        source: create_denial_memo
+        target: notify_customer_denial
+
+      - id: e20
+        source: notify_customer_denial
+        target: end
+
+      - id: e21
+        source: escalate_security
+        target: apply_temporary_hold
+
+      - id: e22
+        source: apply_temporary_hold
+        target: create_investigation_case
+
+      - id: e23
+        source: create_investigation_case
+        target: end

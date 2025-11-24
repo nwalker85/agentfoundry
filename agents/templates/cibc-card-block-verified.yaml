@@ -1,0 +1,147 @@
+apiVersion: foundry.ai/v1
+kind: AgentGraph
+metadata:
+  name: CIBC Card - Block (Verified Customer)
+  type: system
+  version: 1.0.0
+  description: Block card for verified customer post-verification
+  tags: [cibc, agent-group-1, card-lifecycle, block, verified]
+
+spec:
+  state_schema_id: null
+  triggers: []
+  graph:
+    nodes:
+      - id: entry
+        type: entryPoint
+        position: { x: 300, y: 50 }
+        data:
+          label: Block Request
+          description: Customer requests card block
+
+      - id: verify_customer
+        type: toolCall
+        position: { x: 300, y: 150 }
+        data:
+          label: Verify Customer
+          description: Full verification before blocking
+          tool: func-verify-5-question-protocol
+
+      - id: get_fraud_score
+        type: toolCall
+        position: { x: 300, y: 280 }
+        data:
+          label: Get Fraud Score
+          description: Pindrop scoring
+          tool: func-get-fraud-risk-score
+
+      - id: verification_check
+        type: decision
+        position: { x: 300, y: 410 }
+        data:
+          label: Verification Result
+          description: Must pass verification to block
+          conditions:
+            - label: Verified
+              expression: verification_passed == true
+              next: confirm_block_reason
+            - label: Failed Verification
+              expression: verification_passed == false
+              next: deny_block
+
+      - id: confirm_block_reason
+        type: process
+        position: { x: 200, y: 540 }
+        data:
+          label: Confirm Block Reason
+          description: Capture reason for blocking
+          model: gpt-4o
+          temperature: 0.6
+          prompt: |
+            Ask customer:
+            "Can you tell me the reason you'd like to block your card?"
+
+            Reasons:
+            - Lost
+            - Stolen
+            - Damaged
+            - Compromised
+            - Customer request
+
+      - id: block_card
+        type: toolCall
+        position: { x: 200, y: 670 }
+        data:
+          label: Block Card
+          description: Change status to blocked
+          tool: func-block-card
+
+      - id: offer_replacement
+        type: process
+        position: { x: 200, y: 800 }
+        data:
+          label: Offer Replacement
+          description: Ask if customer needs replacement card
+          model: gpt-4o
+          temperature: 0.7
+          prompt: |
+            "Your card has been blocked successfully.
+            Would you like us to order a replacement card for you?"
+
+      - id: deny_block
+        type: process
+        position: { x: 400, y: 540 }
+        data:
+          label: Deny Block Request
+          description: Cannot block without verification
+          model: gpt-4o
+          temperature: 0.6
+          prompt: |
+            "I'm sorry, I wasn't able to verify your identity.
+            For security reasons, I cannot block your card at this time.
+            Please visit a branch with valid ID for assistance."
+
+      - id: end
+        type: end
+        position: { x: 300, y: 930 }
+        data:
+          label: Complete
+
+    edges:
+      - id: e1
+        source: entry
+        target: verify_customer
+
+      - id: e2
+        source: verify_customer
+        target: get_fraud_score
+
+      - id: e3
+        source: get_fraud_score
+        target: verification_check
+
+      - id: e4
+        source: verification_check
+        target: confirm_block_reason
+        sourceHandle: Verified
+
+      - id: e5
+        source: verification_check
+        target: deny_block
+        sourceHandle: Failed Verification
+
+      - id: e6
+        source: confirm_block_reason
+        target: block_card
+
+      - id: e7
+        source: block_card
+        target: offer_replacement
+
+      - id: e8
+        source: offer_replacement
+        target: end
+
+      - id: e9
+        source: deny_block
+        target: end

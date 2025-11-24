@@ -1,0 +1,188 @@
+model
+  schema 1.1
+
+# =============================================================================
+# PRINCIPALS
+# =============================================================================
+
+type user
+
+type team
+  relations
+    define organization: [organization]
+    define lead: [user]
+    define member: [user, user:*] or lead
+
+# =============================================================================
+# PLATFORM & TENANT
+# =============================================================================
+
+type platform
+  relations
+    define global_admin: [user]
+
+type tenant
+  relations
+    define admin: [user]
+    define member: [user] or admin
+    define billing_admin: [user] or admin
+
+# =============================================================================
+# ORGANIZATION
+# =============================================================================
+
+type organization
+  relations
+    define tenant: [tenant]
+    define admin: [user] or admin from tenant
+    define member: [user] or admin
+    
+    # Permissions (cascade from tenant)
+    define can_read: member or can_read from tenant
+    define can_write: admin or admin from tenant
+    define can_delete: admin from tenant
+
+# =============================================================================
+# PROJECT (top-level organizer within org)
+# =============================================================================
+
+type project
+  relations
+    define organization: [organization]
+    define admin: [user]
+    define team_visibility: [team]
+    
+    # Computed: users who can see this project via team membership
+    define viewer: [user] or member from team_visibility
+    
+    # Permissions (cascade from org)
+    define can_read: viewer or admin or can_read from organization
+    define can_write: admin or can_write from organization
+    define can_delete: admin or can_delete from organization
+
+# =============================================================================
+# DOMAIN (knowledge vertical, nested under project, can have subdomains)
+# =============================================================================
+
+type domain
+  relations
+    define project: [project]
+    define parent: [domain]                    # subdomain relationship
+    define admin: [user]
+    define compliance_officer: [user]          # domain-specific role
+    
+    # Permissions (cascade from project OR parent domain)
+    define can_read: admin or compliance_officer or can_read from project or can_read from parent
+    define can_write: admin or can_write from project or can_write from parent
+    define can_delete: admin or can_delete from project or can_delete from parent
+    
+    # Domain-specific permissions
+    define can_manage_compliance: compliance_officer or admin or can_write from project
+
+# =============================================================================
+# ASSETS (deployed to domains)
+# =============================================================================
+
+# Base asset pattern - agents
+type agent
+  relations
+    define domain: [domain]
+    define owner: [user]
+    define is_system: [platform]               # system agents (Marshal, etc.)
+    
+    # Permissions (cascade from domain, system agents restricted)
+    define can_read: owner or can_read from domain
+    define can_write: owner or can_write from domain but not is_system
+    define can_delete: owner or can_delete from domain but not is_system
+    define can_deploy: can_write
+    define can_execute: can_read
+
+# Reporting assets
+type report
+  relations
+    define domain: [domain]
+    define owner: [user]
+    define viewer: [user, team#member]
+    
+    define can_read: owner or viewer or can_read from domain
+    define can_write: owner or can_write from domain
+    define can_delete: owner or can_delete from domain
+
+# Configuration/management assets
+type config
+  relations
+    define domain: [domain]
+    define owner: [user]
+    
+    define can_read: owner or can_read from domain
+    define can_write: owner or can_write from domain
+    define can_delete: can_delete from domain  # no individual delete, domain-level only
+
+# Datasets (RAG/vector stores)
+type dataset
+  relations
+    define domain: [domain]
+    define owner: [user]
+    define is_shared: [organization]           # org-wide shared dataset
+    
+    define can_read: owner or can_read from domain or member from is_shared
+    define can_write: owner or can_write from domain
+    define can_delete: owner or can_delete from domain
+    define can_ingest: can_write               # upload documents
+
+# Tools (MCP integrations)
+type tool
+  relations
+    define domain: [domain]
+    define owner: [user]
+    
+    define can_read: owner or can_read from domain
+    define can_write: owner or can_write from domain
+    define can_delete: owner or can_delete from domain
+    define can_invoke: can_read                # runtime execution
+
+# =============================================================================
+# SECRETS (LocalStack storage + OpenFGA authorization)
+# =============================================================================
+
+type secret
+  relations
+    define organization: [organization]
+    define domain: [domain]
+    define owner: [user]
+    define viewer: [user]
+    
+    # IMPORTANT: can_read_value is NEVER granted (blind write pattern)
+    # Frontend can only check status, backend retrieves from LocalStack
+    define can_read_status: viewer or owner or can_read from organization
+    define can_update: owner or admin from organization
+    define can_delete: owner or admin from organization
+    define can_rotate: can_update
+
+# =============================================================================
+# SESSIONS & GRAPHS
+# =============================================================================
+
+type session
+  relations
+    define agent: [agent]
+    define owner: [user]
+    define viewer: [user]
+    
+    define can_read: owner or viewer or can_read from agent
+    define can_terminate: owner or admin from agent
+    define can_replay: can_read
+
+type graph
+  relations
+    define domain: [domain]
+    define owner: [user]
+    define editor: [user, team#member]
+    define viewer: [user, team#member]
+    
+    define can_read: viewer or editor or owner or can_read from domain
+    define can_update: editor or owner or can_write from domain
+    define can_deploy: owner or admin from domain
+    define can_delete: owner or can_delete from domain
+    define can_share: owner
+

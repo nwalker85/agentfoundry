@@ -1,7 +1,9 @@
 ## LEGACY / ARCHIVE – Single EC2 Deployment Flow
 
-> **Note:** This document preserves the original **single‑EC2 + docker‑compose** deployment pattern.  
-> The **current, supported** AWS deployment path uses **ECR + ECS Fargate + ALB** via `infra/` and is documented in `DEPLOYMENT.md`.
+> **Note:** This document preserves the original **single‑EC2 + docker‑compose**
+> deployment pattern.  
+> The **current, supported** AWS deployment path uses **ECR + ECS Fargate +
+> ALB** via `infra/` and is documented in `DEPLOYMENT.md`.
 
 # Agent Foundry - Deployment Quick Reference (Legacy EC2)
 
@@ -184,5 +186,3 @@ aws ssm delete-parameters \
 ## 📚 Full Documentation (Legacy)
 
 - `deploy/AWS_DEPLOYMENT_GUIDE.md` – original EC2‑centric deployment guide
-
-

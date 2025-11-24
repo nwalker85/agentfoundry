@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "agent-foundry": {
+      "command": "node",
+      "args": [
+        "/Users/nwalker/Development/Projects/agentfoundry/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "ENVIRONMENT": "development",
+        "SVC_BACKEND_HOST": "localhost",
+        "BACKEND_PORT": "8000",
+        "SVC_MCP_HOST": "localhost",
+        "MCP_INTEGRATION_PORT": "8100"
+      }
+    }
+  }
+}

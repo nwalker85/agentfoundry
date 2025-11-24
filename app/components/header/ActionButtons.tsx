@@ -29,14 +29,14 @@ export function ActionButtons({ actions }: ActionButtonsProps) {
           onClick={action.onClick}
           disabled={action.loading || action.disabled}
           className={cn(
-            "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-            "flex items-center gap-2",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
+            'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+            'flex items-center gap-2',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
             action.variant === 'primary'
               ? 'bg-blue-600 hover:bg-blue-700 text-white'
               : action.variant === 'danger'
-              ? 'bg-red-600 hover:bg-red-700 text-white'
-              : 'text-gray-300 hover:bg-gray-800'
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'text-gray-300 hover:bg-gray-800'
           )}
         >
           {action.loading ? (

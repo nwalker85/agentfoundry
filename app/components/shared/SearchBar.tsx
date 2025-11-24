@@ -3,12 +3,12 @@
  * Standardized search input with icon and clear button
  */
 
-"use client";
+'use client';
 
-import { Search, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -20,14 +20,14 @@ interface SearchBarProps {
 }
 
 export function SearchBar({
-  placeholder = "Search...",
+  placeholder = 'Search...',
   value: controlledValue,
   onChange,
   onSearch,
   debounceMs = 300,
   className,
 }: SearchBarProps) {
-  const [internalValue, setInternalValue] = useState(controlledValue || "");
+  const [internalValue, setInternalValue] = useState(controlledValue || '');
   const [debouncedValue, setDebouncedValue] = useState(internalValue);
 
   // Update internal value when controlled value changes
@@ -60,12 +60,12 @@ export function SearchBar({
   };
 
   const handleClear = () => {
-    setInternalValue("");
-    onChange?.("");
+    setInternalValue('');
+    onChange?.('');
   };
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn('relative', className)}>
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-2" />
       <Input
         type="text"
