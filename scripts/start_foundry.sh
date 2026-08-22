@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+cd "$(dirname "$SCRIPT_DIR")"
 
 echo "🏭 Agent Foundry - Development Mode"
 echo "===================================="

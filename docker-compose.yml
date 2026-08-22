@@ -120,8 +120,11 @@ services:
       - ./mcp:/app/mcp
       - ./scripts:/app/scripts
       - ./openfga:/app/openfga
-      # Mount local n8n source for mining integrations (read-only)
-      - /Users/nwalker/Development/Projects/n8n:/n8n:ro
+      # Mount local n8n source for mining integrations (read-only).
+      # Quant-era path was /Users/nwalker/Development/Projects/n8n; this Mac
+      # does not have it. Stub dir keeps the mount valid; catalog comes from
+      # the committed integrations.manifest.json (307 n8n nodes).
+      - ${N8N_SOURCE_DIR:-./.stubs/n8n}:/n8n:ro
     environment:
       # ========================================================================
       # SERVICE LISTENING - Always 8080 internally
@@ -395,13 +398,14 @@ services:
       - N8N_PORT=5678
       # Configuration
       - INTEGRATIONS_MANIFEST=/app/mcp/integration_server/config/integrations.manifest.json
+    command: ["uvicorn", "mcp.integration_server.main:app", "--host", "0.0.0.0", "--port", "8080"]
     depends_on:
       n8n:
         condition: service_started
     networks:
       - foundry
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -456,7 +460,9 @@ services:
 
   # LocalStack - AWS Services Emulation (Secrets Manager, S3, etc.)
   localstack:
-    image: localstack/localstack:latest
+    # :latest (2026.7) now requires LOCALSTACK_AUTH_TOKEN. Community 3.8 is enough
+    # for the Foundry secrets-manager registry on this local Podman standup.
+    image: localstack/localstack:3.8
     ports:
       - "4566:4566" # LocalStack gateway
       - "4510-4559:4510-4559" # External services port range
