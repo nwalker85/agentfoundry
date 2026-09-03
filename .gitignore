@@ -269,3 +269,4 @@ local.settings.json
 # yarn.lock
 # poetry.lock
 # Pipfile.lock
+.gstack/
