@@ -1,0 +1,82 @@
+<h2>Which single-window layout feels closest?</h2>
+<p class="subtitle">The critical choice is where the director chat lives relative to the live project and agent work state.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">A. Command Center</div>
+        <div class="mockup-body">
+          <div style="display:grid;grid-template-columns:300px 1fr 360px;gap:12px;min-height:310px">
+            <div class="placeholder" style="min-height:310px">
+              <strong>Projects</strong><br><br>
+              Heimdall<br>
+              Huginn<br>
+              Norns<br>
+              Andvari
+            </div>
+            <div class="placeholder" style="min-height:310px">
+              <strong>Live Work Board</strong><br><br>
+              Project status, task queues, dependencies, blocked work, active agents
+            </div>
+            <div class="placeholder" style="min-height:310px">
+              <strong>Director Chat</strong><br><br>
+              Always visible, always available
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Director Chat + Work Board</h3>
+      <p>A dense operations console: chat is fixed on the right, projects on the left, live work state in the center.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">B. Chat-Led Workspace</div>
+        <div class="mockup-body">
+          <div style="display:grid;grid-template-columns:1fr 380px;gap:12px;min-height:310px">
+            <div class="placeholder" style="min-height:310px">
+              <strong>Director Conversation</strong><br><br>
+              Primary thread with delegation events, supervisor handoffs, approvals, summaries
+            </div>
+            <div style="display:grid;gap:12px">
+              <div class="placeholder"><strong>Project Snapshot</strong><br>Open tasks, blocked, agents</div>
+              <div class="placeholder"><strong>Supervisor Stack</strong><br>Heimdall lead, Huginn lead</div>
+              <div class="placeholder"><strong>Activity Stream</strong><br>Latest agent events</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Chat First, Context Beside It</h3>
+      <p>Feels conversational and guided. Better for directing work, weaker for scanning many projects at once.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">C. Project Cockpit</div>
+        <div class="mockup-body">
+          <div style="display:grid;grid-template-rows:70px 1fr 100px;gap:12px;min-height:310px">
+            <div class="placeholder"><strong>Portfolio Strip</strong> Heimdall | Huginn | Norns | Andvari | Add Project</div>
+            <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:12px">
+              <div class="placeholder"><strong>Selected Project</strong><br><br>Roadmap, task graph, dependencies, artifacts</div>
+              <div class="placeholder"><strong>Agent Team</strong><br><br>Supervisor, subagents, capacity, health</div>
+            </div>
+            <div class="placeholder"><strong>Director Chat Bar</strong> Compact chat composer and latest reply at the bottom</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Project First, Chat Anchored</h3>
+      <p>Optimized for deep work on one project at a time. The director is present, but less dominant.</p>
+    </div>
+  </div>
+</div>
